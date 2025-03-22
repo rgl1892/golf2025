@@ -7,10 +7,23 @@ class GolfCourse(models.Model):
     name = models.CharField(max_length=20)
     country = models.CharField(max_length=20,null=True)
     tees = models.CharField(max_length=20,default='White')
+    slope_rating = models.IntegerField(default=113)
+    course_rating = models.DecimalField(decimal_places=1,max_digits=3,default=72)
+    slug = models.SlugField(default="", null=False)
+
+    def __str__(self) -> str:
+        return f"{self.name} - {self.tees} Tees"
+
+class GolfEvent(models.Model):
+
+    name = models.CharField(max_length=40)
+
+    def __str__(self):
+        return self.name
 
 class GolfRound(models.Model):
 
-    event = models.CharField(max_length=20,null=True) # 
+    event = models.ForeignKey(GolfEvent,on_delete=models.CASCADE,default=1)
     holiday = models.BooleanField(default=False)
     date_started = models.DateField(blank=True,null=True)
 
@@ -20,6 +33,7 @@ class Hole(models.Model):
     golf_course = models.ForeignKey(GolfCourse,on_delete=models.CASCADE,null=True) # tees implied by choice 
     par = models.IntegerField(choices=[(3,3),(4,4),(5,5)],default=4)
     yards = models.IntegerField(default=400)
+    stroke_index = models.IntegerField(choices=[(x+1,x+1) for x in range(18)],default=1)
 
 class Player(models.Model):
 
