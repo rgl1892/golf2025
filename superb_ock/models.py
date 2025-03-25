@@ -43,6 +43,13 @@ class Player(models.Model):
     first_name = models.CharField(max_length=20,null=True)
     second_name = models.CharField(max_length=20,null=True)
     ocks = models.IntegerField(default=0)
+    handedness = models.CharField(max_length=20,default='Right')
+    picture = models.ImageField(blank=True,null=True)
+    info = models.TextField(blank=True,null=True)
+    slug = models.SlugField(default="", null=False)
+
+    def __str__(self):
+        return f"{self.first_name} {self.second_name}"
 
 class Score(models.Model):
 
@@ -52,3 +59,7 @@ class Score(models.Model):
     player = models.ForeignKey(Player,on_delete=models.CASCADE,null=True)
     golf_round = models.ForeignKey(GolfRound,on_delete=models.CASCADE,null=True)
     handicap_index = models.FloatField()
+    sandy = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.player} {self.hole} {self.golf_round}"
