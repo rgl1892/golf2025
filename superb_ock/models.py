@@ -35,6 +35,9 @@ class Hole(models.Model):
     yards = models.IntegerField(default=400)
     stroke_index = models.IntegerField(choices=[(x+1,x+1) for x in range(18)],default=1)
 
+    def __str__(self):
+        return f"{self.golf_course} - Hole {self.hole_number}"
+
 class Player(models.Model):
 
     first_name = models.CharField(max_length=20,null=True)
