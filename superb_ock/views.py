@@ -73,3 +73,14 @@ class Home(View):
     def get(self,request):
     
         return render(request,self.template_name,context=self.get_context())
+    
+class NewRound(View):
+
+    template_name = 'superb_ock/new_round/new_round.html'
+
+    def get_context(self):
+        context = {'test':'test'}
+        return context
+    
+    def get(self,request):
+        return render(request,self.template_name,context=self.get_context())
