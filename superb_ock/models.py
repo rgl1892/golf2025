@@ -2,6 +2,9 @@ from django.db import models
 
 # Create your models here.
 
+def hole_choice():
+    return [(x+1,x+1) for x in range(18)]
+
 class GolfCourse(models.Model):
     
     name = models.CharField(max_length=20)
@@ -24,16 +27,18 @@ class GolfEvent(models.Model):
 class GolfRound(models.Model):
 
     event = models.ForeignKey(GolfEvent,on_delete=models.CASCADE,default=1)
-    holiday = models.BooleanField(default=False)
     date_started = models.DateField(blank=True,null=True)
+
+    def __str__(self):
+        return f"{self.event} - {self.pk}"
 
 class Hole(models.Model):
     
-    hole_number = models.IntegerField(choices=[(x+1,x+1) for x in range(18)])
+    hole_number = models.IntegerField(choices=hole_choice())
     golf_course = models.ForeignKey(GolfCourse,on_delete=models.CASCADE,null=True) # tees implied by choice 
     par = models.IntegerField(choices=[(3,3),(4,4),(5,5)],default=4)
     yards = models.IntegerField(default=400)
-    stroke_index = models.IntegerField(choices=[(x+1,x+1) for x in range(18)],default=1)
+    stroke_index = models.IntegerField(choices=hole_choice(),default=1)
 
     def __str__(self):
         return f"{self.golf_course} - Hole {self.hole_number}"
