@@ -12,7 +12,8 @@ import json
 from .models import *
 from .forms import *
 
-
+def jsonify(query):
+    return json.dumps(list(query),cls=DjangoJSONEncoder)
 
 # Create your views here.
 def getWeather(lat,long):
@@ -76,10 +77,6 @@ class Home(View):
     def get(self,request):
     
         return render(request,self.template_name,context=self.get_context())
-
-    def post(self,request):
-        print(request.POST)
-        return render(request,self.template_name,context=self.get_context())
     
 class NewRound(View):
 
@@ -88,15 +85,36 @@ class NewRound(View):
     def get_context(self):
 
         courses = GolfCourse.objects.values()
-        courses = json.dumps(list(courses),cls=DjangoJSONEncoder)
+        courses = jsonify(courses)
 
         players = Player.objects.values()
-        players = json.dumps(list(players),cls=DjangoJSONEncoder)
+        players = jsonify(players)
+
+        events = GolfEvent.objects.order_by('name').values()
+
+
         context = {
             'courses':courses,
             'players':players,
+            'events':events,
             }
         return context
     
     def get(self,request):
         return render(request,self.template_name,context=self.get_context())
+    
+    def post(self,request):
+
+        course_id = request.POST.get('courseId')
+        players = [{
+            'id':request.POST.get(f'player_{x+1}'),
+            'index':request.POST.get(f'player_{x+1}_index')
+            } for x in range(4) 
+            if request.POST.get(f'player_{x+1}')]
+        print(players,course_id)
+        golf_round = GolfRound.objects.create(event_id=request.POST.get('eventId'))
+        print( golf_round.pk)
+
+        return render(request,'superb_ock/new_round/round_created.html')
+    
+    

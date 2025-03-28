@@ -11839,6 +11839,9 @@ textarea.form-control-lg {
 [data-bs-theme=dark] .btn-primary {
   background-color: #080808;
 }
+[data-bs-theme=dark] .form-select {
+  background-color: var(--bs-tertiary-color);
+}
 
 body {
   letter-spacing: 1px;
@@ -11879,15 +11882,16 @@ th {
 
 [data-bs-theme=dark] .form-control {
   color: #55595c;
+  background-color: var(--bs-tertiary-color);
 }
 [data-bs-theme=dark] .form-control::-moz-placeholder {
-  color: rgba(85, 89, 92, 0.75);
+  color: var(--bs-body-color);
 }
 [data-bs-theme=dark] .form-control::placeholder {
-  color: rgba(85, 89, 92, 0.75);
+  color: var(--bs-body-color);
 }
 [data-bs-theme=dark] .form-floating > .form-control:not(:-moz-placeholder-shown) ~ label {
-  color: rgba(85, 89, 92, 0.75);
+  color: var(--bs-body-color);
 }
 [data-bs-theme=dark] .form-floating > label,
 [data-bs-theme=dark] .form-floating > .form-control:focus ~ label,

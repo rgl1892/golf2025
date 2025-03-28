@@ -30,7 +30,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const populateSelect = (select, options, defaultText) => {
         select.innerHTML = `<option value="">${defaultText}</option>`;
         options.forEach(optionValue => {
-            console.log(optionValue);
             const option = document.createElement("option");
             option.value = optionValue;
             option.textContent = optionValue;
@@ -129,9 +128,6 @@ document.addEventListener("DOMContentLoaded", () => {
             course.name === selectedCourse && 
             course.tees === selectedTee
         );
-        if (!chosenCourse){
-            console.error("Chosen course not found:", selectedCountry, selectedCourse, selectedTee);
-        }
         const handicap = getHandicap(indexValue,chosenCourse) 
 
         if (indexValue) {

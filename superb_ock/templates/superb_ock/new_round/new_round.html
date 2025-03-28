@@ -4,8 +4,18 @@
 <script src="{% static 'superb_ock/js/new_round/new_round.js' %}"></script>
 
 <h1 class="mt-4 mb-4">Golf Course Selector</h1>
-<form id="courseSelectorForm" method="post" action="{% url 'home'%}">
+<form id="courseSelectorForm" method="post" action="{% url 'new_round'%}">
   {% csrf_token %}
+
+  <div class="mb-3">
+    <label for="eventSelect" class="form-label">Select Event:</label>
+    <select id="eventSelect" class="form-select" name="eventId">
+      <option value="">--Select an Event--</option>
+      {% for event in events %}
+        <option value="{{event.id}}">{{event.name}}</option>
+      {% endfor %}
+    </select>
+  </div>
 
   <div class="mb-3">
     <label for="countrySelect" class="form-label">Select Country:</label>
