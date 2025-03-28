@@ -1,19 +1,35 @@
 {% extends "superb_ock/base.html" %}
 {% block content %}
-<div class="row">
-    <div class="col">
-        <h1>Add Round</h1>
-        <p>Choose course <br>
-            Choose Players <br>
-            Handicaps <br>
-            Event
-        </p>
-        After you choose a course, it should know the Slope and Stroke ratings <br>
-        So it can show the playing handicap you would have <br>
-        <br>
-        Need to get the js to read from the data sent
+{% load static %}
+<div style="display: none" id="jsonData" data-json="{{ test }}"></div>
+<script src="{% static 'superb_ock/js/new_round/new_round.js' %}"></script>
 
+<h1 class="mb-4">Golf Course Selector</h1>
+    
+    <div class="mb-3">
+        <label for="countrySelect" class="form-label">Select Country:</label>
+        <select id="countrySelect" class="form-select">
+            <option value="">--Select a Country--</option>
+        </select>
     </div>
-</div>
+    
+    <div class="mb-3">
+        <label for="courseSelect" class="form-label">Select Course:</label>
+        <select id="courseSelect" class="form-select" disabled>
+            <option value="">--Select a Course--</option>
+        </select>
+    </div>
+    
+    <div class="mb-3">
+        <label for="teeSelect" class="form-label">Select Tee:</label>
+        <select id="teeSelect" class="form-select" disabled>
+            <option value="">--Select a Tee--</option>
+        </select>
+    </div>
+
+    
+    
+
 
 {% endblock content %}
+

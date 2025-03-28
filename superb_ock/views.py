@@ -4,9 +4,12 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.db import IntegrityError
+from django.core.serializers.json import DjangoJSONEncoder
 
 from requests import request
+import json
 
+from .models import *
 from .forms import *
 
 
@@ -79,7 +82,9 @@ class NewRound(View):
     template_name = 'superb_ock/new_round/new_round.html'
 
     def get_context(self):
-        context = {'test':'test'}
+        courses = GolfCourse.objects.values()
+        courses = json.dumps(list(courses),cls=DjangoJSONEncoder)
+        context = {'test':courses}
         return context
     
     def get(self,request):
