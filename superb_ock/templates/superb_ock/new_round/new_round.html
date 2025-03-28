@@ -1,35 +1,45 @@
-{% extends "superb_ock/base.html" %}
-{% block content %}
-{% load static %}
-<div style="display: none" id="jsonData" data-json="{{ test }}"></div>
+{% extends "superb_ock/base.html" %} {% block content %} {% load static %}
+<div style="display: none" id="courseJsonData" data-json="{{ courses }}"></div>
+<div style="display: none" id="playerJsonData" data-json="{{ players }}"></div>
 <script src="{% static 'superb_ock/js/new_round/new_round.js' %}"></script>
 
-<h1 class="mb-4">Golf Course Selector</h1>
-    
-    <div class="mb-3">
-        <label for="countrySelect" class="form-label">Select Country:</label>
-        <select id="countrySelect" class="form-select">
-            <option value="">--Select a Country--</option>
-        </select>
-    </div>
-    
-    <div class="mb-3">
-        <label for="courseSelect" class="form-label">Select Course:</label>
-        <select id="courseSelect" class="form-select" disabled>
-            <option value="">--Select a Course--</option>
-        </select>
-    </div>
-    
-    <div class="mb-3">
-        <label for="teeSelect" class="form-label">Select Tee:</label>
-        <select id="teeSelect" class="form-select" disabled>
-            <option value="">--Select a Tee--</option>
-        </select>
-    </div>
+<h1 class="mt-4 mb-4">Golf Course Selector</h1>
+<form id="courseSelectorForm" method="post" action="{% url 'home'%}">
+  {% csrf_token %}
 
-    
-    
+  <div class="mb-3">
+    <label for="countrySelect" class="form-label">Select Country:</label>
+    <select id="countrySelect" class="form-select">
+      <option value="">--Select a Country--</option>
+    </select>
+  </div>
 
+  <div class="mb-3">
+    <label for="courseSelect" class="form-label">Select Course:</label>
+    <select id="courseSelect" class="form-select" disabled>
+      <option value="">--Select a Course--</option>
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label for="teeSelect" class="form-label">Select Tee:</label>
+    <select id="teeSelect" class="form-select" disabled>
+      <option value="">--Select a Tee--</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <div class="col-4" id="slopeReturn">Slope:</div>
+    <div class="col-4" id="strokeReturn">Stroke:</div>
+    <div class="col-4" id="parReturn">Par:</div>
+  </div>
+
+  <h1 class="mt-4 mb-4">Players</h1>
+  <input type="text" name="courseId" id="courseId"  style="display: none">
+  <div id="playerContainer"></div>
+  <div class="mb-3">
+    <button type="submit" class="btn btn-primary w-100">Submit</button>
+  </div>
+</form>
 
 {% endblock content %}
-

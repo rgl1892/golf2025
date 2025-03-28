@@ -12,6 +12,7 @@ class GolfCourse(models.Model):
     tees = models.CharField(max_length=20,default='White')
     slope_rating = models.IntegerField(default=113)
     course_rating = models.DecimalField(decimal_places=1,max_digits=3,default=72)
+    par = models.IntegerField(default=72)
     slug = models.SlugField(default="", null=False)
 
     def __str__(self) -> str:

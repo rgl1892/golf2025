@@ -76,15 +76,26 @@ class Home(View):
     def get(self,request):
     
         return render(request,self.template_name,context=self.get_context())
+
+    def post(self,request):
+        print(request.POST)
+        return render(request,self.template_name,context=self.get_context())
     
 class NewRound(View):
 
     template_name = 'superb_ock/new_round/new_round.html'
 
     def get_context(self):
+
         courses = GolfCourse.objects.values()
         courses = json.dumps(list(courses),cls=DjangoJSONEncoder)
-        context = {'test':courses}
+
+        players = Player.objects.values()
+        players = json.dumps(list(players),cls=DjangoJSONEncoder)
+        context = {
+            'courses':courses,
+            'players':players,
+            }
         return context
     
     def get(self,request):
