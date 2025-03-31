@@ -106,15 +106,46 @@ class NewRound(View):
     def post(self,request):
 
         course_id = request.POST.get('courseId')
-        players = [{
-            'id':request.POST.get(f'player_{x+1}'),
-            'index':request.POST.get(f'player_{x+1}_index')
-            } for x in range(4) 
-            if request.POST.get(f'player_{x+1}')]
-        print(players,course_id)
-        golf_round = GolfRound.objects.create(event_id=request.POST.get('eventId'))
-        print( golf_round.pk)
 
-        return render(request,'superb_ock/new_round/round_created.html')
+        # Extract players from request data (avoids unnecessary dictionary creation)
+        players = [
+            {
+                'id': request.POST.get(f'player_{x+1}'),
+                'index': request.POST.get(f'player_{x+1}_index')
+            }
+            for x in range(4)
+            if request.POST.get(f'player_{x+1}')
+        ]
+
+        # Create the golf round
+        golf_round = GolfRound.objects.create(event_id=request.POST.get('eventId'))
+
+        # Fetch all holes for the course in a single query, indexed by hole_number
+        holes = {hole.hole_number: hole for hole in Hole.objects.filter(golf_course_id=course_id)}
+
+        # Create Score objects efficiently
+        score_objects = [
+            Score(
+                shots_taken=None,
+                stableford=None,
+                hole=holes.get(x + 1),  # Efficient lookup in the dictionary
+                player_id=player['id'],
+                golf_round_id=golf_round.pk,
+                handicap_index=player['index'],
+                sandy=False
+            )
+            for player in players
+            for x in range(18)
+            if holes.get(x + 1)  # Ensures hole exists before creating a Score
+        ]
+
+        # Bulk create to reduce database hits
+        Score.objects.bulk_create(score_objects)
+        course = GolfCourse.objects.filter(id=course_id).get()
+
+        context = {'course':course}
+
+        # Return response
+        return render(request, 'superb_ock/new_round/round_created.html',context=context)
     
     
