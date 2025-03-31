@@ -5,6 +5,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db import connection
 
 from requests import request
 import json
@@ -143,9 +144,38 @@ class NewRound(View):
         Score.objects.bulk_create(score_objects)
         course = GolfCourse.objects.filter(id=course_id).get()
 
-        context = {'course':course}
+        player_objects = list(Player.objects.filter(id__in=[player['id'] for player in players]).values())
+
+        
+        # Create a lookup dictionary for fast access
+        player_index_lookup = {int(person['id']): float(person['index']) for person in players}
+        
+        # Update player objects with handicap calculations
+        for player in player_objects:
+            player_id = int(player['id'])
+            if player_id in player_index_lookup:
+                player['index'] = player_index_lookup[player_id]
+                player['handicap'] = round(
+                    player['index'] * (float(course.slope_rating) / 113) +
+                    float(course.course_rating) - float(course.par)
+                )
+        
+        
+        context = {
+            'course':course,
+            'players':player_objects
+            }
 
         # Return response
         return render(request, 'superb_ock/new_round/round_created.html',context=context)
+    
+
+class RoundsOverview(View):
+
+    template_name = 'superb_ock/rounds/overview.html'
+
+    def get(self,request):
+
+        return render(request,self.template_name,context={'test':'test'})
     
     

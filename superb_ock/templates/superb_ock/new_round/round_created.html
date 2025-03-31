@@ -1,11 +1,53 @@
-{% extends "superb_ock/base.html" %} {% block content %} {% load static %}
-<h1 class="mt-4 mb-4">Round Created</h1>
+{% extends "superb_ock/base.html" %} 
+{% block content %} 
+{% load static %}
 
-{{course.name}}
+<div class="container mt-4">
+    <div class="card shadow-sm p-4">
+        <h1 class="text-primary mb-4">Round Created</h1>
 
-{{course.country}}
-{{course.country}}
-{{course.slope_rating}}
-{{course.course_rating}}
-{{course.par}}
+        <div class="mb-3">
+            <h4 class="text-success">{{ course.name }}</h4>
+            <p class="text-muted">{{ course.country }}</p>
+        </div>
+
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Slope Rating</th>
+                    <th>Course Rating</th>
+                    <th>Par</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ course.slope_rating }}</td>
+                    <td>{{ course.course_rating }}</td>
+                    <td>{{ course.par }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h5 class="mt-4">Players:</h5>
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Name</th>
+                    <th>Index</th>
+                    <th>Handicap</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in players %}
+                <tr>
+                    <td>{{ player.first_name }}</td>
+                    <td>{{ player.index }}</td>
+                    <td>{{ player.handicap }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 {% endblock content %}
