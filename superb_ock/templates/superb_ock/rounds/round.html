@@ -1,0 +1,58 @@
+{% extends "superb_ock/base.html" %}
+{% block content %}
+
+<h1 class="mt-4">Golf Round Summary</h1>
+
+<div class="table-responsive">
+    <table class="table table-primary table-sm">
+        <thead>
+            <tr>
+                <th scope="col" style="width: 50px; text-align: center;"></th>
+                {% for player_name, player_data in scores.items %}
+                    {% if forloop.first %}
+                        {% for score in player_data.scores %}
+                            <th scope="col" style="width: 50px; text-align: center;">{{score.hole__hole_number}}<sub>{{score.hole__stroke_index}}</sub></th>
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            </tr>
+            <tr>
+                <th scope="col" style="width: 50px; text-align: center;"></th>
+                {% for player_name, player_data in scores.items %}
+                    {% if forloop.first %}
+                        {% for score in player_data.scores %}
+                            <th scope="col" style="width: 50px; text-align: center;">{{score.hole__par}}<sub>{{score.hole__stroke_index}}</sub></th>
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for player_name, player_data in scores.items %}
+                <tr style="text-align: center;">
+                    <td scope="row">{{player_name}}</td>
+                    {% for score_sum in player_data.scores %}
+                        {% if score_sum.shots_taken %}
+                        <td style="padding: 5px; text-align: center;">{{score_sum.shots_taken}}<sub>{{score_sum.stableford}}</sub></td>
+                        {% else %}
+                        <td style="padding: 5px; text-align: center;"></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<style>
+    /* Custom styles for making table cells smaller */
+    .table th, .table td {
+        padding: 10px; /* Adjust padding to reduce cell size */
+
+        text-align: center; /* Center align the text */
+    }
+</style>
+
+
+
+{% endblock content %}

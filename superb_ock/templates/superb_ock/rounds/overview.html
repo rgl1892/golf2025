@@ -1,4 +1,91 @@
 {% extends "superb_ock/base.html" %}
 {% block content %}
 
+<div class="container mt-4">
+    <h2 class="text-primary mb-3">Rounds</h2>
+
+    {% for event, event_details in rounds.items %}
+    <div class="card mb-3">
+        <div class="card-header bg-primary text-white" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}">
+            <h5 class="mb-0">{{ event }}
+                <small class="badge bg-light text-dark">{{ event_details|length }} rounds</small>
+            </h5>
+        </div>
+        <div id="collapse{{ forloop.counter }}" class="collapse">
+        <div class="card-body" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}">
+            {% for course, course_details in event_details.items %}
+            <div class="mb-2">
+                <h6 class="text-secondary">{{ course|slice:":-5"  }}</h6>
+                {% for round, round_details in course_details.items %}
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'golf_round' round %}" class="text-decoration-none">
+                    <div class="card border-secondary p-2 m-1 player-card" style="min-width: 200px;">
+                        <div class="d-flex flex-row gap-3 justify-content-between player-data">
+                            {% for player, player_details in round_details.items %}
+                            <div class="text-center player" data-shots="{{ player_details.shots_taken }}" data-stableford="{{ player_details.stableford }}">
+                                <strong>{{ player }}</strong><br>
+                                <span class="shots text-muted small">Shots: {{ player_details.shots_taken }}</span><br>
+                                <span class="stableford text-muted small">Stableford: {{ player_details.stableford }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll(".player-card").forEach(function(card) {
+            let players = card.querySelectorAll(".player");
+            let minShots = Infinity;
+            let maxStableford = -Infinity;
+    
+            // Find min shots & max stableford
+            players.forEach(player => {
+                let shots = parseInt(player.dataset.shots);
+                let stableford = parseInt(player.dataset.stableford);
+    
+                if (shots < minShots) {
+                    minShots = shots;
+                }
+    
+                if (stableford > maxStableford) {
+                    maxStableford = stableford;
+                }
+            });
+    
+            // Apply theming to lowest shots and highest stableford
+            players.forEach(player => {
+                let shotsElem = player.querySelector(".shots");
+                let stablefordElem = player.querySelector(".stableford");
+    
+                // Remove text-muted class if it exists
+                shotsElem.classList.remove("text-muted");
+                stablefordElem.classList.remove("text-muted");
+    
+                // Apply styles
+                if (parseInt(player.dataset.shots) === minShots) {
+                    shotsElem.classList.add("fw-bold"); // Bold text
+                    shotsElem.classList.add("text-success"); // Green color
+                }
+    
+                if (parseInt(player.dataset.stableford) === maxStableford) {
+                    stablefordElem.classList.add("fw-bold"); // Bold text
+                    stablefordElem.classList.add("text-danger"); // Red color
+                }
+            });
+        });
+    });
+    </script>
+    
+    
+
 {% endblock content %}
