@@ -1,0 +1,16 @@
+
+{% load mathfilters %}
+<svg width="30px" height="50px">
+    {% if score_sum.shots_taken|add:"2" <= score_sum.hole__par %}
+        <circle cx="15" cy="15" r="12" stroke="var(--bs-body-color)" fill="var(--bs-body-color)"></circle>
+    {% elif score_sum.shots_taken|add:"1" == score_sum.hole__par %}
+        <circle cx="15" cy="15" r="12" stroke="var(--bs-body-color)" fill="None"></circle>
+    {% elif score_sum.shots_taken|sub:score_sum.hole__par == 1 %}
+        <rect x="3" y="3" width="24" height="24" stroke="var(--bs-body-color)" fill="None"></rect>
+    {% elif score_sum.shots_taken|sub:score_sum.hole__par > 1 %}
+        <rect x="3" y="3" width="24" height="24" stroke="var(--bs-body-color)" fill="var(--bs-body-color)"></rect>
+    {% endif %}
+    <text x="15" y="16" fill="{% if score_sum.shots_taken|sub:score_sum.hole__par > 1 or score_sum.shots_taken|add:'2' <= score_sum.hole__par %}var(--bs-body-bg){% else %}var(--bs-body-color){% endif %}" text-anchor="middle" alignment-baseline="middle">
+        {{ score_sum.shots_taken }}
+    </text>
+</svg>

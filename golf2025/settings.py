@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'superb_ock',
     'debug_toolbar',
+    'mathfilters',
 ]
 
 MIDDLEWARE = [

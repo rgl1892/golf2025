@@ -1,0 +1,23 @@
+{% if user.is_authenticated %}
+<tr>
+    <td></td>
+    {% for player_name, player_data in scores.items %}
+    {% if forloop.first %}
+    {% for score in player_data.scores %}
+            <td scope="col" style="text-align: center;">
+                <a
+                name=""
+                id=""
+                    class="btn btn-primary btn-sml"
+                    style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .1rem; --bs-btn-font-size: .5rem;"
+                    href="{% url 'edit_score' round_id score.hole__hole_number %}"
+                    role="button"
+                    >Edit</a
+                    >
+                    
+                </td>
+                {% endfor %}
+                {% endif %}
+                {% endfor %}
+            </tr>
+            {% endif %}

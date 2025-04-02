@@ -1,0 +1,42 @@
+<tbody name="to_stableford">
+    {% for player_name, player_data in scores.items %}
+        <tr style="text-align: center;">
+            <td scope="row">{{ player_name }}</td>
+            {% for score_sum in player_data.scores %}
+                {% if score_sum.shots_taken %}
+                <td style="padding: 5px; text-align: center;">
+                    <svg width="30px" height="50px">
+                        <!-- Eagle or Better (2+ under par) -->
+                        {% if score_sum.stableford >= 4 %}
+                        <circle cx="15" cy="15" r="12" stroke="var(--bs-body-color)" fill="var(--bs-body-color)"></circle>
+                        
+                        <!-- Birdie (1 under par) -->
+                        {% elif score_sum.stableford == 3 %}
+                        <circle cx="15" cy="15" r="12" stroke="var(--bs-body-color)" fill="None"></circle>
+                        
+                        <!-- Bogey (1 over par) -->
+                        {% elif score_sum.stableford == 1 %}
+                        <rect x="3" y="3" width="24" height="24" stroke="var(--bs-body-color)" fill="None"></rect>
+                        
+                        <!-- Double Bogey or Worse (2+ over par) -->
+                        {% elif score_sum.stableford == 0 %}
+                        <rect x="3" y="3" width="24" height="24" stroke="var(--bs-body-color)" fill="var(--bs-body-color)"></rect>
+                        {% endif %}
+
+                        <!-- Score Text (Ensuring visibility on dark fill) -->
+                        <text x="15" y="16" 
+                            fill="{% if score_sum.stableford == 0 or score_sum.stableford >= 4 %}var(--bs-body-bg){% else %}var(--bs-body-color){% endif %}"
+                            text-anchor="middle" 
+                            alignment-baseline="middle">
+                            {{ score_sum.shots_taken }}
+                        </text>
+                    </svg>
+                </td>
+                {% else %}
+                <td style="padding: 5px; text-align: center;"></td>
+                {% endif %}
+            {% endfor %}
+        </tr>
+    {% endfor %}
+    {% include "superb_ock/rounds/partials/golf_table_footer.html" %}
+</tbody>

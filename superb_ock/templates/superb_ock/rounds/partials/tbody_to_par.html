@@ -1,0 +1,17 @@
+<tbody name="to_par">
+    {% for player_name, player_data in scores.items %}
+        <tr style="text-align: center;">
+            <td scope="row">{{ player_name }}</td>
+            {% for score_sum in player_data.scores %}
+                {% if score_sum.shots_taken %}
+                    <td style="padding: 5px; text-align: center;">
+                        {% include "superb_ock/rounds/partials/svg_to_par.html" %}
+                    </td>
+                {% else %}
+                    <td style="padding: 5px; text-align: center;"></td>
+                {% endif %}
+            {% endfor %}
+        </tr>
+    {% endfor %}
+    {% include "superb_ock/rounds/partials/golf_table_footer.html" %}
+</tbody>

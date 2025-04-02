@@ -292,6 +292,7 @@ class GolfRoundView(View):
                 "player__first_name",
                 "hole__hole_number",
                 "hole__par",
+                "hole__yards",
                 "hole__stroke_index",
             )
         )
@@ -310,4 +311,21 @@ class GolfRoundView(View):
             grouped_summary[player_id]["scores"].append(item)
         grouped_data = dict(grouped_summary)
 
-        return render(request, self.template_name, context={"scores": grouped_data})
+        return render(request, self.template_name, context={"scores": grouped_data,'round_id':round_id})
+
+class EditScore(View):
+    
+    template_name = 'superb_ock/rounds/edit_score.html'
+    
+    def get_context_data(self,round_id,hole_number):
+        
+        scores = Score.objects.filter(golf_round=round_id,hole__hole_number=hole_number).values()
+        context = {'scores':scores,'round_id':round_id,'hole':hole_number}
+        return context
+    
+    
+    def get(self,request,round_id,hole_number):
+        
+        
+        
+        return render(request, self.template_name, self.get_context_data(round_id,hole_number))

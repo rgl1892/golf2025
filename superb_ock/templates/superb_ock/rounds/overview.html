@@ -6,7 +6,7 @@
 
     {% for event, event_details in rounds.items %}
     <div class="card mb-3">
-        <div class="card-header bg-primary text-white" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}">
+        <div class="card-header bg-primary text-white " data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" style="cursor:pointer;">
             <h5 class="mb-0">{{ event }}
                 <small class="badge bg-light text-dark">{{ event_details|length }} rounds</small>
             </h5>
@@ -46,7 +46,9 @@
         document.querySelectorAll(".player-card").forEach(function(card) {
             let players = card.querySelectorAll(".player");
             let minShots = Infinity;
+            let maxShots = -Infinity;
             let maxStableford = -Infinity;
+            let minStableford = Infinity;
     
             // Find min shots & max stableford
             players.forEach(player => {
@@ -56,9 +58,15 @@
                 if (shots < minShots) {
                     minShots = shots;
                 }
+                if (shots > maxShots) {
+                    maxShots = shots;
+                }
     
                 if (stableford > maxStableford) {
                     maxStableford = stableford;
+                }
+                if (stableford < minStableford) {
+                    minStableford = stableford;
                 }
             });
     
@@ -76,10 +84,18 @@
                     shotsElem.classList.add("fw-bold"); // Bold text
                     shotsElem.classList.add("text-success"); // Green color
                 }
+                if (parseInt(player.dataset.shots) === maxShots) {
+                    shotsElem.classList.add("fw-bold"); // Bold text
+                    shotsElem.classList.add("text-danger"); // Red color
+                }
     
                 if (parseInt(player.dataset.stableford) === maxStableford) {
                     stablefordElem.classList.add("fw-bold"); // Bold text
-                    stablefordElem.classList.add("text-danger"); // Red color
+                    stablefordElem.classList.add("text-success"); // Green color
+                }
+                if (parseInt(player.dataset.stableford) === minStableford) {
+                    stablefordElem.classList.add("fw-bold"); // Bold text
+                    stablefordElem.classList.add("text-danger"); // Green color
                 }
             });
         });

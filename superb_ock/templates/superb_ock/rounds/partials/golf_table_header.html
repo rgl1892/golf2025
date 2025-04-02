@@ -1,0 +1,26 @@
+<thead>
+    <tr>
+        <th scope="col" style="width: 50px; text-align: center;">Hole<sub><small>S.I.</small></sub></th>
+        {% for player_name, player_data in scores.items %}
+            {% if forloop.first %}
+                {% for score in player_data.scores %}
+                    <th scope="col" style="width: 50px; text-align: center;">
+                        {{ score.hole__hole_number }}<sub>{{ score.hole__stroke_index }}</sub>
+                    </th>
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+    </tr>
+    <tr>
+        <th scope="col" style="width: 50px; text-align: center;">Par<sub><small>Yards</small></sub></th>
+        {% for player_name, player_data in scores.items %}
+            {% if forloop.first %}
+                {% for score in player_data.scores %}
+                    <th scope="col" style="width: 50px; text-align: center;">
+                        {{ score.hole__par }}<sub>{{ score.hole__yards }}</sub>
+                    </th>
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+    </tr>
+</thead>
