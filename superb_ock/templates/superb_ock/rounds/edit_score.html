@@ -4,7 +4,7 @@
 <div class="container mt-4">
     <h2 class="text-primary">Enter Scores</h2>
     
-    <form method="POST" action="{% url 'edit_score' round_id hole %}">
+    <form method="POST" action="#">
         {% csrf_token %}
         
         <table class="table table-bordered">
@@ -12,13 +12,12 @@
                 <tr>
                     <th>Player</th>
                     <th>Shots Taken</th>
-                    <th>Stableford</th>
                 </tr>
             </thead>
             <tbody>
                 {% for score in scores %}
                 <tr>
-                    <td>{{ score.player_id }}</td>
+                    <td>{{ score.player__first_name }} {{score.player__second_name|slice:"1"}}</td>
                     <td>
                         <div class="input-group">
                             <button type="button" class="btn btn-danger btn-lg" onclick="adjustValue('shots_{{ score.id }}', -1)">-</button>
@@ -26,13 +25,7 @@
                             <button type="button" class="btn btn-success btn-lg" onclick="adjustValue('shots_{{ score.id }}', 1)">+</button>
                         </div>
                     </td>
-                    <td>
-                        <div class="input-group">
-                            <button type="button" class="btn btn-danger btn-lg" onclick="adjustValue('stableford_{{ score.id }}', -1)">-</button>
-                            <input type="number" class="form-control text-center" name="stableford_{{ score.id }}" id="stableford_{{ score.id }}" value="{{ score.stableford }}" min="0">
-                            <button type="button" class="btn btn-success btn-lg" onclick="adjustValue('stableford_{{ score.id }}', 1)">+</button>
-                        </div>
-                    </td>
+                    
                 </tr>
                 {% endfor %}
             </tbody>

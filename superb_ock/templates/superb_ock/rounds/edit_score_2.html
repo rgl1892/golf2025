@@ -1,0 +1,157 @@
+{% extends "superb_ock/base.html" %}
+{% block content %}
+{% load static %}
+
+<div class="container mt-4">
+    <h2 class="text-primary mb-3">Enter Scores</h2>
+
+    <div id="holeCarousel" class="carousel slide" data-bs-interval="false">
+        <div class="carousel-inner">
+            {% for hole in scores_per_hole %}
+            <div class="carousel-item {% if forloop.counter == hole_number %}active{% endif %}" data-hole-id="{{ hole.0.hole__hole_number }}">
+                <h3 class="text-center">Hole {{ hole.0.hole__hole_number }}</h3>
+                <p class="text-center text-muted">Par: {{ hole.0.hole__par }} | Stroke Index: {{ hole.0.hole__stroke_index }}</p>
+    
+                <form method="POST" class="score-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="hole_id" value="{{ hole.0.hole__hole_number }}">
+    
+                    {% for player in hole %}
+                    <div class="player-card">
+                        <h5>{{ player.player__first_name }}</h5>
+                        
+                        <div class="score-entry">
+                            <button type="button" class="btn btn-danger minus-btn" onclick="changeScore(this, -1,{{hole.0.hole__par}},{{player.handicap_index}},{{hole.0.hole__stroke_index}},{{hole.0.hole__golf_course__slope_rating}},{{hole.0.hole__golf_course__course_rating}},{{hole.0.hole__golf_course__par}})" >−</button>
+                            <input type="number" class="form-control score-input" name="shots_taken_{{ player.id }}" value="{% if player.shots_taken %}{{ player.shots_taken }}{% endif %}" data-original="{% if player.shots_taken %}{{ player.shots_taken }}{% endif %}">
+                            <button type="button" class="btn btn-success plus-btn" onclick="changeScore(this, 1,{{hole.0.hole__par}},{{player.handicap_index}},{{hole.0.hole__stroke_index}},{{hole.0.hole__golf_course__slope_rating}},{{hole.0.hole__golf_course__course_rating}},{{hole.0.hole__golf_course__par}})">+</button>
+                        </div>
+                        <div class="stable_out" name="stable_{{ player.id }}">
+                            Stableford : {{player.stableford}}
+                            <input type="hidden" name="stable_{{ player.id }}" value="{{player.stableford}}">
+                        </div>
+    
+                    </div>
+                    {% endfor %}
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    
+        <!-- Bootstrap Carousel Controls -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#holeCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#holeCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        </button>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3 submit-btn">Submit Scores</button>
+</div>
+
+
+
+<script>
+    function changeScore(button, change,par,index,stroke,slope_rating,course_rating,total_par) {
+        let input = button.parentElement.querySelector('.score-input');
+        let stable_out = button.closest('.player-card').querySelector('.stable_out');
+        let newValue = input.value?parseInt(input.value) + change: par;
+        let handicap = Math.round((index *(slope_rating/113)) + course_rating - total_par);
+        let stable_val = 0;
+        let extra_shots = Math.floor(handicap/18);
+        let si_shots = stroke <= handicap?1:0;
+
+        let strokesToPar = newValue - par - extra_shots - si_shots;
+        
+        if (strokesToPar <= -4) stable_val = 6;  // Condor or better
+        else if (strokesToPar === -3) stable_val = 5;  // Albatross
+        else if (strokesToPar === -2) stable_val = 4;  // Eagle
+        else if (strokesToPar === -1) stable_val = 3;  // Birdie
+        else if (strokesToPar === 0) stable_val = 2;  // Par
+        else if (strokesToPar === 1) stable_val = 1;  // Bogey
+        else stable_val = 0;  // Double bogey or worse
+
+        if (newValue >= 0) {
+            input.value = newValue;
+            stable_out.textContent = `Stableford: ${stable_val}`
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        let carousel = document.getElementById('holeCarousel');
+        let touchStartX = 0, touchEndX = 0;
+        let currentIndex = 0;
+
+        function detectSwipe() {
+            let diff = touchEndX - touchStartX;
+            if (Math.abs(diff) > 50) {  // Ensure significant movement
+                let hasChanges = false;
+                const inputs = document.querySelectorAll('.carousel-item.active .score-input');
+
+                inputs.forEach(input => {
+                    if (input.value !== input.dataset.original) {
+                        hasChanges = true;
+                    }
+                });
+
+                if (hasChanges) {
+                    submitScores(() => {
+                        if (diff < 0) nextHole();
+                        else prevHole();
+                    });
+                } else {
+                    if (diff < 0) nextHole();
+                    else prevHole();
+                }
+            }
+        }
+
+        function nextHole() {
+            let next = document.querySelector('.carousel-item.active').nextElementSibling;
+            if (next) {
+                console.log('next');
+                let carouselInstance = new bootstrap.Carousel(carousel);
+                carouselInstance.next();
+            }
+        }
+
+        function prevHole() {
+            let prev = document.querySelector('.carousel-item.active').previousElementSibling;
+            if (prev) {
+                console.log('prev');
+                let carouselInstance = new bootstrap.Carousel(carousel);
+                carouselInstance.prev();
+            }
+        }
+
+        function submitScores(callback) {
+            let activeHole = document.querySelector('.carousel-item.active');
+            let holeId = activeHole.dataset.holeId;
+            let form = activeHole.querySelector('.score-form');
+            let formData = new FormData(form);
+
+            fetch(`{% url 'edit_score' round_id hole_number %}` + holeId, {
+                method: "POST",
+                body: formData
+            }).then(response => {
+                if (response.ok) callback();
+            });
+        }
+
+        // Touch Events for Swiping
+        carousel.addEventListener("touchstart", (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+
+        carousel.addEventListener("touchend", (e) => {
+            touchEndX = e.changedTouches[0].clientX;
+            detectSwipe();
+        });
+
+        // Submit Button
+        document.querySelector('.submit-btn').addEventListener('click', () => {
+            submitScores(() => alert("Scores Submitted!"));
+        });
+    });
+</script>
+
+{% endblock %}

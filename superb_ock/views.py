@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection
+from django.views.decorators.csrf import csrf_exempt
 
 from requests import request
 from collections import defaultdict
@@ -311,21 +312,70 @@ class GolfRoundView(View):
             grouped_summary[player_id]["scores"].append(item)
         grouped_data = dict(grouped_summary)
 
-        return render(request, self.template_name, context={"scores": grouped_data,'round_id':round_id})
+        return render(
+            request,
+            self.template_name,
+            context={"scores": grouped_data, "round_id": round_id},
+        )
+
 
 class EditScore(View):
-    
-    template_name = 'superb_ock/rounds/edit_score.html'
-    
-    def get_context_data(self,round_id,hole_number):
-        
-        scores = Score.objects.filter(golf_round=round_id,hole__hole_number=hole_number).values()
-        context = {'scores':scores,'round_id':round_id,'hole':hole_number}
+
+    template_name = "superb_ock/rounds/edit_score_2.html"
+
+    def get_context_data(self, round_id, hole_number):
+
+        scores = (
+            Score.objects.filter(golf_round=round_id)
+            .order_by("player__first_name")
+            .values(
+                "shots_taken",
+                "stableford",
+                "id",
+                "hole__hole_number",
+                "hole__yards",
+                "hole__par",
+                "player__first_name",
+                "player__second_name",
+                "handicap_index",
+                "sandy",
+                "golf_round",
+                "hole__stroke_index",
+                "hole__golf_course__slope_rating",
+                "hole__golf_course__course_rating",
+                "hole__golf_course__par",
+            )
+        )
+
+        scores_per_hole = [
+            [score for score in scores if score["hole__hole_number"] == x + 1]
+            for x in range(18)
+        ]
+        context = {
+            "scores_per_hole": scores_per_hole,
+            "round_id": round_id,
+            "hole_number": hole_number,
+        }
         return context
-    
-    
-    def get(self,request,round_id,hole_number):
-        
-        
-        
-        return render(request, self.template_name, self.get_context_data(round_id,hole_number))
+
+    def get(self, request, round_id, hole_number):
+
+        if request.user.is_authenticated:
+            return render(
+                request,
+                self.template_name,
+                self.get_context_data(round_id, hole_number),
+            )
+        else:
+            return redirect("golf_round",round_id=round_id)
+
+    # @csrf_exempt
+    # def submit_scores(request):
+    #     if request.method == "POST":
+    #         hole_id = request
+
+    def post(self, request, round_id, hole_number):
+        print(request.POST)
+        return render(
+            request, self.template_name, self.get_context_data(round_id, hole_number)
+        )
