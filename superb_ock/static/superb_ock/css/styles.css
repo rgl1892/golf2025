@@ -1,14 +1,15 @@
-.carousel-item {
+.carousel-item,
+.player-card {
     text-align: center;
     padding: 20px;
-}
-
-.player-card {
-    padding: 10px;
     border: 1px solid #ddd;
     margin-bottom: 10px;
     border-radius: 5px;
-    background: #f8f9fa;
+    background-color: var(--bs-body-bg);
+}
+.carousel-item {
+    background-color: var(--bs-tertiary-color);
+    /* background-color: green; */
 }
 
 .score-entry {
@@ -24,4 +25,10 @@
     text-align: center;
     font-size: 1.2rem;
     font-weight: bold;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }

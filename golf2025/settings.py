@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-!5774!yb)7)bi=%+x=r&n3n80=ot4onu6@5)ml4l3=i*y*&5(l
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+
 
 INTERNAL_IPS = ['127.0.0.1']
 
@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'superb_ock',
-    'debug_toolbar',
     'mathfilters',
 ]
 
@@ -52,8 +51,16 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
+
+try:
+    from .dev import *
+    print('o')
+    ALLOWED_HOSTS = hosts
+    INSTALLED_APPS.extend(apps)
+    MIDDLEWARE.extend(middleware)
+except:
+    ALLOWED_HOSTS = ['www.thesuperbock.co.uk','thesuperbock.co.uk',]
 
 ROOT_URLCONF = 'golf2025.urls'
 

@@ -16,7 +16,10 @@
     <link rel="stylesheet" href="{% static 'superb_ock/css/bootstrap.css' %}">
     <link rel="stylesheet" href="{% static 'superb_ock/css/styles.css' %}">
     <script src="{% static 'superb_ock/js/get_theme_pref.js' %}"></script>
+    {% block head %}
 
+
+    {% endblock head %}
 </head>
 <body>
     <nav
@@ -44,7 +47,7 @@
                         >
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Link</a>
+                        <a class="nav-link" href="{% url 'rounds_overview' %}">Rounds</a>
                     </li>
                     {% if user.is_staff %}
                     <li class="nav-item">
@@ -59,18 +62,16 @@
                             data-bs-toggle="dropdown"
                             aria-haspopup="true"
                             aria-expanded="false"
-                            >Rounds</a
+                            >Stats</a
                         >
                         <div
                             class="dropdown-menu"
                             aria-labelledby="dropdownId"
                         >
-                            <a class="dropdown-item" href="{% url 'rounds_overview' %}"
-                                >All Rounds</a
+                            <a class="dropdown-item" href="{% url 'heatmap' %}"
+                                >Heatmap - Stableford</a
                             >
-                            <a class="dropdown-item" href="#"
-                                >Practice</a
-                            >
+                            
                         </div>
                     </li>
                 </ul>

@@ -1,0 +1,61 @@
+{% extends "superb_ock/base.html" %}
+{% block head %}
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+    .heatmap rect {
+        stroke: #eee;
+    }
+    .axis text {
+        font-size: 12px;
+    }
+</style>
+{% endblock head %}
+
+    {% block content %}
+    <h2>Stableford Score Heatmap</h2>
+    <svg id="heatmap" width="800" height="500"></svg>
+
+    <script>
+        fetch('/heatmap-data/')
+            .then(response => response.json())
+            .then(data => {
+                const svg = d3.select("#heatmap");
+                const margin = {top: 50, right: 20, bottom: 50, left: 120},
+                      width = +svg.attr("width") - margin.left - margin.right,
+                      height = +svg.attr("height") - margin.top - margin.bottom;
+
+                const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+                const players = [...new Set(data.map(d => d.player))];
+                const holes = [...new Set(data.map(d => d.hole))];
+
+                const x = d3.scaleBand().domain(holes).range([0, width]).padding(0.05);
+                const y = d3.scaleBand().domain(players).range([0, height]).padding(0.05);
+                const color = d3.scaleSequential(d3.interpolateYlGnBu).domain([0, 6]);
+
+                // X-axis
+                g.append("g")
+                    .attr("transform", `translate(0,${height})`)
+                    .call(d3.axisBottom(x).tickSize(0))
+                    .selectAll("text")
+                    .style("text-anchor", "middle");
+
+                // Y-axis
+                g.append("g")
+                    .call(d3.axisLeft(y).tickSize(0));
+
+                // Draw cells
+                g.selectAll()
+                    .data(data)
+                    .enter()
+                    .append("rect")
+                    .attr("x", d => x(d.hole))
+                    .attr("y", d => y(d.player))
+                    .attr("width", x.bandwidth())
+                    .attr("height", y.bandwidth())
+                    .style("fill", d => color(d.stableford))
+                    .append("title")
+                    .text(d => `Stableford: ${d.stableford.toFixed(1)}`);
+            });
+    </script>
+{% endblock content %}
