@@ -263,7 +263,7 @@ class RoundsOverview(View):
     def get(self, request):
         scores = (
             Score.objects.all()
-            .order_by("golf_round__event__name", "golf_round_id", "player__first_name")
+            .order_by("-golf_round__event__name", "golf_round_id", "player__first_name")
             .values(
                 "player__first_name",
                 "shots_taken",
