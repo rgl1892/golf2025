@@ -423,7 +423,7 @@ def heatmap_data(request):
 
     heatmap = [
         {
-            "player": f"{s['player__first_name']} {s['player__second_name']}",
+            "player": f"{s['player__first_name']} {s['player__second_name'][1]}",
             "hole": s["hole__hole_number"],
             "stableford": s["avg_stableford"]
         }
