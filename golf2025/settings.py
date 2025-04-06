@@ -55,7 +55,6 @@ MIDDLEWARE = [
 
 try:
     from .dev import *
-    print('o')
     ALLOWED_HOSTS = hosts
     INSTALLED_APPS.extend(apps)
     MIDDLEWARE.extend(middleware)
