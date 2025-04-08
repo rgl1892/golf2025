@@ -3,13 +3,13 @@
 
 <div class="container mt-4">
     <h2 class="text-primary mb-3">Rounds</h2>
-    
+
 
     {% for event, event_details in rounds.items %}
     <div class="card mb-3">
         <div class="card-header bg-primary text-white " data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" style="cursor:pointer;">
             <h5 class="mb-1">{{ event }}</h5>
-            <h5 class="mb-1"><small class="badge bg-light text-dark">{{ event_details|length }} rounds</small></h5>
+            <h5 class="mb-0"><small class="badge bg-light text-dark">{{ event_details|length }} rounds</small></h5>
         </div>
         <div id="collapse{{ forloop.counter }}" class="collapse">
         <div class="card-body" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}">

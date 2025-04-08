@@ -8,6 +8,7 @@ urlpatterns = [
     path("rounds",views.RoundsOverview.as_view() , name="rounds_overview"),
     path("rounds/<int:round_id>",views.GolfRoundView.as_view() , name="golf_round"),
     path("rounds/<int:round_id>/<int:hole_number>",views.EditScore.as_view() , name="edit_score"),
+    path("event/<int:event_id>",views.EventView.as_view(), name='event'),
     path("heatmap/",views.HeatMap.as_view() , name="heatmap"),
 
     

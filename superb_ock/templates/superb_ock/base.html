@@ -74,6 +74,32 @@
                             
                         </div>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a
+                            class="nav-link dropdown-toggle"
+                            href="#"
+                            id="dropdownId"
+                            data-bs-toggle="dropdown"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            >Tournaments</a
+                        >
+                        <div
+                            class="dropdown-menu"
+                            aria-labelledby="dropdownId"
+                        >
+                            <a class="dropdown-item" href="{% url 'event' 1 %}"
+                                >The Superb Ock 1</a
+                            >
+                            <a class="dropdown-item" href="{% url 'event' 2 %}"
+                                >The Superb Ock 2</a
+                            >
+                            <a class="dropdown-item" href="{% url 'event' 3 %}"
+                                >The Superb Ock 3</a
+                            >
+                            
+                        </div>
+                    </li>
                 </ul>
                 
                 {% if user.is_authenticated %}

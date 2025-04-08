@@ -20,7 +20,13 @@ class GolfCourse(models.Model):
 
 class GolfEvent(models.Model):
 
+    format_choices = [
+        ("best_three_of_five", "Best Three of All"),
+        ("best_last_rounds_counts", "Best Two of First, Last Round Counts"),
+    ]
+
     name = models.CharField(max_length=40)
+    scoring = models.TextField(max_length=40,choices=format_choices,default='best_three_of_five')
 
     def __str__(self):
         return self.name
