@@ -7,8 +7,6 @@ from django.db import IntegrityError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from django.db.models import Avg
 
 from requests import request
 from collections import defaultdict
@@ -411,26 +409,6 @@ class EditScore(View):
         return render(
             request, self.template_name, self.get_context_data(round_id, hole_number)
         )
-
-def heatmap_data(request):
-    scores = (
-        Score.objects
-        .select_related('player', 'hole')
-        .values('player__first_name', 'player__second_name', 'hole__hole_number')
-        .annotate(avg_stableford=Avg('stableford'))
-        .order_by('player__second_name', 'hole__hole_number')
-    )
-
-    heatmap = [
-        {
-            "player": f"{s['player__first_name']} {s['player__second_name'][0]}",
-            "hole": s["hole__hole_number"],
-            "stableford": s["avg_stableford"]
-        }
-        for s in scores
-    ]
-
-    return JsonResponse(heatmap, safe=False)
 
 class HeatMap(View):
 

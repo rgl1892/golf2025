@@ -8,4 +8,5 @@ admin.site.register(GolfCourse)
 admin.site.register(Player)
 admin.site.register(Score) 
 admin.site.register(GolfEvent)
+admin.site.register(Highlight)
  

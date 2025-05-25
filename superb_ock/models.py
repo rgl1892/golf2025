@@ -62,6 +62,14 @@ class Player(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.second_name}"
+    
+class Highlight(models.Model):
+    title = models.CharField(max_length=40)
+    video = models.FileField(upload_to='highlights')
+    thumbnail = models.ImageField(blank=True)
+
+    def __str__(self):
+        return self.title
 
 class Score(models.Model):
 
@@ -72,6 +80,7 @@ class Score(models.Model):
     golf_round = models.ForeignKey(GolfRound,on_delete=models.CASCADE,null=True)
     handicap_index = models.FloatField()
     sandy = models.BooleanField(default=False)
+    highlight = models.ManyToManyField(Highlight,blank=True)
 
     def __str__(self):
         return f"{self.player} {self.hole} {self.golf_round}"

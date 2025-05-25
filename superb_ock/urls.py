@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import views
+from .views_stats import stats
 
 urlpatterns = [
     path("",views.Home.as_view() , name="home"),
@@ -25,6 +26,6 @@ urlpatterns.extend(
 # For d3 charts
 urlpatterns.extend(
     [
-    path('heatmap-data/', views.heatmap_data, name='heatmap_data'),
+    path('heatmap-data/', stats.heatmap_data, name='heatmap_data'),
     ]
 )
