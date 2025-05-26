@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}The Superb Ock{% endblock %}</title>
+
+    <!-- Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'superb_ock/css/bootstrap.css' %}">
+    <link rel="stylesheet" href="{% static 'superb_ock/css/styles.css' %}">
+    <script src="{% static 'superb_ock/js/get_theme_pref.js' %}"></script>
+    
+    <!-- CSRF token for React API calls -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    
+    {% block head %}{% endblock head %}
+</head>
+<body>
+    <!-- Same navbar as before -->
+    <nav class="navbar navbar-expand-lg bg-dark" data-bs-theme="dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">The Superb Ock - 2025</a>
+            <!-- ... rest of navbar ... -->
+        </div>
+    </nav>
+    
+    <div class="container main">
+        {% block content %}{% endblock content %}
+    </div>
+    
+    <!-- React app mounting point -->
+    <div id="react-root"></div>
+    
+    <!-- Configure axios defaults for Django CSRF -->
+    <script>
+        // Set up CSRF token for all axios requests
+        if (window.axios) {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            window.axios.defaults.headers.common['X-CSRFToken'] = csrfToken;
+            window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        }
+    </script>
+</body>
+</html>
