@@ -2,7 +2,6 @@ from django.urls import path
 
 from . import views
 from .views_stats import stats
-from .api_views import *
 
 urlpatterns = [
     path("",views.Home.as_view() , name="home"),
@@ -12,7 +11,6 @@ urlpatterns = [
     path("rounds/<int:round_id>/<int:hole_number>",views.EditScore.as_view() , name="edit_score"),
     path("event/<int:event_id>",views.EventView.as_view(), name='event'),
     path("heatmap/",views.HeatMap.as_view() , name="heatmap"),
-    path("react_rounds/",ScoreViewSet.as_view({'get': 'list', 'post': 'create'}), name='react_rounds'),
 
     
 ]

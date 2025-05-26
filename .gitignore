@@ -3,9 +3,3 @@ sqlite3.exe
 golf2025/dev.py
 *.sqlite3
 media/
-node_modules/
-npm-debug.log*
-assets/webpack_bundles/
-webpack-stats.json
-.env
-*.log
