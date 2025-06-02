@@ -3,3 +3,5 @@ sqlite3.exe
 golf2025/dev.py
 *.sqlite3
 media/
+*.pyc
+*/__pycache__/
