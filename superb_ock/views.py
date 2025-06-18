@@ -122,7 +122,88 @@ class Home(View):
     template_name = "superb_ock/homepage/home.html"
 
     def get_context(self):
-        context = {"test": "Test"}
+        
+        scores = list(Score.objects.filter(golf_round__event=3).values(
+            'player__first_name', 'player__second_name','stableford', 'golf_round_id', 'hole_id',
+            'shots_taken','hole__golf_course__name','hole__golf_course__tees','golf_round__event__scoring'
+            ))
+
+        # manip the data to get infor per player per round
+        player_rounds = defaultdict(lambda: defaultdict(lambda: {'total': 0, 'course': ''}))
+
+        for score in scores:
+            name = f"{score['player__first_name']} {score['player__second_name']}"
+            round_id = score['golf_round_id']
+            course = f"{score['hole__golf_course__name']} - {score['hole__golf_course__tees']}"
+            
+            player_rounds[name][round_id]['total'] += score['stableford']
+            player_rounds[name][round_id]['course'] = course  
+            player_rounds[name][round_id]['scoring'] = score['golf_round__event__scoring']  
+            
+    
+
+        # get the totals
+        leaderboard = []
+
+        for player__first_name, round_scores in player_rounds.items():
+            top3_scores = sorted(
+                round_scores.values(), 
+                key=lambda x: x['total'], 
+                reverse=True
+            )[:3]
+            leaderboard.append({
+                'player__first_name': player__first_name,
+                'round_totals': dict(round_scores),
+                'best_3_total': sum(r['total'] for r in top3_scores),
+
+            })
+
+        # Step 4: Sort leaderboard
+        leaderboard = sorted(leaderboard, key=lambda x: x['best_3_total'], reverse=True)
+        all_round_numbers = set()
+        for player in leaderboard:
+            all_round_numbers.update(player['round_totals'].keys())
+        round_numbers = sorted(all_round_numbers)
+
+        cleaned_leaderboard = []
+        for player in leaderboard:
+            rounds = []
+            round_dict = player['round_totals']
+            
+            best_round_score = max([r['total'] for r in round_dict.values()] or [0])
+            
+            for round_num in round_numbers:
+                round_info = round_dict.get(round_num)
+                if round_info:
+                    rounds.append({
+                        'num': round_num,
+                        'total': round_info['total'],
+                        'course': round_info['course'],
+                        'is_best': round_info['total'] == best_round_score
+                    })
+                else:
+                    rounds.append({
+                        'num': round_num,
+                        'total': None,
+                        'course': None,
+                        'is_best': False
+                    })
+            
+            cleaned_leaderboard.append({
+                'player': player['player__first_name'],
+                'rounds': rounds,
+                'best_3_total': player['best_3_total']
+            })
+        courses = []
+        for rounds in cleaned_leaderboard[0]['rounds']:
+            courses.append({'course':rounds['course'],'id':rounds['num']})
+
+            
+        context = {
+            'leaderboard': cleaned_leaderboard,
+            'round_numbers': round_numbers,
+            'courses':courses
+        }
         return context
 
     def get(self, request):
