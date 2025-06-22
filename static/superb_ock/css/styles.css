@@ -7,6 +7,7 @@
     border-radius: 5px;
     background-color: var(--bs-body-bg);
 }
+
 .carousel-item {
     background-color: var(--bs-tertiary-color);
     /* background-color: green; */
@@ -39,7 +40,49 @@ input::-webkit-inner-spin-button {
         grid-template-columns: repeat(auto-fit, minmax(45%, 1fr));
         gap: 10px;
     }
+
     .player {
         text-align: center;
     }
+}
+
+.heatmap rect {
+    stroke: #eee;
+}
+
+.axis text {
+    font-size: 12px;
+    color: red;
+}
+
+.player-selector {
+    margin-bottom: 20px;
+}
+
+.player-selector select {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.player-selector label {
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.tooltip {
+    opacity: 0;
+    background-color: white;
+    color: black;
+    border: solid;
+    border-color: black;
+    border-width: 2px;
+    border-radius: 5px;
+    padding: 5px;
+    position: absolute;
+    pointer-events: none;
+    font-size: 12px;
+    z-index: 1000;
 }
