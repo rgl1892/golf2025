@@ -9,7 +9,6 @@ from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
 
 from requests import request
-from collections import defaultdict
 import json
 
 from .models import *
@@ -129,12 +128,17 @@ class Home(View):
             ))
 
         # manip the data to get infor per player per round
-        player_rounds = defaultdict(lambda: defaultdict(lambda: {'total': 0, 'course': ''}))
+        player_rounds = {}
 
         for score in scores:
             name = f"{score['player__first_name']} {score['player__second_name']}"
             round_id = score['golf_round_id']
             course = f"{score['hole__golf_course__name']} - {score['hole__golf_course__tees']}"
+            
+            if name not in player_rounds:
+                player_rounds[name] = {}
+            if round_id not in player_rounds[name]:
+                player_rounds[name][round_id] = {'total': 0, 'course': ''}
             
             player_rounds[name][round_id]['total'] += score['stableford']
             player_rounds[name][round_id]['course'] = course  
@@ -154,7 +158,7 @@ class Home(View):
             leaderboard.append({
                 'player__first_name': player__first_name,
                 'round_totals': dict(round_scores),
-                'best_3_total': sum(r['total'] for r in top3_scores),
+                'best_3_total': sum(int(r['total']) if r['total'] is not None else 0 for r in top3_scores),
 
             })
 
@@ -311,24 +315,27 @@ class RoundsOverview(View):
     template_name = "superb_ock/rounds/overview.html"
 
     def convert_to_dict(self, d):
-        if isinstance(d, defaultdict):
+        if isinstance(d, dict):
             return {k: self.convert_to_dict(v) for k, v in d.items()}
         return d
 
     def group_scores(self, data):
-        grouped = defaultdict(
-            lambda: defaultdict(
-                lambda: defaultdict(
-                    lambda: defaultdict(lambda: {"shots_taken": 0, "stableford": 0})
-                )
-            )
-        )
+        grouped = {}
 
         for entry in data:
             event = entry["golf_round__event__name"]
             course = f"{entry['hole__golf_course__name']} - {entry['hole__golf_course__tees']}{entry['golf_round_id']:05}"
             id = entry["golf_round_id"]
             player = entry["player__first_name"]
+
+            if event not in grouped:
+                grouped[event] = {}
+            if course not in grouped[event]:
+                grouped[event][course] = {}
+            if id not in grouped[event][course]:
+                grouped[event][course][id] = {}
+            if player not in grouped[event][course][id]:
+                grouped[event][course][id][player] = {"shots_taken": 0, "stableford": 0}
 
             grouped[event][course][id][player]["shots_taken"] += (
                 entry["shots_taken"] if entry["shots_taken"] else 0
@@ -379,11 +386,11 @@ class GolfRoundView(View):
             )
         )
 
-        grouped_summary = defaultdict(
-            lambda: {"total_shots": 0, "total_stableford": 0, "scores": []}
-        )
+        grouped_summary = {}
         for item in scores:
             player_id = item["player__first_name"]
+            if player_id not in grouped_summary:
+                grouped_summary[player_id] = {"total_shots": 0, "total_stableford": 0, "scores": []}
             grouped_summary[player_id]["total_shots"] += (
                 item["shots_taken"] if item["shots_taken"] else 0
             )
@@ -392,11 +399,36 @@ class GolfRoundView(View):
             )
             grouped_summary[player_id]["scores"].append(item)
         grouped_data = dict(grouped_summary)
+        summary_data = {}
+        for player, data in grouped_data.items():
+            summary_data[player] = {
+                'front_nine': 0,
+                'back_nine': 0,
+                'total_shots': 0,
+                'front_nine_stableford': 0,
+                'back_nine_stableford': 0, 
+                'total_stableford': 0,
+            }
+            for score in data.get('scores', []):
+                if score['hole__hole_number'] < 10:
+                    summary_data[player]['front_nine'] += score['shots_taken'] if score['shots_taken'] else 0
+                    summary_data[player]['total_shots'] += score['shots_taken'] if score['shots_taken'] else 0
+                    summary_data[player]['front_nine_stableford'] += score['stableford'] if score['stableford'] else 0
+                    summary_data[player]['total_stableford'] += score['stableford'] if score['stableford'] else 0
+                else:
+                    summary_data[player]['back_nine'] += score['shots_taken'] if score['shots_taken'] else 0
+                    summary_data[player]['total_shots'] += score['shots_taken'] if score['shots_taken'] else 0
+                    summary_data[player]['back_nine_stableford'] += score['stableford'] if score['stableford'] else 0
+                    summary_data[player]['total_stableford'] += score['stableford'] if score['stableford'] else 0
 
         return render(
             request,
             self.template_name,
-            context={"scores": grouped_data, "round_id": round_id},
+            context={
+                "scores": grouped_data,
+                "round_id": round_id,
+                "summary":summary_data
+                },
         )
 
 
@@ -463,7 +495,7 @@ class EditScore(View):
         }
 
         # Temporary dict to hold player data
-        players = defaultdict(lambda: {'shots': None, 'stable': None})
+        players = {}
 
         for key in post_data:
             if key.startswith('shots_') or key.startswith('stable_'):
@@ -475,6 +507,8 @@ class EditScore(View):
                 value = int(post_data.getlist(key)[0])
                 
                 # Update the appropriate field
+                if player_id not in players:
+                    players[player_id] = {'shots': None, 'stable': None}
                 if prefix == 'shots':
                     players[player_id]['shots'] = value
                 elif prefix == 'stable':
@@ -510,12 +544,17 @@ class EventView(View):
             ))
 
         # manip the data to get infor per player per round
-        player_rounds = defaultdict(lambda: defaultdict(lambda: {'total': 0, 'course': ''}))
+        player_rounds = {}
 
         for score in scores:
             name = f"{score['player__first_name']} {score['player__second_name']}"
             round_id = score['golf_round_id']
             course = f"{score['hole__golf_course__name']} - {score['hole__golf_course__tees']}"
+            
+            if name not in player_rounds:
+                player_rounds[name] = {}
+            if round_id not in player_rounds[name]:
+                player_rounds[name][round_id] = {'total': 0, 'course': ''}
             
             player_rounds[name][round_id]['total'] += score['stableford']
             player_rounds[name][round_id]['course'] = course  
@@ -535,7 +574,7 @@ class EventView(View):
             leaderboard.append({
                 'player__first_name': player__first_name,
                 'round_totals': dict(round_scores),
-                'best_3_total': sum(r['total'] for r in top3_scores),
+                'best_3_total': sum(int(r['total']) if r['total'] is not None else 0 for r in top3_scores),
 
             })
 

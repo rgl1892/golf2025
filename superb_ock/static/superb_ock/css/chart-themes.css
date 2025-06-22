@@ -1,0 +1,57 @@
+/* Chart theme variables for light and dark modes */
+:root {
+    --chart-text-color: #212529;
+    --chart-axis-color: #6c757d;
+    --chart-grid-color: #dee2e6;
+    --chart-primary-color: #0d6efd;
+    --chart-danger-color: #dc3545;
+    --chart-success-color: #198754;
+    --chart-warning-color: #ffc107;
+}
+
+[data-bs-theme="dark"] {
+    --chart-text-color: #f8f9fa;
+    --chart-axis-color: #adb5bd;
+    --chart-grid-color: #495057;
+    --chart-primary-color: #0d6efd;
+    --chart-danger-color: #dc3545;
+    --chart-success-color: #198754;
+    --chart-warning-color: #ffc107;
+}
+
+/* Ensure SVG text uses theme colors */
+.chart-container svg text {
+    fill: var(--chart-text-color) !important;
+}
+
+.chart-container svg .axis {
+    color: var(--chart-axis-color);
+}
+
+.chart-container svg .axis path,
+.chart-container svg .axis line {
+    stroke: var(--chart-axis-color);
+}
+
+/* Responsive chart containers */
+.chart-container {
+    width: 100%;
+    min-height: 200px;
+    position: relative;
+}
+
+.chart-container svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Ensure charts don't overflow on very small screens */
+@media (max-width: 576px) {
+    .chart-container {
+        min-height: 180px;
+    }
+    
+    .card-body {
+        padding: 0.5rem !important;
+    }
+}

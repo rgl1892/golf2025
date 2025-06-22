@@ -1,8 +1,57 @@
 {% extends "superb_ock/base.html" %}
+{% load static %}
 {% block content %}
 {% load mathfilters %}
 
+<link rel="stylesheet" href="{% static 'superb_ock/css/chart-themes.css' %}">
+
 <h1 class="mt-4">Golf Round Summary</h1>
+
+<div class="mb-4">
+    <h3>Round Summary</h3>
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Player</th>
+                    <th class="d-none d-md-table-cell">Front 9 Shots</th>
+                    <th class="d-none d-md-table-cell">Back 9 Shots</th> 
+                    <th class="d-none d-md-table-cell">Total Shots</th>
+                    <th class="d-none d-md-table-cell">Front 9 Points</th>
+                    <th class="d-none d-md-table-cell">Back 9 Points</th>
+                    <th class="d-none d-md-table-cell">Total Points</th>
+                    <th class="d-md-none">Front 9</th>
+                    <th class="d-md-none">Back 9</th>
+                    <th class="d-md-none">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player, data in summary.items %}
+                <tr>
+                    <td><strong>{{ player }}</strong></td>
+                    <!-- Desktop view - separate columns -->
+                    <td class="text-center d-none d-md-table-cell">{{ data.front_nine }}</td>
+                    <td class="text-center d-none d-md-table-cell">{{ data.back_nine }}</td>
+                    <td class="text-center d-none d-md-table-cell"><strong>{{ data.total_shots }}</strong></td>
+                    <td class="text-center d-none d-md-table-cell">{{ data.front_nine_stableford }}</td>
+                    <td class="text-center d-none d-md-table-cell">{{ data.back_nine_stableford }}</td>
+                    <td class="text-center d-none d-md-table-cell"><strong>{{ data.total_stableford }}</strong></td>
+                    <!-- Mobile view - combined cells -->
+                    <td class="text-center d-md-none">
+                        <div>{{ data.front_nine }}/{{ data.front_nine_stableford }}</div>
+                    </td>
+                    <td class="text-center d-md-none">
+                        <div>{{ data.back_nine }}/{{ data.back_nine_stableford }}</div>
+                    </td>
+                    <td class="text-center d-md-none">
+                        <div><strong>{{ data.total_shots }}/{{ data.total_stableford }}</strong></div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
 <div class="mb-3">
     <button class="btn btn-secondary btn-sm" onclick="showTable('to_stableford')">Stableford</button>
@@ -11,7 +60,7 @@
 </div>
 
 <div class="table-responsive">
-    <table class="table table-primary table-sm">
+    <table class="table table-primary table-sm scoring-table">
         {% include "superb_ock/rounds/partials/golf_table_header.html" %}
         {% include "superb_ock/rounds/partials/tbody_to_par.html" %}
         {% include "superb_ock/rounds/partials/tbody_to_stableford.html" %}
@@ -19,15 +68,67 @@
     </table>
 </div>
 
+<!-- D3 Charts Section -->
+<div class="mt-5">
+    <h3>Player Performance Charts</h3>
+    <div class="row">
+        {% for player, data in scores.items %}
+        <div class="col-12 col-md-6 col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ player }}</h5>
+                </div>
+                <div class="card-body p-2">
+                    <!-- Shots per hole chart -->
+                    <div id="shots-chart-{{ forloop.counter }}" class="mb-3 chart-container"></div>
+                    <!-- Points per hole chart -->
+                    <div id="points-chart-{{ forloop.counter }}" class="mb-3 chart-container"></div>
+                    <!-- To Par chart -->
+                    <div id="to-par-chart-{{ forloop.counter }}" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% load static %}
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="{% static 'superb_ock/js/round-charts.js' %}"></script>
 <script>
-function showTable(tableName) {
-    document.querySelectorAll("table tbody").forEach(tbody => {
-        tbody.style.display = "none";
-    });
-    document.querySelector(`tbody[name='${tableName}']`).style.display = "table-row-group";
-}
-document.addEventListener("DOMContentLoaded", function () {
+// Player data from Django
+const playerData = {
+    {% for player, data in scores.items %}
+    "{{ player }}": {
+        scores: [
+            {% for score in data.scores %}
+            {
+                hole: {{ score.hole__hole_number }},
+                shots: {{ score.shots_taken|default:0 }},
+                points: {{ score.stableford|default:0 }},
+                par: {{ score.hole__par }}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+};
+
+// Initialize charts when DOM is ready
+document.addEventListener("DOMContentLoaded", function() {
+    initializeRoundCharts(playerData);
+    
+    // Show default table
     showTable("to_stableford");
+    
+    // Add resize listener with debouncing
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            redrawAllCharts(playerData);
+        }, 250);
+    });
 });
 </script>
 
