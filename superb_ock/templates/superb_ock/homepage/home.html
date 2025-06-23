@@ -12,7 +12,8 @@
 <div class="container my-5">
   <h2 class="mb-4 text-center fw-bold">🇲🇦 Superb Ock 3 🇲🇦</h2>
 
-  <div class="table-responsive">
+  <!-- Desktop Table -->
+  <div class="table-responsive d-none d-md-block">
     <table class="table table-bordered table-hover table-sm align-middle text-center table-striped">
       <thead class="table-dark">
         <tr>
@@ -38,6 +39,38 @@
                 <td class="text-muted">—</td>
               {% endif %}
             {% endfor %}
+            <td class="fw-bold">{{ player.best_3_total }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Mobile Table -->
+  <div class="table-responsive d-md-none">
+    <table class="table table-bordered table-hover table-sm align-middle text-center table-striped">
+      <thead class="table-dark">
+        <tr>
+          <th scope="col" class="text-start">Player</th>
+          <th scope="col">Scores</th>
+          <th scope="col">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for player in leaderboard %}
+          <tr>
+            <td class="fw-semibold text-start ps-2">{{ player.player }}</td>
+            <td class="small">
+              {% for round in player.rounds %}
+                {% if round.total %}
+                  <span class="{% if round.is_best %}bg-success text-white fw-bold px-1 rounded{% endif %}">{{ round.total }}</span>
+                  {% if not forloop.last %} | {% endif %}
+                {% else %}
+                  <span class="text-muted">—</span>
+                  {% if not forloop.last %} | {% endif %}
+                {% endif %}
+              {% endfor %}
+            </td>
             <td class="fw-bold">{{ player.best_3_total }}</td>
           </tr>
         {% endfor %}

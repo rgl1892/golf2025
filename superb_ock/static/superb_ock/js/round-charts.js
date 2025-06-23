@@ -146,8 +146,8 @@ function createToParChart(containerId, data) {
         .attr("height", d => Math.abs(y(d.toPar) - y(0)))
         .attr("fill", d => {
             if (d.toPar < 0) return getThemeColor('--chart-success-color'); // Green for under par
-            if (d.toPar === 0) return getThemeColor('--chart-warning-color'); // Orange for par
-            return getThemeColor('--chart-danger-color'); // Red for over par
+            if (d.toPar === 0) return getThemeColor('--chart-success-color'); // Orange for par
+            return getThemeColor('--chart-success-color'); // Red for over par
         });
 
     // Add x axis
@@ -187,8 +187,8 @@ function initializeRoundCharts(playerData) {
     Object.keys(playerData).forEach(player => {
         const data = playerData[player].scores;
         
-        createChart(`shots-chart-${playerIndex}`, data, 'shots', 'Shots per Hole', '--chart-primary-color');
-        createChart(`points-chart-${playerIndex}`, data, 'points', 'Points per Hole', '--chart-danger-color');
+        createChart(`shots-chart-${playerIndex}`, data, 'shots', 'Shots per Hole', '--chart-success-color');
+        createChart(`points-chart-${playerIndex}`, data, 'points', 'Points per Hole', '--chart-success-color');
         createToParChart(`to-par-chart-${playerIndex}`, data);
         
         playerIndex++;
@@ -201,8 +201,8 @@ function redrawAllCharts(playerData) {
     Object.keys(playerData).forEach(player => {
         const data = playerData[player].scores;
         
-        createChart(`shots-chart-${playerIndex}`, data, 'shots', 'Shots per Hole', '--chart-primary-color');
-        createChart(`points-chart-${playerIndex}`, data, 'points', 'Points per Hole', '--chart-danger-color');
+        createChart(`shots-chart-${playerIndex}`, data, 'shots', 'Shots per Hole', '--chart-success-color');
+        createChart(`points-chart-${playerIndex}`, data, 'points', 'Points per Hole', '--chart-success-color');
         createToParChart(`to-par-chart-${playerIndex}`, data);
         
         playerIndex++;
