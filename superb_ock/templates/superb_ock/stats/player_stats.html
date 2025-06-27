@@ -1,0 +1,207 @@
+{% extends "superb_ock/base.html" %}
+{% load static %}
+{% block content %}
+
+<h1 class="mt-4 mb-4">Player Statistics</h1>
+
+<!-- Desktop Table -->
+<div class="table-responsive d-none d-md-block">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Player</th>
+                <th>Handedness</th>
+                <th>Info</th>
+                <th>Rounds</th>
+                <th>Holes</th>
+                <th>Avg Score</th>
+                <th>Avg Points</th>
+                <th>Total Points</th>
+                <th>Best Hole</th>
+                <th>Eagles</th>
+                <th>Birdies</th>
+                <th>Pars</th>
+                <th>Sandies</th>
+                <th>Courses</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in player_stats %}
+            <tr>
+                <td><strong>{{ stat.player.first_name }} {{ stat.player.second_name }}</strong></td>
+                <td>{{ stat.player.handedness }}</td>
+                <td>
+                    {% if stat.player.info %}
+                        <span class="small text-muted" title="{{ stat.player.info }}">
+                            {{ stat.player.info|truncatechars:30 }}
+                        </span>
+                    {% else %}—{% endif %}
+                </td>
+                <td>{{ stat.total_rounds }}</td>
+                <td>{{ stat.total_holes }}</td>
+                <td>{{ stat.avg_score }}</td>
+                <td>{{ stat.avg_stableford }}</td>
+                <td><strong>{{ stat.total_stableford }}</strong></td>
+                <td>{{ stat.best_hole_score|default:"—" }}</td>
+                <td class="text-warning">{{ stat.eagles }}</td>
+                <td class="text-info">{{ stat.birdies }}</td>
+                <td class="text-success">{{ stat.pars }}</td>
+                <td class="text-primary">{{ stat.sandies }}</td>
+                <td>{{ stat.courses_played }}</td>
+                <td>
+                    <a href="{% url 'player_detail' stat.player.id %}" class="btn btn-sm btn-outline-primary">
+                        View Details
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="15" class="text-center text-muted">No player data available</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Mobile Cards -->
+<div class="d-md-none">
+    {% for stat in player_stats %}
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><strong>{{ stat.player.first_name }} {{ stat.player.second_name }}</strong></h6>
+            <a href="{% url 'player_detail' stat.player.id %}" class="btn btn-sm btn-primary">
+                Details
+            </a>
+        </div>
+        <div class="card-body p-3">
+            <div class="row mb-2">
+                <div class="col-6">
+                    <small class="text-muted">Handedness</small><br>
+                    <strong>{{ stat.player.handedness }}</strong>
+                </div>
+                <div class="col-6">
+                    <small class="text-muted">Rounds</small><br>
+                    <strong>{{ stat.total_rounds }}</strong>
+                </div>
+            </div>
+            {% if stat.player.info %}
+            <div class="row mb-2">
+                <div class="col-12">
+                    <small class="text-muted">Info</small><br>
+                    <span class="small">{{ stat.player.info|truncatechars:50 }}</span>
+                </div>
+            </div>
+            {% endif %}
+            <div class="row">
+                <div class="col-6">
+                    <small class="text-muted">Total Points</small><br>
+                    <strong class="text-primary">{{ stat.total_stableford }}</strong>
+                </div>
+                <div class="col-6">
+                    <small class="text-muted">Avg Points</small><br>
+                    {{ stat.avg_stableford }}
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-3">
+                    <small class="text-muted">Eagles</small><br>
+                    <span class="text-warning">{{ stat.eagles }}</span>
+                </div>
+                <div class="col-3">
+                    <small class="text-muted">Birdies</small><br>
+                    <span class="text-info">{{ stat.birdies }}</span>
+                </div>
+                <div class="col-3">
+                    <small class="text-muted">Pars</small><br>
+                    <span class="text-success">{{ stat.pars }}</span>
+                </div>
+                <div class="col-3">
+                    <small class="text-muted">Sandies</small><br>
+                    <span class="text-primary">{{ stat.sandies }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center text-muted">No player data available</div>
+    {% endfor %}
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-6">
+        <h3>Performance Metrics</h3>
+        <div class="card">
+            <div class="card-body">
+                <canvas id="performanceChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <h3>Achievement Summary</h3>
+        <div class="card">
+            <div class="card-body">
+                <canvas id="achievementChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Performance Chart
+const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+const performanceChart = new Chart(performanceCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for stat in player_stats %}'{{ stat.player.first_name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Average Stableford',
+            data: [{% for stat in player_stats %}{{ stat.avg_stableford }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Achievement Chart
+const achievementCtx = document.getElementById('achievementChart').getContext('2d');
+const totalEagles = {% for stat in player_stats %}{{ stat.eagles }}{% if not forloop.last %}+{% endif %}{% endfor %};
+const totalBirdies = {% for stat in player_stats %}{{ stat.birdies }}{% if not forloop.last %}+{% endif %}{% endfor %};
+const totalPars = {% for stat in player_stats %}{{ stat.pars }}{% if not forloop.last %}+{% endif %}{% endfor %};
+
+const achievementChart = new Chart(achievementCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Eagles', 'Birdies', 'Pars'],
+        datasets: [{
+            data: [totalEagles, totalBirdies, totalPars],
+            backgroundColor: [
+                'rgba(255, 206, 86, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(75, 192, 192, 0.6)'
+            ],
+            borderColor: [
+                'rgba(255, 206, 86, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(75, 192, 192, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true
+    }
+});
+</script>
+
+{% endblock content %}

@@ -7,6 +7,31 @@
 
 <h1 class="mt-4">Golf Round Summary</h1>
 
+<!-- Other Concurrent Rounds Summary -->
+{% if other_rounds %}
+<div class="mb-4">
+    <h3>Other Games in Progress</h3>
+    {% for round_id, round_data in other_rounds.items %}
+    <div class="card mb-2">
+        <div class="card-header">
+            <h6 class="mb-0">Played {{ round_data.max_holes_played }}</h6>
+        </div>
+        <div class="card-body py-2">
+            <div class="row">
+                {% for player in round_data.players %}
+                <div class="col-6 col-md-3 mb-1">
+                    <small class="text-muted">{{ player.player }}</small><br>
+                    <strong>{{ player.total_stableford }} pts</strong>
+                    <span class="text-muted">({{ player.total_shots }} shots)</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
 <div class="mb-4">
     <h3>Round Summary</h3>
     <div class="table-responsive">

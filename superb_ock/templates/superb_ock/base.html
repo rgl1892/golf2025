@@ -76,10 +76,16 @@
                             class="dropdown-menu"
                             aria-labelledby="dropdownId"
                         >
+                            <a class="dropdown-item" href="{% url 'player_stats' %}"
+                                >Player Statistics</a
+                            >
+                            <a class="dropdown-item" href="{% url 'course_stats' %}"
+                                >Course Statistics</a
+                            >
+                            <div class="dropdown-divider"></div>
                             <a class="dropdown-item" href="{% url 'heatmap' %}"
                                 >Heatmap - Stableford</a
                             >
-                            
                         </div>
                     </li>
                     <li class="nav-item dropdown">
@@ -96,16 +102,11 @@
                             class="dropdown-menu"
                             aria-labelledby="dropdownId"
                         >
-                            <a class="dropdown-item" href="{% url 'event' 1 %}"
-                                >The Superb Ock 1</a
+                            {% for tournament in tournaments %}
+                            <a class="dropdown-item" href="{% url 'event' tournament.id %}"
+                                >{{ tournament.name }}</a
                             >
-                            <a class="dropdown-item" href="{% url 'event' 2 %}"
-                                >The Superb Ock 2</a
-                            >
-                            <a class="dropdown-item" href="{% url 'event' 3 %}"
-                                >The Superb Ock 3</a
-                            >
-                            
+                            {% endfor %}
                         </div>
                     </li>
                 </ul>

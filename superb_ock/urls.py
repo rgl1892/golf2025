@@ -1,7 +1,7 @@
 from django.urls import path
 
 from . import views
-from .views_stats import stats
+from .views_stats import stats, player_stats, course_stats
 
 urlpatterns = [
     path("",views.Home.as_view() , name="home"),
@@ -27,5 +27,15 @@ urlpatterns.extend(
 urlpatterns.extend(
     [
     path('heatmap-data/', stats.heatmap_data, name='heatmap_data'),
+    ]
+)
+
+# Stats pages
+urlpatterns.extend(
+    [
+    path('stats/players/', player_stats.player_stats_overview, name='player_stats'),
+    path('stats/players/<int:player_id>/', player_stats.player_detail_stats, name='player_detail'),
+    path('stats/courses/', course_stats.course_stats_overview, name='course_stats'),
+    path('stats/courses/<int:course_id>/', course_stats.course_detail_stats, name='course_detail'),
     ]
 )

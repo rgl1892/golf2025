@@ -1,0 +1,476 @@
+{% extends "superb_ock/base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ player.first_name }} {{ player.second_name }} - Detailed Stats</h1>
+    <a href="{% url 'player_stats' %}" class="btn btn-secondary">← Back to All Players</a>
+</div>
+
+<!-- Round Performance -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h3>Round-by-Round Performance</h3>
+        <div class="table-responsive">
+            <table class="table table-striped table-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Round</th>
+                        <th>Course</th>
+                        <th>Holes Played</th>
+                        <th>Total Shots</th>
+                        <th>Total Points</th>
+                        <th>Avg per Hole</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for round in rounds %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'golf_round' round.round.id %}" class="text-decoration-none">
+                                Round {{ round.round.id }}
+                            </a>
+                        </td>
+                        <td>{{ round.course }}</td>
+                        <td>{{ round.holes_played }}</td>
+                        <td>{{ round.total_shots }}</td>
+                        <td><strong>{{ round.total_stableford }}</strong></td>
+                        <td>
+                            {% if round.holes_played > 0 %}
+                                {{ round.total_shots|floatformat:1 }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">No rounds played yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Course Performance -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h3>Course Performance</h3>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Course</th>
+                        <th>Rounds Played</th>
+                        <th>Avg Score per Hole</th>
+                        <th>Avg Points per Hole</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in course_performance %}
+                    <tr>
+                        <td><strong>{{ course.course.name }}</strong></td>
+                        <td>{{ course.rounds_played }}</td>
+                        <td>{{ course.avg_score }}</td>
+                        <td><strong>{{ course.avg_stableford }}</strong></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No course data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Hole-by-Hole Performance -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h3>Hole-by-Hole Performance</h3>
+        <div class="table-responsive">
+            <table class="table table-striped table-sm">
+                <thead class="table-dark">
+                    <tr>
+                        {% for hole in hole_performance %}
+                        <th class="text-center">{{ hole.hole_number }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        {% for hole in hole_performance %}
+                        <td class="text-center">
+                            <div class="small">{{ hole.avg_score }}</div>
+                            <div class="fw-bold text-primary">{{ hole.avg_stableford }}</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">{{ hole.times_played }}x</div>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <small class="text-muted">
+            Top: Average score | Middle: Average points | Bottom: Times played
+        </small>
+    </div>
+</div>
+
+<!-- Player Summary Cards -->
+<div class="row mb-5">
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="display-6 text-primary mb-2">🏆</div>
+                <h6 class="card-title">Best Round</h6>
+                <p class="card-text fs-5 fw-bold text-success">
+                    {% if rounds %}
+                        {% for round in rounds %}
+                            {% if forloop.first %}{{ round.total_stableford }} pts{% endif %}
+                        {% endfor %}
+                    {% else %}—{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="display-6 text-warning mb-2">📊</div>
+                <h6 class="card-title">Consistency</h6>
+                <p class="card-text fs-6 fw-bold text-warning">
+                    {% if rounds|length > 1 %}
+                        {{ rounds|length }} rounds
+                    {% else %}—{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="display-6 text-info mb-2">🎯</div>
+                <h6 class="card-title">Favorite Course</h6>
+                <p class="card-text fs-6 fw-bold text-info">
+                    {% if course_performance %}
+                        {% for course in course_performance %}
+                            {% if forloop.first %}{{ course.course.name }}{% endif %}
+                        {% endfor %}
+                    {% else %}—{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center">
+                <div class="display-6 text-success mb-2">⭐</div>
+                <h6 class="card-title">Best Hole</h6>
+                <p class="card-text fs-6 fw-bold text-success">
+                    {% if hole_performance %}
+                        {% for hole in hole_performance %}
+                            {% if forloop.first %}Hole {{ hole.hole_number }}{% endif %}
+                        {% endfor %}
+                    {% else %}—{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scoring Patterns Analysis -->
+<div class="row mb-5">
+    <div class="col-md-6">
+        <h4>Scoring Patterns</h4>
+        <div class="card">
+            <div class="card-body">
+                <canvas id="scoringPatternsChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <h4>Course Difficulty vs Performance</h4>
+        <div class="card">
+            <div class="card-body">
+                <canvas id="difficultyPerformanceChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Charts -->
+<div class="row mb-5">
+    <div class="col-md-6">
+        <h4>Round Progression</h4>
+        <div class="card">
+            <div class="card-body">
+                <canvas id="roundProgressionChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <h4>Hole Performance Heatmap</h4>
+        <div class="card">
+            <div class="card-body">
+                <canvas id="holePerformanceChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Front 9 vs Back 9 Analysis -->
+<div class="row mb-5">
+    <div class="col-12">
+        <h4>Front 9 vs Back 9 Performance</h4>
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <canvas id="frontBackChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Performance Breakdown</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>Front 9</th>
+                                        <th>Back 9</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Average Points</strong></td>
+                                        <td>
+                                            {% with front_total=0 front_count=0 %}
+                                                {% for hole in hole_performance %}
+                                                    {% if hole.hole_number <= 9 %}
+                                                        {% with front_total=front_total|add:hole.avg_stableford front_count=front_count|add:1 %}{% endwith %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% if front_count > 0 %}{{ front_total|floatformat:1 }}{% else %}—{% endif %}
+                                            {% endwith %}
+                                        </td>
+                                        <td>
+                                            {% with back_total=0 back_count=0 %}
+                                                {% for hole in hole_performance %}
+                                                    {% if hole.hole_number > 9 %}
+                                                        {% with back_total=back_total|add:hole.avg_stableford back_count=back_count|add:1 %}{% endwith %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% if back_count > 0 %}{{ back_total|floatformat:1 }}{% else %}—{% endif %}
+                                            {% endwith %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Strongest Hole</strong></td>
+                                        <td>
+                                            {% with best_front=0 best_front_hole=0 %}
+                                                {% for hole in hole_performance %}
+                                                    {% if hole.hole_number <= 9 and hole.avg_stableford > best_front %}
+                                                        {% with best_front=hole.avg_stableford best_front_hole=hole.hole_number %}{% endwith %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% if best_front_hole > 0 %}Hole {{ best_front_hole }}{% else %}—{% endif %}
+                                            {% endwith %}
+                                        </td>
+                                        <td>
+                                            {% with best_back=0 best_back_hole=0 %}
+                                                {% for hole in hole_performance %}
+                                                    {% if hole.hole_number > 9 and hole.avg_stableford > best_back %}
+                                                        {% with best_back=hole.avg_stableford best_back_hole=hole.hole_number %}{% endwith %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% if best_back_hole > 0 %}Hole {{ best_back_hole }}{% else %}—{% endif %}
+                                            {% endwith %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Round Progression Chart
+const roundCtx = document.getElementById('roundProgressionChart').getContext('2d');
+const roundChart = new Chart(roundCtx, {
+    type: 'line',
+    data: {
+        labels: [{% for round in rounds %}'Round {{ round.round.id }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Total Stableford Points',
+            data: [{% for round in rounds %}{{ round.total_stableford }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Hole Performance Chart
+const holeCtx = document.getElementById('holePerformanceChart').getContext('2d');
+const holeChart = new Chart(holeCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for hole in hole_performance %}'{{ hole.hole_number }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Average Stableford',
+            data: [{% for hole in hole_performance %}{{ hole.avg_stableford }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: function(context) {
+                const value = context.parsed.y;
+                if (value >= 3) return 'rgba(40, 167, 69, 0.8)';  // Green for good scores
+                if (value >= 2) return 'rgba(255, 193, 7, 0.8)';   // Yellow for average
+                return 'rgba(220, 53, 69, 0.8)';                   // Red for poor scores
+            },
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 5
+            }
+        }
+    }
+});
+
+// Scoring Patterns Chart
+const scoringCtx = document.getElementById('scoringPatternsChart').getContext('2d');
+// Calculate eagles, birdies, pars from hole performance data
+let totalEagles = 0, totalBirdies = 0, totalPars = 0, totalBogeys = 0;
+{% for hole in hole_performance %}
+    // This would need to be calculated in the backend for accuracy
+    // For now, showing placeholder data based on performance
+    {% if hole.avg_stableford >= 4 %}totalEagles += 1;{% endif %}
+    {% if hole.avg_stableford >= 3 %}totalBirdies += 1;{% endif %}
+    {% if hole.avg_stableford >= 2 %}totalPars += 1;{% endif %}
+    {% if hole.avg_stableford < 2 %}totalBogeys += 1;{% endif %}
+{% endfor %}
+
+const scoringChart = new Chart(scoringCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Strong Holes (3+ pts)', 'Average Holes (2-3 pts)', 'Weak Holes (<2 pts)'],
+        datasets: [{
+            data: [
+                {% for hole in hole_performance %}{% if hole.avg_stableford >= 3 %}1{% else %}0{% endif %}{% if not forloop.last %}+{% endif %}{% endfor %},
+                {% for hole in hole_performance %}{% if hole.avg_stableford >= 2 and hole.avg_stableford < 3 %}1{% else %}0{% endif %}{% if not forloop.last %}+{% endif %}{% endfor %},
+                {% for hole in hole_performance %}{% if hole.avg_stableford < 2 %}1{% else %}0{% endif %}{% if not forloop.last %}+{% endif %}{% endfor %}
+            ],
+            backgroundColor: [
+                'rgba(40, 167, 69, 0.8)',
+                'rgba(255, 193, 7, 0.8)',
+                'rgba(220, 53, 69, 0.8)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true
+    }
+});
+
+// Course Difficulty vs Performance Chart
+const diffPerfCtx = document.getElementById('difficultyPerformanceChart').getContext('2d');
+const diffPerfChart = new Chart(diffPerfCtx, {
+    type: 'scatter',
+    data: {
+        datasets: [{
+            label: 'Course Performance',
+            data: [
+                {% for course in course_performance %}
+                    {x: {{ course.course.slope_rating }}, y: {{ course.avg_stableford }}},
+                {% endfor %}
+            ],
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Course Slope Rating (Difficulty)'
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Average Stableford Points'
+                },
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Front 9 vs Back 9 Chart
+const frontBackCtx = document.getElementById('frontBackChart').getContext('2d');
+let front9Total = 0, back9Total = 0, front9Count = 0, back9Count = 0;
+{% for hole in hole_performance %}
+    {% if hole.hole_number <= 9 %}
+        front9Total += {{ hole.avg_stableford }};
+        front9Count += 1;
+    {% else %}
+        back9Total += {{ hole.avg_stableford }};
+        back9Count += 1;
+    {% endif %}
+{% endfor %}
+
+const frontBackChart = new Chart(frontBackCtx, {
+    type: 'bar',
+    data: {
+        labels: ['Front 9 Average', 'Back 9 Average'],
+        datasets: [{
+            label: 'Average Stableford Points',
+            data: [
+                front9Count > 0 ? (front9Total / front9Count).toFixed(1) : 0,
+                back9Count > 0 ? (back9Total / back9Count).toFixed(1) : 0
+            ],
+            backgroundColor: [
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(255, 159, 64, 0.6)'
+            ],
+            borderColor: [
+                'rgba(75, 192, 192, 1)',
+                'rgba(255, 159, 64, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 4
+            }
+        }
+    }
+});
+</script>
+
+{% endblock content %}

@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here.
 
 def hole_choice():
-    return [(x+1,x+1) for x in range(18)]
+    return [(x+1,f'{x+1}') for x in range(18)]
 
 class GolfCourse(models.Model):
     
@@ -43,7 +43,7 @@ class Hole(models.Model):
     
     hole_number = models.IntegerField(choices=hole_choice())
     golf_course = models.ForeignKey(GolfCourse,on_delete=models.CASCADE,null=True) # tees implied by choice 
-    par = models.IntegerField(choices=[(3,3),(4,4),(5,5)],default=4)
+    par = models.IntegerField(choices=[(3,'3'),(4,'4'),(5,'5')],default=4)
     yards = models.IntegerField(default=400)
     stroke_index = models.IntegerField(choices=hole_choice(),default=1)
 

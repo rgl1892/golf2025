@@ -7,6 +7,7 @@ from django.db import IntegrityError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
 
 from requests import request
 import json
@@ -140,7 +141,7 @@ class Home(View):
             if round_id not in player_rounds[name]:
                 player_rounds[name][round_id] = {'total': 0, 'course': ''}
             
-            player_rounds[name][round_id]['total'] += score['stableford']
+            player_rounds[name][round_id]['total'] += score['stableford'] or 0
             player_rounds[name][round_id]['course'] = course  
             player_rounds[name][round_id]['scoring'] = score['golf_round__event__scoring']  
             
@@ -199,8 +200,9 @@ class Home(View):
                 'best_3_total': player['best_3_total']
             })
         courses = []
-        for rounds in cleaned_leaderboard[0]['rounds']:
-            courses.append({'course':rounds['course'],'id':rounds['num']})
+        if cleaned_leaderboard:
+            for rounds in cleaned_leaderboard[0]['rounds']:
+                courses.append({'course':rounds['course'],'id':rounds['num']})
 
             
         context = {
@@ -254,7 +256,10 @@ class NewRound(View):
         ]
 
         # Create the golf round
-        golf_round = GolfRound.objects.create(event_id=request.POST.get("eventId"))
+        golf_round = GolfRound.objects.create(
+            event_id=request.POST.get("eventId"),
+            date_started=timezone.now().date()
+        )
 
         # Fetch all holes for the course in a single query, indexed by hole_number
         holes = {
@@ -383,8 +388,50 @@ class GolfRoundView(View):
                 "hole__par",
                 "hole__yards",
                 "hole__stroke_index",
+                "golf_round__event_id",
             )
         )
+        
+        # Get the current round's event ID for cross-round summary
+        current_round = GolfRound.objects.get(id=round_id)
+        event_id = current_round.event.pk
+        
+        # Get summary of other concurrent rounds in the same event (same day only)
+        other_rounds_summary = (
+            Score.objects.filter(
+                golf_round__event_id=event_id,
+                golf_round__date_started=current_round.date_started
+            )
+            .exclude(golf_round__id=round_id)
+            .values("golf_round_id", "player__first_name")
+            .annotate(
+                total_stableford=models.Sum("stableford"),
+                total_shots=models.Sum("shots_taken"),
+                holes_played=models.Count("id", filter=models.Q(shots_taken__isnull=False))
+            )
+            .order_by("golf_round_id", "-total_stableford")
+        )
+        
+        # Group other rounds data
+        other_rounds = {}
+        for summary in other_rounds_summary:
+            round_id_key = summary["golf_round_id"]
+            if round_id_key not in other_rounds:
+                other_rounds[round_id_key] = {
+                    "players": [],
+                    "max_holes_played": 0
+                }
+            other_rounds[round_id_key]["players"].append({
+                "player": summary["player__first_name"],
+                "total_stableford": summary["total_stableford"] or 0,
+                "total_shots": summary["total_shots"] or 0,
+                "holes_played": summary["holes_played"]
+            })
+            # Track max holes played for this round
+            other_rounds[round_id_key]["max_holes_played"] = max(
+                other_rounds[round_id_key]["max_holes_played"],
+                summary["holes_played"]
+            )
 
         grouped_summary = {}
         for item in scores:
@@ -427,7 +474,8 @@ class GolfRoundView(View):
             context={
                 "scores": grouped_data,
                 "round_id": round_id,
-                "summary":summary_data
+                "summary": summary_data,
+                "other_rounds": other_rounds
                 },
         )
 
@@ -556,7 +604,7 @@ class EventView(View):
             if round_id not in player_rounds[name]:
                 player_rounds[name][round_id] = {'total': 0, 'course': ''}
             
-            player_rounds[name][round_id]['total'] += score['stableford']
+            player_rounds[name][round_id]['total'] += score['stableford'] or 0
             player_rounds[name][round_id]['course'] = course  
             player_rounds[name][round_id]['scoring'] = score['golf_round__event__scoring']  
             
@@ -615,8 +663,9 @@ class EventView(View):
                 'best_3_total': player['best_3_total']
             })
         courses = []
-        for rounds in cleaned_leaderboard[0]['rounds']:
-            courses.append({'course':rounds['course'],'id':rounds['num']})
+        if cleaned_leaderboard:
+            for rounds in cleaned_leaderboard[0]['rounds']:
+                courses.append({'course':rounds['course'],'id':rounds['num']})
 
             
         context = {

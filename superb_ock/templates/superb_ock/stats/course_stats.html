@@ -1,0 +1,184 @@
+{% extends "superb_ock/base.html" %}
+{% load static %}
+{% block content %}
+
+<h1 class="mt-4 mb-4">Course Statistics</h1>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Course</th>
+                <th>Rounds</th>
+                <th>Holes Played</th>
+                <th>Par</th>
+                <th>Avg Hole Length</th>
+                <th>Avg Score</th>
+                <th>Avg Points</th>
+                <th>Difficulty</th>
+                <th>Course Record</th>
+                <th>Players</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in course_stats %}
+            <tr>
+                <td>
+                    <strong>{{ stat.course.name }}</strong>
+                    <br><small class="text-muted">{{ stat.course.tees }} Tees</small>
+                </td>
+                <td>{{ stat.total_rounds }}</td>
+                <td>{{ stat.total_holes_played }}</td>
+                <td>{{ stat.total_par }}</td>
+                <td>{{ stat.avg_hole_length }} yds</td>
+                <td>{{ stat.avg_score }}</td>
+                <td>{{ stat.avg_stableford }}</td>
+                <td>
+                    <span class="badge 
+                        {% if stat.difficulty_rating == 'Easy' %}bg-success
+                        {% elif stat.difficulty_rating == 'Moderate' %}bg-warning
+                        {% elif stat.difficulty_rating == 'Hard' %}bg-danger
+                        {% else %}bg-dark{% endif %}">
+                        {{ stat.difficulty_rating }}
+                    </span>
+                </td>
+                <td><strong>{{ stat.best_round_score }}</strong></td>
+                <td>{{ stat.unique_players }}</td>
+                <td>
+                    <a href="{% url 'course_detail' stat.course.id %}" class="btn btn-sm btn-outline-primary">
+                        View Details
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="11" class="text-center text-muted">No course data available</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-6">
+        <h3>Course Difficulty Comparison</h3>
+        <div class="card">
+            <div class="card-body">
+                <canvas id="difficultyChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <h3>Course Usage</h3>
+        <div class="card">
+            <div class="card-body">
+                <canvas id="usageChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <h3>Course Performance Summary</h3>
+        <div class="card">
+            <div class="card-body">
+                <canvas id="performanceChart" width="800" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Difficulty Chart
+const difficultyCtx = document.getElementById('difficultyChart').getContext('2d');
+const difficultyChart = new Chart(difficultyCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for stat in course_stats %}'{{ stat.course.name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Average Stableford (Higher = Easier)',
+            data: [{% for stat in course_stats %}{{ stat.avg_stableford }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: function(context) {
+                const value = context.parsed.y;
+                if (value >= 2.5) return 'rgba(40, 167, 69, 0.8)';  // Green for easy
+                if (value >= 2.0) return 'rgba(255, 193, 7, 0.8)';   // Yellow for moderate
+                if (value >= 1.5) return 'rgba(255, 108, 36, 0.8)';  // Orange for hard
+                return 'rgba(220, 53, 69, 0.8)';                     // Red for very hard
+            },
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 4
+            }
+        }
+    }
+});
+
+// Usage Chart
+const usageCtx = document.getElementById('usageChart').getContext('2d');
+const usageChart = new Chart(usageCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for stat in course_stats %}'{{ stat.course.name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Rounds Played',
+            data: [{% for stat in course_stats %}{{ stat.total_rounds }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(153, 102, 255, 0.6)',
+                'rgba(255, 159, 64, 0.6)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true
+    }
+});
+
+// Performance Chart
+const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+const performanceChart = new Chart(performanceCtx, {
+    type: 'line',
+    data: {
+        labels: [{% for stat in course_stats %}'{{ stat.course.name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [
+            {
+                label: 'Course Record',
+                data: [{% for stat in course_stats %}{{ stat.best_round_score }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                borderColor: 'rgba(255, 206, 86, 1)',
+                backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                tension: 0.1
+            },
+            {
+                label: 'Average Performance',
+                data: [{% for stat in course_stats %}{{ stat.avg_stableford|floatformat:1 }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                tension: 0.1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+
+{% endblock content %}
