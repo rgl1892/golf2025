@@ -2,6 +2,22 @@ from django.db import models
 
 # Create your models here.
 
+class CarouselImage(models.Model):
+    title = models.CharField(max_length=100, help_text="Title displayed on the image")
+    description = models.TextField(max_length=200, help_text="Description displayed on the image")
+    image = models.ImageField(upload_to='carousel/', help_text="Upload carousel image")
+    order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers first)")
+    is_active = models.BooleanField(default=True, help_text="Show this image in the carousel")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['order', '-created_at']
+        verbose_name = "Carousel Image"
+        verbose_name_plural = "Carousel Images"
+    
+    def __str__(self):
+        return f"{self.title} (Order: {self.order})"
+
 def hole_choice():
     return [(x+1,f'{x+1}') for x in range(18)]
 

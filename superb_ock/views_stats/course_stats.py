@@ -9,6 +9,9 @@ import statistics
 def course_stats_overview(request):
     """Course statistics overview - optimized version"""
     
+    # Get filter parameter
+    round_type_filter = request.GET.get('filter', 'all')
+    
     # Get all courses with their related data in bulk
     courses = GolfCourse.objects.prefetch_related('hole_set').order_by('name')
     
@@ -16,6 +19,12 @@ def course_stats_overview(request):
     all_scores = Score.objects.select_related('hole__golf_course', 'player', 'golf_round').filter(
         hole__golf_course__isnull=False
     )
+    
+    # Apply round type filtering
+    if round_type_filter == 'ocks':
+        all_scores = all_scores.exclude(golf_round__event__name__icontains='practice')
+    elif round_type_filter == 'practice':
+        all_scores = all_scores.filter(golf_round__event__name__icontains='practice')
     
     # Group scores by course
     course_scores = {}

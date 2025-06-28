@@ -2,7 +2,58 @@
 {% load static %}
 {% block content %}
 
-<h1 class="mt-4 mb-4">Player Statistics</h1>
+<style>
+/* Filter button styling for dark mode compatibility */
+.btn-check:checked + .btn-outline-primary {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: var(--bs-white);
+}
+
+.btn-outline-primary {
+    color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    background-color: transparent;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: var(--bs-white);
+}
+
+/* Dark mode specific styling */
+[data-bs-theme="dark"] .btn-outline-primary {
+    color: #6ea8fe;
+    border-color: #6ea8fe;
+}
+
+[data-bs-theme="dark"] .btn-outline-primary:hover {
+    background-color: #6ea8fe;
+    border-color: #6ea8fe;
+    color: #000;
+}
+
+[data-bs-theme="dark"] .btn-check:checked + .btn-outline-primary {
+    background-color: #6ea8fe;
+    border-color: #6ea8fe;
+    color: #000;
+}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+    <h1>Player Statistics</h1>
+    <div class="btn-group" role="group" aria-label="Round Type Filter">
+        <input type="radio" class="btn-check" name="roundTypeFilter" id="allRounds" value="all" checked>
+        <label class="btn btn-outline-primary" for="allRounds">All Rounds</label>
+        
+        <input type="radio" class="btn-check" name="roundTypeFilter" id="ocksRounds" value="ocks">
+        <label class="btn btn-outline-primary" for="ocksRounds">Ocks Only</label>
+        
+        <input type="radio" class="btn-check" name="roundTypeFilter" id="practiceRounds" value="practice">
+        <label class="btn btn-outline-primary" for="practiceRounds">Practice Only</label>
+    </div>
+</div>
 
 <!-- Desktop Table -->
 <div class="table-responsive d-none d-md-block">
@@ -200,6 +251,34 @@ const achievementChart = new Chart(achievementCtx, {
     },
     options: {
         responsive: true
+    }
+});
+
+// Round type filtering
+document.addEventListener('DOMContentLoaded', function() {
+    const filterInputs = document.querySelectorAll('input[name="roundTypeFilter"]');
+    
+    filterInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const selectedFilter = this.value;
+            const url = new URL(window.location);
+            
+            if (selectedFilter === 'all') {
+                url.searchParams.delete('filter');
+            } else {
+                url.searchParams.set('filter', selectedFilter);
+            }
+            
+            window.location.href = url.toString();
+        });
+    });
+    
+    // Set active filter based on URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentFilter = urlParams.get('filter') || 'all';
+    const activeInput = document.getElementById(currentFilter + 'Rounds');
+    if (activeInput) {
+        activeInput.checked = true;
     }
 });
 </script>

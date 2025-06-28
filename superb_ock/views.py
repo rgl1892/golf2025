@@ -205,10 +205,14 @@ class Home(View):
                 courses.append({'course':rounds['course'],'id':rounds['num']})
 
             
+        # Get active carousel images
+        carousel_images = CarouselImage.objects.filter(is_active=True).order_by('order', '-created_at')
+        
         context = {
             'leaderboard': cleaned_leaderboard,
             'round_numbers': round_numbers,
-            'courses':courses
+            'courses': courses,
+            'carousel_images': carousel_images
         }
         return context
 

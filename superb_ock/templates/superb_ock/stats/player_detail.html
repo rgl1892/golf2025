@@ -28,7 +28,7 @@
                     <tr>
                         <td>
                             <a href="{% url 'golf_round' round.round.id %}" class="text-decoration-none">
-                                Round {{ round.round.id }}
+                                Round {{ forloop.counter }}
                             </a>
                         </td>
                         <td>{{ round.course }}</td>
@@ -37,7 +37,8 @@
                         <td><strong>{{ round.total_stableford }}</strong></td>
                         <td>
                             {% if round.holes_played > 0 %}
-                                {{ round.total_shots|floatformat:1 }}
+                                {% load mathfilters %}
+                                {{ round.total_shots|div:round.holes_played|floatformat:1 }}
                             {% else %}
                                 —
                             {% endif %}

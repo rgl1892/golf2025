@@ -7,15 +7,28 @@ from ..models import Player, Score, GolfRound, GolfCourse
 def player_stats_overview(request):
     """Individual player statistics overview"""
     
+    # Get filter parameter
+    round_type_filter = request.GET.get('filter', 'all')
+    
     players = Player.objects.all().order_by('first_name')
     
     player_stats = []
     for player in players:
+        # Apply round type filtering
         scores = Score.objects.filter(player=player)
+        
+        if round_type_filter == 'ocks':
+            scores = scores.exclude(golf_round__event__name__icontains='practice')
+        elif round_type_filter == 'practice':
+            scores = scores.filter(golf_round__event__name__icontains='practice')
         
         # Basic stats
         total_rounds = scores.values('golf_round').distinct().count()
         total_holes = scores.count()
+        
+        # Skip players with no rounds in the filtered category
+        if total_rounds == 0:
+            continue
         
         # Scoring stats
         avg_score = scores.filter(shots_taken__isnull=False).aggregate(avg=Avg('shots_taken'))['avg']
@@ -61,8 +74,17 @@ def player_stats_overview(request):
 def player_detail_stats(request, player_id):
     """Detailed stats for individual player"""
     
+    # Get filter parameter
+    round_type_filter = request.GET.get('filter', 'all')
+    
     player = Player.objects.get(id=player_id)
     scores = Score.objects.filter(player=player).select_related('hole__golf_course', 'golf_round')
+    
+    # Apply round type filtering
+    if round_type_filter == 'ocks':
+        scores = scores.exclude(golf_round__event__name__icontains='practice')
+    elif round_type_filter == 'practice':
+        scores = scores.filter(golf_round__event__name__icontains='practice')
     
     # Round-by-round performance
     rounds = {}

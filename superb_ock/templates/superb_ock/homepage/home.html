@@ -1,13 +1,77 @@
 {% extends "superb_ock/base.html" %}
+{% load static %}
 {% block content %}
-<div class="row">
-    <div class="col">
-        <h1>The Homepage</h1>
-        <p>More to come...</p>
-        <p>Check the rounds tab</p>
 
+<!-- Image Carousel -->
+{% if carousel_images %}
+<div id="golfCarousel" class="carousel slide mb-5" data-bs-ride="carousel">
+    {% if carousel_images|length > 1 %}
+    <div class="carousel-indicators">
+        {% for image in carousel_images %}
+        <button type="button" data-bs-target="#golfCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
+                {% if forloop.first %}class="active" aria-current="true"{% endif %} 
+                aria-label="Slide {{ forloop.counter }}"></button>
+        {% endfor %}
     </div>
+    {% endif %}
+    
+    <div class="carousel-inner">
+        {% for image in carousel_images %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+            <img src="{{ image.image.url }}" class="d-block w-100 carousel-image" alt="{{ image.title }}">
+            <div class="carousel-caption d-none d-md-block">
+                <h5>{{ image.title }}</h5>
+                <p>{{ image.description }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if carousel_images|length > 1 %}
+    <button class="carousel-control-prev" type="button" data-bs-target="#golfCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#golfCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
+    {% endif %}
 </div>
+{% endif %}
+
+<style>
+/* Carousel styling */
+.carousel-image {
+    height: 400px;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Dark overlay for better text readability */
+.carousel-caption {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 20px;
+}
+
+/* Mobile responsive height */
+@media (max-width: 768px) {
+    .carousel-image {
+        height: 250px;
+    }
+}
+
+/* Carousel controls styling */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-size: 100%, 100%;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.5);
+    width: 40px;
+    height: 40px;
+}
+</style>
 {% load mathfilters %}
 <div class="container my-5">
   <h2 class="mb-4 text-center fw-bold">🇲🇦 Superb Ock 3 🇲🇦</h2>
