@@ -8,6 +8,17 @@ class CarouselImage(models.Model):
     image = models.ImageField(upload_to='carousel/', help_text="Upload carousel image")
     order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers first)")
     is_active = models.BooleanField(default=True, help_text="Show this image in the carousel")
+    
+    # Focal point controls (0-100 percentage)
+    focal_point_x = models.PositiveIntegerField(
+        default=50, 
+        help_text="Horizontal focal point (0=left, 50=center, 100=right)"
+    )
+    focal_point_y = models.PositiveIntegerField(
+        default=50, 
+        help_text="Vertical focal point (0=top, 50=center, 100=bottom)"
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:

@@ -18,7 +18,8 @@
     <div class="carousel-inner">
         {% for image in carousel_images %}
         <div class="carousel-item {% if forloop.first %}active{% endif %}">
-            <img src="{{ image.image.url }}" class="d-block w-100 carousel-image" alt="{{ image.title }}">
+            <img src="{{ image.image.url }}" class="d-block w-100 carousel-image" alt="{{ image.title }}"
+                 style="object-position: {{ image.focal_point_x }}% {{ image.focal_point_y }}%;">
             <div class="carousel-caption d-none d-md-block">
                 <h5>{{ image.title }}</h5>
                 <p>{{ image.description }}</p>

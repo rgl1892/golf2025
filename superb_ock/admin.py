@@ -9,7 +9,7 @@ admin.site.index_title = "Golf Tournament Management"
 
 @admin.register(CarouselImage)
 class CarouselImageAdmin(admin.ModelAdmin):
-    list_display = ['title', 'order', 'is_active', 'created_at']
+    list_display = ['title', 'order', 'focal_display', 'is_active', 'created_at']
     list_editable = ['order', 'is_active']
     list_filter = ['is_active', 'created_at']
     search_fields = ['title', 'description']
@@ -19,11 +19,25 @@ class CarouselImageAdmin(admin.ModelAdmin):
         (None, {
             'fields': ('title', 'description', 'image')
         }),
+        ('Image Positioning', {
+            'fields': ('focal_point_x', 'focal_point_y'),
+            'description': 'Adjust where the image is centered. 50,50 = center. 0,0 = top-left. 100,100 = bottom-right.'
+        }),
         ('Display Options', {
             'fields': ('order', 'is_active'),
             'description': 'Control how and when this image appears in the carousel'
         }),
     )
+    
+    def focal_display(self, obj):
+        return f"{obj.focal_point_x},{obj.focal_point_y}"
+    focal_display.short_description = "Focal Point"
+    
+    class Media:
+        css = {
+            'all': ('admin/css/carousel_admin.css',)
+        }
+        js = ('admin/js/carousel_admin.js',)
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
