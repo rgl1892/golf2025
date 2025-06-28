@@ -154,7 +154,7 @@ const performanceCtx = document.getElementById('performanceChart').getContext('2
 const performanceChart = new Chart(performanceCtx, {
     type: 'bar',
     data: {
-        labels: [{% for stat in player_stats %}'{{ stat.player.first_name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        labels: [{% for stat in player_stats %}'{{ stat.player.first_name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
         datasets: [{
             label: 'Average Stableford',
             data: [{% for stat in player_stats %}{{ stat.avg_stableford }}{% if not forloop.last %},{% endif %}{% endfor %}],
