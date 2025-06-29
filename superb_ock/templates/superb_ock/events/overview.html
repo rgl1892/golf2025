@@ -5,6 +5,25 @@
 <div class="container my-5">
   <h2 class="mb-4 text-center fw-bold">🏆 Tournament Leaderboard</h2>
 
+  <!-- Cumulative Scoring Chart -->
+  <div class="row mb-5">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">📈 Cumulative Points Progress (Counting Rounds Only)</h5>
+        </div>
+        <div class="card-body">
+          <div style="position: relative; height: 400px; max-height: 50vh;">
+            <canvas id="cumulativeChart"></canvas>
+          </div>
+          <small class="text-muted mt-2 d-block">
+            * Only shows points from rounds that count toward final tournament score (best 3 rounds)
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="table-responsive">
     <table class="table table-bordered table-hover table-sm align-middle text-center table-striped">
       <thead class="table-dark">
@@ -24,7 +43,7 @@
             <td class="fw-semibold text-start ps-3">{{ player.player }}</td>
             {% for round in player.rounds %}
               {% if round.total %}
-                <td class="{% if round.is_best %}bg-success text-white fw-bold{% endif %}">
+                <td class="{% if round.is_best %}bg-success text-white fw-bold{% elif round.is_counting %}bg-light border border-warning border-2{% endif %}">
                   <div>{{ round.total }}</div>
                 </td>
               {% else %}
@@ -57,5 +76,112 @@
       }
     });
   });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Cumulative Scoring Chart
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('cumulativeChart').getContext('2d');
+    
+    // Process cumulative data from Django
+    const cumulativeData = {{ cumulative_data|safe }};
+    const holeLabels = {{ hole_labels_json|safe }};
+    
+    // Generate colors for each player
+    const colors = [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+        '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
+    ];
+    
+    const datasets = cumulativeData.map((playerData, index) => {
+        const data = holeLabels.map(holeNum => {
+            const holeData = playerData.data.find(d => d.hole_number === holeNum);
+            return holeData ? holeData.cumulative : null;
+        });
+        
+        return {
+            label: playerData.player,
+            data: data,
+            borderColor: colors[index % colors.length],
+            backgroundColor: colors[index % colors.length] + '20',
+            borderWidth: 3,
+            fill: false,
+            tension: 0.1,
+            pointRadius: 0,
+            pointHoverRadius: 8,
+            spanGaps: false // Don't connect lines across null values
+        };
+    });
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: holeLabels.map(h => `Hole ${h}`),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: 10
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Cumulative Points'
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Holes Played'
+                    },
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            return tooltipItems[0].label;
+                        },
+                        label: function(context) {
+                            const playerData = cumulativeData[context.datasetIndex];
+                            const holeData = playerData.data[context.dataIndex];
+                            
+                            if (holeData && holeData.hole_score !== null) {
+                                return `${context.dataset.label}: ${context.parsed.y} pts (Round ${holeData.round_id}, Hole ${holeData.actual_hole}: +${holeData.hole_score})`;
+                            } else {
+                                return `${context.dataset.label}: ${context.parsed.y} pts (No score)`;
+                            }
+                        }
+                    }
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
+            }
+        }
+    });
+});
 </script>
 {% endblock content %}

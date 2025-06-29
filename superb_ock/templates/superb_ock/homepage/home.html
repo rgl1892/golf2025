@@ -21,8 +21,8 @@
             <img src="{{ image.image.url }}" class="d-block w-100 carousel-image" alt="{{ image.title }}"
                  style="object-position: {{ image.focal_point_x }}% {{ image.focal_point_y }}%;">
             <div class="carousel-caption d-none d-md-block">
-                <h5>{{ image.title }}</h5>
-                <p>{{ image.description }}</p>
+                <h5 style="color: white;">{{ image.title }}</h5>
+                <p style="color: white;">{{ image.description }}</p>
             </div>
         </div>
         {% endfor %}
@@ -97,7 +97,7 @@
             <td class="fw-semibold text-start ps-3">{{ player.player }}</td>
             {% for round in player.rounds %}
               {% if round.total %}
-                <td class="{% if round.is_best %}bg-success text-white fw-bold{% endif %}">
+                <td class="{% if round.is_best %}bg-success text-white fw-bold{% elif round.is_counting %}bg-light border border-warning border-2{% endif %}">
                   <div>{{ round.total }}</div>
                 </td>
               {% else %}
@@ -128,7 +128,7 @@
             <td class="small">
               {% for round in player.rounds %}
                 {% if round.total %}
-                  <span class="{% if round.is_best %}bg-success text-white fw-bold px-1 rounded{% endif %}">{{ round.total }}</span>
+                  <span class="{% if round.is_best %}bg-success text-white fw-bold px-1 rounded{% elif round.is_counting %}border border-warning border-2 px-1 rounded{% endif %}">{{ round.total }}</span>
                   {% if not forloop.last %} | {% endif %}
                 {% else %}
                   <span class="text-muted">—</span>

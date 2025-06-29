@@ -163,6 +163,10 @@ class Home(View):
 
             })
 
+        # Get event scoring format for determining counting rounds (hardcoded event 3 for homepage)
+        event = GolfEvent.objects.get(id=3)
+        scoring_format = event.scoring
+
         # Step 4: Sort leaderboard
         leaderboard = sorted(leaderboard, key=lambda x: x['best_3_total'], reverse=True)
         all_round_numbers = set()
@@ -175,6 +179,28 @@ class Home(View):
             rounds = []
             round_dict = player['round_totals']
             
+            # Determine counting rounds based on scoring format
+            valid_rounds = [{'num': k, 'total': v['total']} for k, v in round_dict.items() if v['total'] is not None]
+            
+            if scoring_format == "best_three_of_five":
+                # Best 3 rounds overall
+                counting_rounds = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
+                counting_round_ids = [r['num'] for r in counting_rounds]
+            elif scoring_format == "best_last_rounds_counts":
+                # Best 2 of first rounds + last round counts
+                if len(valid_rounds) >= 3:
+                    sorted_rounds = sorted(valid_rounds, key=lambda x: x['num'])
+                    last_round = sorted_rounds[-1]
+                    first_rounds = sorted_rounds[:-1]
+                    best_first_two = sorted(first_rounds, key=lambda x: x['total'], reverse=True)[:2]
+                    counting_round_ids = [r['num'] for r in best_first_two] + [last_round['num']]
+                else:
+                    counting_round_ids = [r['num'] for r in valid_rounds]
+            else:
+                # Default to best 3
+                counting_rounds = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
+                counting_round_ids = [r['num'] for r in counting_rounds]
+            
             best_round_score = max([r['total'] for r in round_dict.values()] or [0])
             
             for round_num in round_numbers:
@@ -184,14 +210,16 @@ class Home(View):
                         'num': round_num,
                         'total': round_info['total'],
                         'course': round_info['course'],
-                        'is_best': round_info['total'] == best_round_score
+                        'is_best': round_info['total'] == best_round_score,
+                        'is_counting': round_num in counting_round_ids
                     })
                 else:
                     rounds.append({
                         'num': round_num,
                         'total': None,
                         'course': None,
-                        'is_best': False
+                        'is_best': False,
+                        'is_counting': False
                     })
             
             cleaned_leaderboard.append({
@@ -630,6 +658,10 @@ class EventView(View):
 
             })
 
+        # Get event scoring format for determining counting rounds
+        event = GolfEvent.objects.get(id=event_id)
+        scoring_format = event.scoring
+
         # Step 4: Sort leaderboard
         leaderboard = sorted(leaderboard, key=lambda x: x['best_3_total'], reverse=True)
         all_round_numbers = set()
@@ -642,6 +674,28 @@ class EventView(View):
             rounds = []
             round_dict = player['round_totals']
             
+            # Determine counting rounds based on scoring format
+            valid_rounds = [{'num': k, 'total': v['total']} for k, v in round_dict.items() if v['total'] is not None]
+            
+            if scoring_format == "best_three_of_five":
+                # Best 3 rounds overall
+                counting_rounds = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
+                counting_round_ids = [r['num'] for r in counting_rounds]
+            elif scoring_format == "best_last_rounds_counts":
+                # Best 2 of first rounds + last round counts
+                if len(valid_rounds) >= 3:
+                    sorted_rounds = sorted(valid_rounds, key=lambda x: x['num'])
+                    last_round = sorted_rounds[-1]
+                    first_rounds = sorted_rounds[:-1]
+                    best_first_two = sorted(first_rounds, key=lambda x: x['total'], reverse=True)[:2]
+                    counting_round_ids = [r['num'] for r in best_first_two] + [last_round['num']]
+                else:
+                    counting_round_ids = [r['num'] for r in valid_rounds]
+            else:
+                # Default to best 3
+                counting_rounds = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
+                counting_round_ids = [r['num'] for r in counting_rounds]
+            
             best_round_score = max([r['total'] for r in round_dict.values()] or [0])
             
             for round_num in round_numbers:
@@ -651,14 +705,16 @@ class EventView(View):
                         'num': round_num,
                         'total': round_info['total'],
                         'course': round_info['course'],
-                        'is_best': round_info['total'] == best_round_score
+                        'is_best': round_info['total'] == best_round_score,
+                        'is_counting': round_num in counting_round_ids
                     })
                 else:
                     rounds.append({
                         'num': round_num,
                         'total': None,
                         'course': None,
-                        'is_best': False
+                        'is_best': False,
+                        'is_counting': False
                     })
             
             cleaned_leaderboard.append({
@@ -672,10 +728,126 @@ class EventView(View):
                 courses.append({'course':rounds['course'],'id':rounds['num']})
 
             
+        # Generate cumulative data for chart
+        cumulative_data = self.generate_cumulative_data(cleaned_leaderboard, round_numbers)
+        
+        # Calculate max holes for chart (usually 54 holes for 3 counting rounds)
+        max_holes = max([len(player['data']) for player in cumulative_data]) if cumulative_data else 0
+        hole_labels = list(range(1, max_holes + 1))
+        
         context = {
             'leaderboard': cleaned_leaderboard,
             'round_numbers': round_numbers,
-            'courses':courses
+            'courses': courses,
+            'cumulative_data': json.dumps(cumulative_data),
+            'hole_labels_json': json.dumps(hole_labels),
+            'max_holes': max_holes
         }
 
         return render(request,self.template_name,context=context)
+    
+    def generate_cumulative_data(self, leaderboard, round_numbers):
+        """Generate cumulative scoring data for chart - by hole progression"""
+        from django.db.models import Q
+        
+        cumulative_data = []
+        
+        # Get event scoring format
+        event_id = self.kwargs.get('event_id')
+        event = GolfEvent.objects.get(id=event_id)
+        scoring_format = event.scoring
+        
+        # Get all hole-by-hole scores for this event
+        all_hole_scores = Score.objects.filter(
+            golf_round__event=event_id
+        ).select_related('player', 'golf_round', 'hole').order_by(
+            'golf_round_id', 'hole__hole_number'
+        )
+        
+        # Group scores by player and round
+        player_round_scores = {}
+        for score in all_hole_scores:
+            player_name = f"{score.player.first_name} {score.player.second_name}"
+            if player_name not in player_round_scores:
+                player_round_scores[player_name] = {}
+            if score.golf_round_id not in player_round_scores[player_name]:
+                player_round_scores[player_name][score.golf_round_id] = []
+            
+            player_round_scores[player_name][score.golf_round_id].append({
+                'hole': score.hole.hole_number,
+                'stableford': score.stableford or 0
+            })
+        
+        # Calculate round totals and determine counting rounds for each player
+        for player_data in leaderboard:
+            player_name = player_data['player']
+            rounds = player_data['rounds']
+            
+            # Determine counting rounds based on scoring format
+            valid_rounds = [r for r in rounds if r.get('total') is not None]
+            
+            if scoring_format == "best_three_of_five":
+                # Best 3 rounds overall
+                counting_rounds = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
+                counting_round_ids = [r['num'] for r in counting_rounds]
+            elif scoring_format == "best_last_rounds_counts":
+                # Best 2 of first rounds + last round counts
+                if len(valid_rounds) >= 3:
+                    # Sort by round ID to get chronological order
+                    sorted_rounds = sorted(valid_rounds, key=lambda x: x['num'])
+                    last_round = sorted_rounds[-1]  # Last round always counts
+                    first_rounds = sorted_rounds[:-1]  # All except last
+                    
+                    # Best 2 of the first rounds
+                    best_first_two = sorted(first_rounds, key=lambda x: x['total'], reverse=True)[:2]
+                    
+                    counting_rounds = best_first_two + [last_round]
+                    counting_round_ids = [r['num'] for r in counting_rounds]
+                else:
+                    # Not enough rounds, use all available
+                    counting_round_ids = [r['num'] for r in valid_rounds]
+            else:
+                # Default to best 3
+                counting_rounds = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
+                counting_round_ids = [r['num'] for r in counting_rounds]
+            
+            if player_name not in player_round_scores:
+                continue
+            
+            # Get hole-by-hole data for counting rounds only, in chronological order
+            all_counting_holes = []
+            # Sort counting round IDs chronologically (by round ID)
+            counting_round_ids_sorted = sorted(counting_round_ids)
+            
+            for round_id in counting_round_ids_sorted:
+                if round_id in player_round_scores[player_name]:
+                    round_holes = player_round_scores[player_name][round_id]
+                    # Sort holes within each round (1-18)
+                    round_holes.sort(key=lambda x: x['hole'])
+                    # Add round_id to each hole for reference
+                    for hole in round_holes:
+                        hole['round_id'] = round_id
+                    all_counting_holes.extend(round_holes)
+            
+            # Build cumulative progression by re-indexed hole position
+            player_cumulative = []
+            cumulative_total = 0
+            
+            for i, hole_data in enumerate(all_counting_holes):
+                cumulative_total += hole_data['stableford']
+                
+                player_cumulative.append({
+                    'hole_number': i + 1,  # Re-indexed position (1, 2, 3, ...)
+                    'actual_hole': hole_data['hole'],  # Original hole number (1-18)
+                    'round_id': hole_data['round_id'],  # Which round this hole is from
+                    'hole_score': hole_data['stableford'],
+                    'cumulative': cumulative_total
+                })
+            
+            cumulative_data.append({
+                'player': player_name,
+                'data': player_cumulative,
+                'final_total': cumulative_total
+            })
+        
+        return cumulative_data
