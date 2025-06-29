@@ -72,6 +72,17 @@
     width: 40px;
     height: 40px;
 }
+
+/* Recent rounds card hover effect */
+.card-hover {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
 </style>
 {% load mathfilters %}
 <div class="container my-5">
@@ -85,38 +96,38 @@
         </div>
         <div class="card-body p-2">
           {% for round in recent_rounds %}
-          <div class="card mb-2">
-            <div class="card-body py-2">
-              <div class="row align-items-center">
-                <div class="col-md-4">
-                  <h6 class="mb-1">
-                    <a href="{% url 'golf_round' round.id %}" class="text-decoration-none">
+          <a href="{% url 'golf_round' round.id %}" class="text-decoration-none">
+            <div class="card mb-2 card-hover">
+              <div class="card-body py-2">
+                <div class="row align-items-center">
+                  <div class="col-md-4">
+                    <h6 class="mb-1 text-body">
                       {{ round.course }}
-                    </a>
-                  </h6>
-                  <small class="text-muted">
-                    {{ round.event }} • {{ round.date|date:"M d, Y" }}
-                  </small>
-                </div>
-                <div class="col-md-8">
-                  <div class="row">
-                    {% for player_name, totals in round.players %}
-                    <div class="col-6 col-lg-3 mb-1">
-                      <small class="text-muted">{{ player_name }}</small><br>
-                      <strong>{{ totals.stableford }} pts</strong>
-                      <span class="text-muted">({{ totals.shots }} shots)</span>
+                    </h6>
+                    <small class="text-muted">
+                      {{ round.event }} • {{ round.date|date:"M d, Y" }}
+                    </small>
+                  </div>
+                  <div class="col-md-8">
+                    <div class="row">
+                      {% for player_name, totals in round.players %}
+                      <div class="col-6 col-lg-3 mb-1">
+                        <small class="text-muted">{{ player_name }}</small><br>
+                        <strong class="text-body">{{ totals.stableford }} pts</strong>
+                        <span class="text-muted">({{ totals.shots }} shots)</span>
+                      </div>
+                      {% endfor %}
+                      {% if round.total_players > 4 %}
+                      <div class="col-6 col-lg-3 mb-1">
+                        <small class="text-muted">+{{ round.total_players|add:"-4" }} more</small>
+                      </div>
+                      {% endif %}
                     </div>
-                    {% endfor %}
-                    {% if round.total_players > 4 %}
-                    <div class="col-6 col-lg-3 mb-1">
-                      <small class="text-muted">+{{ round.total_players|add:"-4" }} more</small>
-                    </div>
-                    {% endif %}
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </a>
           {% endfor %}
         </div>
       </div>
