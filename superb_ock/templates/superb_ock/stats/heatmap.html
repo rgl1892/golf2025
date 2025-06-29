@@ -116,7 +116,7 @@
       .attr("x", width / 2)
       .attr("y", 40)
       .attr("text-anchor", "middle")
-      .style("fill", "black")
+      .style("fill", "var(--chart-text-color)")
       .style("font-size", "14px")
       .text("Hole");
 
@@ -128,7 +128,7 @@
       .attr("y", -60)
       .attr("x", -height / 2)
       .attr("text-anchor", "middle")
-      .style("fill", "black")
+      .style("fill", "var(--chart-text-color)")
       .style("font-size", "14px")
       .text("Stableford Score");
 
@@ -143,7 +143,7 @@
       .attr("width", x.bandwidth())
       .attr("height", (d) => height - y(d.stableford))
       .style("fill", (d) => color(d.stableford))
-      .style("stroke", "#333")
+      .style("stroke", "var(--chart-axis-color)")
       .style("stroke-width", 1)
       .on("mouseover", function (event, d) {
         tooltip.transition().duration(200).style("opacity", 0.9);
@@ -166,7 +166,7 @@
       .attr("y", (d) => y(d.stableford) - 5)
       .attr("text-anchor", "middle")
       .style("font-size", "11px")
-      .style("fill", "#333")
+      .style("fill", "var(--chart-text-color)")
       .text((d) => d.stableford.toFixed(1));
   }
 

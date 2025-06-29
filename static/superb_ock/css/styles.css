@@ -47,12 +47,12 @@ input::-webkit-inner-spin-button {
 }
 
 .heatmap rect {
-    stroke: #eee;
+    stroke: var(--bs-border-color);
 }
 
 .axis text {
     font-size: 12px;
-    color: red;
+    color: var(--bs-body-color);
 }
 
 .player-selector {
@@ -62,9 +62,10 @@ input::-webkit-inner-spin-button {
 .player-selector select {
     padding: 8px 12px;
     font-size: 14px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--bs-border-color);
     border-radius: 4px;
-    background-color: white;
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
 }
 
 .player-selector label {
@@ -74,10 +75,10 @@ input::-webkit-inner-spin-button {
 
 .tooltip {
     opacity: 0;
-    background-color: white;
-    color: black;
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
     border: solid;
-    border-color: black;
+    border-color: var(--bs-border-color);
     border-width: 2px;
     border-radius: 5px;
     padding: 5px;

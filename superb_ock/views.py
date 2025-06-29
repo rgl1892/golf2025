@@ -146,26 +146,42 @@ class Home(View):
             player_rounds[name][round_id]['scoring'] = score['golf_round__event__scoring']  
             
     
+        # Get event scoring format for calculating totals
+        event = GolfEvent.objects.get(id=3)
+        scoring_format = event.scoring
 
         # get the totals
         leaderboard = []
 
         for player__first_name, round_scores in player_rounds.items():
-            top3_scores = sorted(
-                round_scores.values(), 
-                key=lambda x: x['total'], 
-                reverse=True
-            )[:3]
+            # Calculate total based on scoring format
+            valid_rounds = [{'num': k, 'total': v['total']} for k, v in round_scores.items() if v['total'] is not None]
+            
+            if scoring_format == "best_three_of_five":
+                # Best 3 rounds overall
+                top3_scores = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
+                total_score = sum(r['total'] for r in top3_scores)
+            elif scoring_format == "best_last_rounds_counts":
+                # Best 2 of first rounds + last round counts
+                if len(valid_rounds) >= 3:
+                    sorted_rounds = sorted(valid_rounds, key=lambda x: x['num'])
+                    last_round = sorted_rounds[-1]
+                    first_rounds = sorted_rounds[:-1]
+                    best_first_two = sorted(first_rounds, key=lambda x: x['total'], reverse=True)[:2]
+                    total_score = sum(r['total'] for r in best_first_two) + last_round['total']
+                else:
+                    total_score = sum(r['total'] for r in valid_rounds)
+            else:
+                # Default to best 3
+                top3_scores = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
+                total_score = sum(r['total'] for r in top3_scores)
+            
             leaderboard.append({
                 'player__first_name': player__first_name,
                 'round_totals': dict(round_scores),
-                'best_3_total': sum(int(r['total']) if r['total'] is not None else 0 for r in top3_scores),
+                'best_3_total': total_score,
 
             })
-
-        # Get event scoring format for determining counting rounds (hardcoded event 3 for homepage)
-        event = GolfEvent.objects.get(id=3)
-        scoring_format = event.scoring
 
         # Step 4: Sort leaderboard
         leaderboard = sorted(leaderboard, key=lambda x: x['best_3_total'], reverse=True)
@@ -236,11 +252,54 @@ class Home(View):
         # Get active carousel images
         carousel_images = CarouselImage.objects.filter(is_active=True).order_by('order', '-created_at')
         
+        # Get last 5 rounds played
+        recent_rounds = (
+            GolfRound.objects
+            .select_related('event')
+            .prefetch_related('score_set__hole__golf_course', 'score_set__player')
+            .order_by('-date_started', '-id')[:5]
+        )
+        
+        # Process recent rounds data
+        recent_rounds_data = []
+        for round_obj in recent_rounds:
+            scores = round_obj.score_set.all()
+            if scores:
+                # Get course info from first score
+                first_score = scores[0]
+                course_name = f"{first_score.hole.golf_course.name} - {first_score.hole.golf_course.tees}"
+                
+                # Get players and their totals
+                player_totals = {}
+                for score in scores:
+                    player_name = f"{score.player.first_name} {score.player.second_name}"
+                    if player_name not in player_totals:
+                        player_totals[player_name] = {'stableford': 0, 'shots': 0}
+                    player_totals[player_name]['stableford'] += score.stableford or 0
+                    player_totals[player_name]['shots'] += score.shots_taken or 0
+                
+                # Sort players by stableford points
+                sorted_players = sorted(
+                    player_totals.items(), 
+                    key=lambda x: x[1]['stableford'], 
+                    reverse=True
+                )
+                
+                recent_rounds_data.append({
+                    'id': round_obj.id,
+                    'date': round_obj.date_started,
+                    'event': round_obj.event.name,
+                    'course': course_name,
+                    'players': sorted_players[:4],  # Show top 4 players
+                    'total_players': len(player_totals)
+                })
+        
         context = {
             'leaderboard': cleaned_leaderboard,
             'round_numbers': round_numbers,
             'courses': courses,
-            'carousel_images': carousel_images
+            'carousel_images': carousel_images,
+            'recent_rounds': recent_rounds_data
         }
         return context
 
@@ -421,6 +480,10 @@ class GolfRoundView(View):
                 "hole__yards",
                 "hole__stroke_index",
                 "golf_round__event_id",
+                "handicap_index",
+                "hole__golf_course__slope_rating",
+                "hole__golf_course__course_rating",
+                "hole__golf_course__par",
             )
         )
         
@@ -480,6 +543,14 @@ class GolfRoundView(View):
         grouped_data = dict(grouped_summary)
         summary_data = {}
         for player, data in grouped_data.items():
+            # Get handicap info from first score entry
+            first_score = data['scores'][0] if data['scores'] else {}
+            handicap_index = first_score.get('handicap_index', 0)
+            slope_rating = first_score.get('hole__golf_course__slope_rating', 113)
+            course_rating = first_score.get('hole__golf_course__course_rating', 72)
+            course_par = first_score.get('hole__golf_course__par', 72)
+            course_handicap = round(handicap_index * (slope_rating / 113) + course_rating - course_par)
+            
             summary_data[player] = {
                 'front_nine': 0,
                 'back_nine': 0,
@@ -487,6 +558,8 @@ class GolfRoundView(View):
                 'front_nine_stableford': 0,
                 'back_nine_stableford': 0, 
                 'total_stableford': 0,
+                'handicap_index': handicap_index,
+                'course_handicap': course_handicap,
             }
             for score in data.get('scores', []):
                 if score['hole__hole_number'] < 10:
@@ -642,25 +715,42 @@ class EventView(View):
             
     
 
+        # Get event scoring format for calculating totals
+        event = GolfEvent.objects.get(id=event_id)
+        scoring_format = event.scoring
+
         # get the totals
         leaderboard = []
 
         for player__first_name, round_scores in player_rounds.items():
-            top3_scores = sorted(
-                round_scores.values(), 
-                key=lambda x: x['total'], 
-                reverse=True
-            )[:3]
+            # Calculate total based on scoring format
+            valid_rounds = [{'num': k, 'total': v['total']} for k, v in round_scores.items() if v['total'] is not None]
+            
+            if scoring_format == "best_three_of_five":
+                # Best 3 rounds overall
+                top3_scores = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
+                total_score = sum(r['total'] for r in top3_scores)
+            elif scoring_format == "best_last_rounds_counts":
+                # Best 2 of first rounds + last round counts
+                if len(valid_rounds) >= 3:
+                    sorted_rounds = sorted(valid_rounds, key=lambda x: x['num'])
+                    last_round = sorted_rounds[-1]
+                    first_rounds = sorted_rounds[:-1]
+                    best_first_two = sorted(first_rounds, key=lambda x: x['total'], reverse=True)[:2]
+                    total_score = sum(r['total'] for r in best_first_two) + last_round['total']
+                else:
+                    total_score = sum(r['total'] for r in valid_rounds)
+            else:
+                # Default to best 3
+                top3_scores = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
+                total_score = sum(r['total'] for r in top3_scores)
+            
             leaderboard.append({
                 'player__first_name': player__first_name,
                 'round_totals': dict(round_scores),
-                'best_3_total': sum(int(r['total']) if r['total'] is not None else 0 for r in top3_scores),
+                'best_3_total': total_score,
 
             })
-
-        # Get event scoring format for determining counting rounds
-        event = GolfEvent.objects.get(id=event_id)
-        scoring_format = event.scoring
 
         # Step 4: Sort leaderboard
         leaderboard = sorted(leaderboard, key=lambda x: x['best_3_total'], reverse=True)
@@ -791,15 +881,18 @@ class EventView(View):
                 counting_rounds = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
                 counting_round_ids = [r['num'] for r in counting_rounds]
             elif scoring_format == "best_last_rounds_counts":
-                # Best 2 of first rounds + last round counts
+                # Best 2 of first 4 rounds + last round counts
                 if len(valid_rounds) >= 3:
                     # Sort by round ID to get chronological order
                     sorted_rounds = sorted(valid_rounds, key=lambda x: x['num'])
                     last_round = sorted_rounds[-1]  # Last round always counts
                     first_rounds = sorted_rounds[:-1]  # All except last
                     
-                    # Best 2 of the first rounds
-                    best_first_two = sorted(first_rounds, key=lambda x: x['total'], reverse=True)[:2]
+                    # Get first 4 rounds (excluding the last round)
+                    first_four_rounds = first_rounds[:4]  # Take only first 4
+                    
+                    # Best 2 of the first 4 rounds
+                    best_first_two = sorted(first_four_rounds, key=lambda x: x['total'], reverse=True)[:2]
                     
                     counting_rounds = best_first_two + [last_round]
                     counting_round_ids = [r['num'] for r in counting_rounds]

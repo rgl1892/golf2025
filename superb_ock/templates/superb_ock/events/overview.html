@@ -43,7 +43,7 @@
             <td class="fw-semibold text-start ps-3">{{ player.player }}</td>
             {% for round in player.rounds %}
               {% if round.total %}
-                <td class="{% if round.is_best %}bg-success text-white fw-bold{% elif round.is_counting %}bg-light border border-warning border-2{% endif %}">
+                <td class="{% if round.is_best %}bg-success text-white fw-bold{% elif round.is_counting %}border border-warning border-2{% endif %}">
                   <div>{{ round.total }}</div>
                 </td>
               {% else %}
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         text: 'Cumulative Points'
                     },
                     grid: {
-                        color: 'rgba(0,0,0,0.1)'
+                        color: 'var(--chart-grid-color)'
                     }
                 },
                 x: {
@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         text: 'Holes Played'
                     },
                     grid: {
-                        color: 'rgba(0,0,0,0.1)'
+                        color: 'var(--chart-grid-color)'
                     }
                 }
             },

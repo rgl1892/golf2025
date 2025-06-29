@@ -1,10 +1,10 @@
 <tbody name="general">
     {% for player_name, player_data in scores.items %}
-        <tr style="text-align: center;">
+        <tr class="text-center">
             <td scope="row">{{ player_name }}</td>
             {% for score_sum in player_data.scores %}
                 {% if score_sum.shots_taken %}
-                <td style="padding: 5px; text-align: center;">
+                <td class="p-2 text-center">
                     <svg width="30px" height="50px">
                         <!-- Score Text (Ensuring visibility on dark fill) -->
                         <text x="15" y="16" 
@@ -24,7 +24,7 @@
                     </svg>
                 </td>
                 {% else %}
-                <td style="padding: 5px; text-align: center;"></td>
+                <td class="p-2 text-center"></td>
                 {% endif %}
             {% endfor %}
         </tr>

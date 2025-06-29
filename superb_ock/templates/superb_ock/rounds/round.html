@@ -53,7 +53,10 @@
             <tbody>
                 {% for player, data in summary.items %}
                 <tr>
-                    <td><strong>{{ player }}</strong></td>
+                    <td>
+                        <strong>{{ player }}</strong><br>
+                        <small class="text-muted">HCP: {{ data.handicap_index }}/{{ data.course_handicap }}</small>
+                    </td>
                     <!-- Desktop view - separate columns -->
                     <td class="text-center d-none d-md-table-cell">{{ data.front_nine }}</td>
                     <td class="text-center d-none d-md-table-cell">{{ data.back_nine }}</td>
