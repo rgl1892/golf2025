@@ -57,22 +57,33 @@
         let stable_out = button.closest('.player-card').querySelector('.stable_out');
         let hiddenInput = stable_out.querySelector('input[type="hidden"]');
         let newValue = input.value?parseInt(input.value) + change: par;
-        let handicap = Math.round((index *(slope_rating/113)) + course_rating - total_par);
-        let stable_val = 0;
-        let extra_shots = Math.floor(handicap/18);
-        let si_shots = stroke <= handicap?1:0;
-
-        let strokesToPar = newValue - par - extra_shots - si_shots;
+        
+        // Calculate course handicap correctly
+        let courseHandicap = Math.round(index * (slope_rating/113));
+        
+        // Calculate handicap strokes for this hole
+        let extraShots = Math.floor(courseHandicap / 18);  // Shots on every hole
+        let remainingHandicap = courseHandicap % 18;       // Remaining handicap strokes
+        let strokeIndexShots = stroke <= remainingHandicap ? 1 : 0;  // Additional shot if hole SI <= remaining
+        
+        // Total handicap strokes for this hole
+        let totalHandicapStrokes = extraShots + strokeIndexShots;
+        
+        // Calculate net score (gross score minus handicap strokes)
+        let netScore = newValue - totalHandicapStrokes;
+        
+        // Calculate strokes to par based on net score
+        let strokesToPar = netScore - par;
         
         const stablefordMap = {
-            '-3': 5,  // Albatross
-            '-2': 4,  // Eagle
-            '-1': 3,  // Birdie
-            '0': 2,   // Par
-            '1': 1    // Bogey
+            '-3': 5,  // Albatross (-3 to par)
+            '-2': 4,  // Eagle (-2 to par)
+            '-1': 3,  // Birdie (-1 to par)
+            '0': 2,   // Par (0 to par)
+            '1': 1    // Bogey (+1 to par)
         };
         
-        stable_val = strokesToPar <= -4 ? 6 : (stablefordMap[strokesToPar] ?? 0);
+        let stable_val = strokesToPar <= -4 ? 6 : (stablefordMap[strokesToPar] ?? 0);
 
         if (newValue >= 0) {
             input.value = newValue;
