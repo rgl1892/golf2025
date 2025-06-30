@@ -61,18 +61,18 @@
         
         // Calculate course handicap correctly using USGA formula
         let courseHandicap = Math.round(index * (slope_rating/113) + course_rating - total_par);
-        
         // Update playing handicap display
         playingHcpSpan.textContent = courseHandicap;
         
         // Calculate handicap strokes for this hole
+        
         let extraShots = Math.floor(courseHandicap / 18);  // Shots on every hole
-        let remainingHandicap = courseHandicap % 18;       // Remaining handicap strokes
+        let remainingHandicap = Math.abs((courseHandicap + 18) % 18);       // Remaining handicap strokes
         let strokeIndexShots = stroke <= remainingHandicap ? 1 : 0;  // Additional shot if hole SI <= remaining
         
+
         // Total handicap strokes for this hole
         let totalHandicapStrokes = extraShots + strokeIndexShots;
-        
         // Calculate net score (gross score minus handicap strokes)
         let netScore = newValue - totalHandicapStrokes;
         
@@ -117,12 +117,17 @@
         });
         
         let carousel = document.getElementById('holeCarousel');
+        let carouselInstance = new bootstrap.Carousel(carousel); // Create once and reuse
         let touchStartX = 0, touchEndX = 0;
-        let currentIndex = 0;
+        let isSwipeInProgress = false; // Prevent multiple simultaneous swipes
 
         function detectSwipe() {
+            if (isSwipeInProgress) return; // Prevent multiple swipes
+            
             let diff = touchEndX - touchStartX;
             if (Math.abs(diff) > 50) {  // Ensure significant movement
+                isSwipeInProgress = true;
+                
                 let hasChanges = false;
                 const inputs = document.querySelectorAll('.carousel-item.active .score-input');
 
@@ -136,11 +141,18 @@
                     submitScores(() => {
                         if (diff < 0) nextHole();
                         else prevHole();
+                        // Reset swipe state after navigation completes
+                        setTimeout(() => { isSwipeInProgress = false; }, 300);
                     });
                 } else {
                     if (diff < 0) nextHole();
                     else prevHole();
+                    // Reset swipe state after navigation completes
+                    setTimeout(() => { isSwipeInProgress = false; }, 300);
                 }
+            } else {
+                // Reset if swipe wasn't significant enough
+                isSwipeInProgress = false;
             }
         }
 
@@ -148,8 +160,7 @@
             let next = document.querySelector('.carousel-item.active').nextElementSibling;
             if (next) {
                 console.log('next');
-                let carouselInstance = new bootstrap.Carousel(carousel);
-                carouselInstance.next();
+                carouselInstance.next(); // Use the reused instance
             }
         }
 
@@ -157,8 +168,7 @@
             let prev = document.querySelector('.carousel-item.active').previousElementSibling;
             if (prev) {
                 console.log('prev');
-                let carouselInstance = new bootstrap.Carousel(carousel);
-                carouselInstance.prev();
+                carouselInstance.prev(); // Use the reused instance
             }
         }
 
@@ -178,12 +188,22 @@
 
         // Touch Events for Swiping
         carousel.addEventListener("touchstart", (e) => {
-            touchStartX = e.touches[0].clientX;
+            if (!isSwipeInProgress) {
+                touchStartX = e.touches[0].clientX;
+                touchEndX = touchStartX; // Initialize end position
+            }
         });
 
         carousel.addEventListener("touchend", (e) => {
-            touchEndX = e.changedTouches[0].clientX;
-            detectSwipe();
+            if (!isSwipeInProgress) {
+                touchEndX = e.changedTouches[0].clientX;
+                detectSwipe();
+            }
+        });
+
+        // Reset swipe state if touch is cancelled
+        carousel.addEventListener("touchcancel", () => {
+            isSwipeInProgress = false;
         });
 
         // Submit Button
