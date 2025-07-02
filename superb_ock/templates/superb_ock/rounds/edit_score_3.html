@@ -260,7 +260,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Calculate and display playing handicaps
-    updatePlayingHandicaps();
+    // Auto-scroll to bottom on mobile for easier button access\n    if (window.innerWidth <= 768) {\n        setTimeout(() => {\n            window.scrollTo(0, document.body.scrollHeight);\n        }, 100);\n    }\n    \n    updatePlayingHandicaps();
     
     // Score input event listeners
     document.querySelectorAll('.btn-minus, .btn-plus').forEach(btn => {
