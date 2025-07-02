@@ -60,21 +60,20 @@
                 <form method="POST" id="scoreForm">
                     {% csrf_token %}
                     
-                    <div class="row g-3">
+                    <div class="row g-2">
                         {% for player in hole_players %}
-                        <div class="col-12 col-md-6 col-lg-3">
-                            <div class="card h-100 player-card" data-player-id="{{ player.id }}">
-                                <div class="card-body">
-                                    <!-- Player Header -->
-                                    <div class="text-center mb-3">
-                                        <h5 class="card-title mb-1">{{ player.player__first_name }} {{ player.player__second_name }}</h5>
+                        <div class="col-6 col-sm-6 col-md-3">
+                            <div class="card player-card-mobile" data-player-id="{{ player.id }}">
+                                <div class="card-body p-2">
+                                    <!-- Compact Player Header -->
+                                    <div class="text-center mb-2">
+                                        <h6 class="card-title mb-0 small">{{ player.player__first_name }}</h6>
                                         <small class="text-muted">HCP: <span class="playing-hcp" data-player-id="{{ player.id }}">-</span></small>
                                     </div>
 
-                                    <!-- Score Input -->
-                                    <div class="score-input-section mb-3">
-                                        <label class="form-label text-center w-100">Shots</label>
-                                        <div class="input-group input-group-lg">
+                                    <!-- Compact Score Input -->
+                                    <div class="score-input-section mb-2">
+                                        <div class="input-group input-group-sm">
                                             <button type="button" class="btn btn-outline-danger btn-minus" 
                                                     data-player-id="{{ player.id }}"
                                                     data-par="{{ player.hole__par }}"
@@ -83,10 +82,10 @@
                                                     data-slope="{{ player.hole__golf_course__slope_rating }}"
                                                     data-course-rating="{{ player.hole__golf_course__course_rating }}"
                                                     data-course-par="{{ player.hole__golf_course__par }}">
-                                                <i class="fas fa-minus"></i>
+                                                -
                                             </button>
                                             <input type="number" 
-                                                   class="form-control text-center score-input" 
+                                                   class="form-control text-center score-input fw-bold" 
                                                    name="shots_{{ player.id }}" 
                                                    value="{% if player.shots_taken %}{{ player.shots_taken }}{% endif %}"
                                                    min="1" max="15"
@@ -100,17 +99,17 @@
                                                     data-slope="{{ player.hole__golf_course__slope_rating }}"
                                                     data-course-rating="{{ player.hole__golf_course__course_rating }}"
                                                     data-course-par="{{ player.hole__golf_course__par }}">
-                                                <i class="fas fa-plus"></i>
+                                                +
                                             </button>
                                         </div>
                                     </div>
 
-                                    <!-- Stableford Display -->
-                                    <div class="text-center">
-                                        <div class="stableford-display p-2 rounded" 
-                                             style="background-color: #f8f9fa; border: 2px solid #e9ecef;">
-                                            <small class="text-muted d-block">Stableford Points</small>
-                                            <span class="stableford-value h4 mb-0" data-player-id="{{ player.id }}">
+                                    <!-- Compact Stableford Display -->
+                                    <div class="text-center mb-2">
+                                        <div class="stableford-display-mobile rounded" 
+                                             style="background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 4px;">
+                                            <small class="text-muted d-block" style="font-size: 0.7rem;">Points</small>
+                                            <span class="stableford-value fw-bold" data-player-id="{{ player.id }}" style="font-size: 1.1rem;">
                                                 {% if player.stableford %}{{ player.stableford }}{% else %}-{% endif %}
                                             </span>
                                         </div>
@@ -118,31 +117,19 @@
                                                value="{{ player.stableford }}" class="stableford-hidden">
                                     </div>
 
-                                    <!-- Quick Score Buttons -->
-                                    <div class="row g-1 mt-3">
+                                    <!-- Compact Quick Score Buttons -->
+                                    <div class="row g-1">
                                         {% with par=player.hole__par %}
-                                        <div class="col-3">
-                                            <button type="button" class="btn btn-sm btn-outline-primary w-100 quick-score"
-                                                    data-score="{% if par >= 3 %}{{ par|add:'-2' }}{% else %}1{% endif %}" data-player-id="{{ player.id }}">
-                                                {% if par >= 3 %}{{ par|add:'-2' }}{% else %}1{% endif %}
-                                            </button>
-                                        </div>
-                                        <div class="col-3">
-                                            <button type="button" class="btn btn-sm btn-outline-success w-100 quick-score"
+                                        <div class="col-6">
+                                            <button type="button" class="btn btn-sm btn-outline-success w-100 quick-score" style="font-size: 0.7rem; padding: 2px;"
                                                     data-score="{% if par >= 2 %}{{ par|add:'-1' }}{% else %}1{% endif %}" data-player-id="{{ player.id }}">
-                                                {% if par >= 2 %}{{ par|add:'-1' }}{% else %}1{% endif %}
+                                                -1
                                             </button>
                                         </div>
-                                        <div class="col-3">
-                                            <button type="button" class="btn btn-sm btn-success w-100 quick-score"
+                                        <div class="col-6">
+                                            <button type="button" class="btn btn-sm btn-success w-100 quick-score" style="font-size: 0.7rem; padding: 2px;"
                                                     data-score="{{ par }}" data-player-id="{{ player.id }}">
-                                                {{ par }}
-                                            </button>
-                                        </div>
-                                        <div class="col-3">
-                                            <button type="button" class="btn btn-sm btn-outline-warning w-100 quick-score"
-                                                    data-score="{{ par|add:'1' }}" data-player-id="{{ player.id }}">
-                                                {{ par|add:'1' }}
+                                                Par
                                             </button>
                                         </div>
                                         {% endwith %}
@@ -197,26 +184,30 @@
 </div>
 
 <style>
-.player-card {
+.player-card, .player-card-mobile {
     transition: transform 0.2s, box-shadow 0.2s;
     border: 1px solid #dee2e6;
 }
 
-.player-card:hover {
+.player-card:hover, .player-card-mobile:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
+.player-card-mobile {
+    min-height: auto;
+}
+
 .score-input {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: bold;
 }
 
-.stableford-display {
+.stableford-display, .stableford-display-mobile {
     transition: all 0.3s ease;
 }
 
-.stableford-display.updated {
+.stableford-display.updated, .stableford-display-mobile.updated {
     background-color: #d4edda !important;
     border-color: #28a745 !important;
     animation: pulse 0.5s;
@@ -242,7 +233,19 @@
 
 @media (max-width: 768px) {
     .col-md-6 {
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .player-card-mobile .card-body {
+        padding: 0.5rem !important;
+    }
+    
+    .player-card-mobile h6 {
+        font-size: 0.9rem;
+    }
+    
+    .input-group-sm .form-control {
+        font-size: 1rem;
     }
 }
 </style>
@@ -357,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const input = document.querySelector(`input[data-player-id="${playerId}"]`);
         const stablefordSpan = document.querySelector(`.stableford-value[data-player-id="${playerId}"]`);
         const stablefordHidden = document.querySelector(`input[name="stable_${playerId}"]`);
-        const stablefordDisplay = stablefordSpan.closest('.stableford-display');
+        const stablefordDisplay = stablefordSpan.closest('.stableford-display, .stableford-display-mobile');
         
         if (!input.value) {
             stablefordSpan.textContent = '-';
