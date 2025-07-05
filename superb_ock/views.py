@@ -587,7 +587,7 @@ class GolfRoundView(View):
 
 class EditScore(View):
 
-    template_name = "superb_ock/rounds/edit_score_3.html"
+    template_name = "superb_ock/rounds/edit_score.html"
 
     def get_context_data(self, round_id, hole_number):
 
