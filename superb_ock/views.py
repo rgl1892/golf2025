@@ -560,6 +560,8 @@ class GolfRoundView(View):
                 'total_stableford': 0,
                 'handicap_index': handicap_index,
                 'course_handicap': course_handicap,
+                'course_par': course_par,
+                'played_holes_par': 0,  # Par for only the holes that have been played
             }
             for score in data.get('scores', []):
                 if score['hole__hole_number'] < 10:
@@ -567,11 +569,17 @@ class GolfRoundView(View):
                     summary_data[player]['total_shots'] += score['shots_taken'] if score['shots_taken'] else 0
                     summary_data[player]['front_nine_stableford'] += score['stableford'] if score['stableford'] else 0
                     summary_data[player]['total_stableford'] += score['stableford'] if score['stableford'] else 0
+                    # Only add to played holes par if the score has been entered
+                    if score['shots_taken'] is not None:
+                        summary_data[player]['played_holes_par'] += score['hole__par'] or 0
                 else:
                     summary_data[player]['back_nine'] += score['shots_taken'] if score['shots_taken'] else 0
                     summary_data[player]['total_shots'] += score['shots_taken'] if score['shots_taken'] else 0
                     summary_data[player]['back_nine_stableford'] += score['stableford'] if score['stableford'] else 0
                     summary_data[player]['total_stableford'] += score['stableford'] if score['stableford'] else 0
+                    # Only add to played holes par if the score has been entered
+                    if score['shots_taken'] is not None:
+                        summary_data[player]['played_holes_par'] += score['hole__par'] or 0
 
         return render(
             request,
@@ -617,10 +625,31 @@ class EditScore(View):
             [score for score in scores if score["hole__hole_number"] == x + 1]
             for x in range(18)
         ]
+        
+        # Calculate current totals for each player
+        player_totals = {}
+        for score in scores:
+            player_name = score["player__first_name"]
+            if player_name not in player_totals:
+                player_totals[player_name] = {
+                    "total_shots": 0,
+                    "total_stableford": 0,
+                    "played_holes_par": 0,
+                    "holes_played": 0
+                }
+            
+            # Only count holes that have been played
+            if score["shots_taken"] is not None:
+                player_totals[player_name]["total_shots"] += score["shots_taken"]
+                player_totals[player_name]["total_stableford"] += score["stableford"] or 0
+                player_totals[player_name]["played_holes_par"] += score["hole__par"] or 0
+                player_totals[player_name]["holes_played"] += 1
+        
         context = {
             "scores_per_hole": scores_per_hole,
             "round_id": round_id,
             "hole_number": hole_number,
+            "player_totals": player_totals,
         }
         return context
 

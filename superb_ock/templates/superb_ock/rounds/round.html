@@ -1,7 +1,7 @@
 {% extends "superb_ock/base.html" %}
 {% load static %}
-{% block content %}
 {% load mathfilters %}
+{% block content %}
 
 <link rel="stylesheet" href="{% static 'superb_ock/css/chart-themes.css' %}">
 
@@ -39,15 +39,15 @@
             <thead class="table-dark">
                 <tr>
                     <th>Player</th>
+                    <th class="d-none d-md-table-cell">Total (To Par)</th>
                     <th class="d-none d-md-table-cell">Front 9 Shots</th>
                     <th class="d-none d-md-table-cell">Back 9 Shots</th> 
-                    <th class="d-none d-md-table-cell">Total Shots</th>
+                    <th class="d-none d-md-table-cell">Total Points</th>
                     <th class="d-none d-md-table-cell">Front 9 Points</th>
                     <th class="d-none d-md-table-cell">Back 9 Points</th>
-                    <th class="d-none d-md-table-cell">Total Points</th>
+                    <th class="d-md-none">Total</th>
                     <th class="d-md-none">Front 9</th>
                     <th class="d-md-none">Back 9</th>
-                    <th class="d-md-none">Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -58,21 +58,33 @@
                         <small class="text-muted">HCP: {{ data.handicap_index }}/{{ data.course_handicap }}</small>
                     </td>
                     <!-- Desktop view - separate columns -->
+                    <td class="text-center d-none d-md-table-cell">
+                        <strong>
+                            {% with to_par=data.total_shots|sub:data.played_holes_par %}
+                                {% if to_par > 0 %}+{% endif %}{{ to_par }}
+                            {% endwith %}
+                        </strong>
+                    </td>
                     <td class="text-center d-none d-md-table-cell">{{ data.front_nine }}</td>
                     <td class="text-center d-none d-md-table-cell">{{ data.back_nine }}</td>
-                    <td class="text-center d-none d-md-table-cell"><strong>{{ data.total_shots }}</strong></td>
+                    <td class="text-center d-none d-md-table-cell"><strong>{{ data.total_stableford }}</strong></td>
                     <td class="text-center d-none d-md-table-cell">{{ data.front_nine_stableford }}</td>
                     <td class="text-center d-none d-md-table-cell">{{ data.back_nine_stableford }}</td>
-                    <td class="text-center d-none d-md-table-cell"><strong>{{ data.total_stableford }}</strong></td>
                     <!-- Mobile view - combined cells -->
+                    <td class="text-center d-md-none">
+                        <div>
+                            <strong>
+                                {% with to_par=data.total_shots|sub:data.played_holes_par %}
+                                    {% if to_par > 0 %}+{% endif %}{{ to_par }}
+                                {% endwith %}/{{ data.total_stableford }}
+                            </strong>
+                        </div>
+                    </td>
                     <td class="text-center d-md-none">
                         <div>{{ data.front_nine }}/{{ data.front_nine_stableford }}</div>
                     </td>
                     <td class="text-center d-md-none">
                         <div>{{ data.back_nine }}/{{ data.back_nine_stableford }}</div>
-                    </td>
-                    <td class="text-center d-md-none">
-                        <div><strong>{{ data.total_shots }}/{{ data.total_stableford }}</strong></div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -132,7 +144,7 @@ const playerData = {
             {% for score in data.scores %}
             {
                 hole: {{ score.hole__hole_number }},
-                shots: {{ score.shots_taken|default:0 }},
+                shots: {% if score.shots_taken %}{{ score.shots_taken }}{% else %}null{% endif %},
                 points: {{ score.stableford|default:0 }},
                 par: {{ score.hole__par }}
             }{% if not forloop.last %},{% endif %}

@@ -20,6 +20,21 @@ function createChart(containerId, data, metric, title, colorVar) {
     // Clear any existing chart
     d3.select(`#${containerId}`).selectAll("*").remove();
 
+    // Filter out holes without scores
+    const filteredData = data.filter(d => d.shots !== null && d.shots !== undefined);
+
+    // If no data, show empty state
+    if (filteredData.length === 0) {
+        const container = d3.select(`#${containerId}`)
+            .attr("class", "chart-container");
+        container.append("div")
+            .style("text-align", "center")
+            .style("padding", "20px")
+            .style("color", getThemeColor('--chart-text-color'))
+            .text("No scores entered yet");
+        return;
+    }
+
     const container = d3.select(`#${containerId}`)
         .attr("class", "chart-container");
 
@@ -35,18 +50,18 @@ function createChart(containerId, data, metric, title, colorVar) {
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const x = d3.scaleBand()
-        .domain(data.map(d => d.hole))
+        .domain(filteredData.map(d => d.hole))
         .range([0, width])
         .padding(0.1);
 
     const y = d3.scaleLinear()
-        .domain([0, d3.max(data, d => d[metric])])
+        .domain([0, d3.max(filteredData, d => d[metric])])
         .nice()
         .range([height, 0]);
 
     // Add bars
     svg.selectAll(".bar")
-        .data(data)
+        .data(filteredData)
         .enter().append("rect")
         .attr("class", "bar")
         .attr("x", d => x(d.hole))
@@ -91,13 +106,27 @@ function createToParChart(containerId, data) {
     // Clear any existing chart
     d3.select(`#${containerId}`).selectAll("*").remove();
 
-    // Calculate to par values
-    const toParData = data.map(d => ({
-        hole: d.hole,
-        toPar: d.shots - d.par,
-        shots: d.shots,
-        par: d.par
-    }));
+    // Filter out holes without scores and calculate to par values
+    const toParData = data
+        .filter(d => d.shots !== null && d.shots !== undefined)
+        .map(d => ({
+            hole: d.hole,
+            toPar: d.shots - d.par,
+            shots: d.shots,
+            par: d.par
+        }));
+
+    // If no data, show empty state
+    if (toParData.length === 0) {
+        const container = d3.select(`#${containerId}`)
+            .attr("class", "chart-container");
+        container.append("div")
+            .style("text-align", "center")
+            .style("padding", "20px")
+            .style("color", getThemeColor('--chart-text-color'))
+            .text("No scores entered yet");
+        return;
+    }
 
     const container = d3.select(`#${containerId}`)
         .attr("class", "chart-container");

@@ -7,9 +7,14 @@
     <div class="row mb-3">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
-                <h2 class="mb-0">Score Entry</h2>
+                <div class="d-flex align-items-center">
+                    <a href="{% url 'golf_round' round_id %}" class="btn btn-outline-secondary me-3">
+                        <i class="fas fa-arrow-left"></i> Back to Round
+                    </a>
+                    <h2 class="mb-0">Score Entry</h2>
+                </div>
                 <div class="text-end">
-                    <small class="text-muted">Round {{ round_id }}</small>
+                    <small class="text-body-secondary">Round {{ round_id }}</small>
                 </div>
             </div>
         </div>
@@ -24,9 +29,40 @@
                      aria-valuenow="{{ hole_number }}" aria-valuemin="0" aria-valuemax="18">
                 </div>
             </div>
-            <small class="text-muted">Hole {{ hole_number }} of 18</small>
+            <small class="text-body-secondary">Hole {{ hole_number }} of 18</small>
         </div>
     </div>
+
+    <!-- Current Scores Summary -->
+    {% if player_totals %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Current Scores</h6>
+                </div>
+                <div class="card-body p-2">
+                    <div class="row g-2">
+                        {% for player_name, totals in player_totals.items %}
+                        <div class="col-6 col-md-3">
+                            <div class="text-center p-2 border rounded bg-body-tertiary">
+                                <strong class="d-block text-body">{{ player_name }}</strong>
+                                <small class="d-block text-body-secondary">
+                                    {% load mathfilters %}
+                                    {% with to_par=totals.total_shots|sub:totals.played_holes_par %}
+                                        {% if to_par > 0 %}+{% endif %}{{ to_par }} | {{ totals.total_stableford }} pts
+                                    {% endwith %}
+                                </small>
+                                <small class="text-body-secondary">{{ totals.holes_played }} holes</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Get current hole data (hole_number - 1 = index) -->
     {% for hole_players in scores_per_hole %}
@@ -68,7 +104,7 @@
                                     <!-- Compact Player Header -->
                                     <div class="text-center mb-2">
                                         <h6 class="card-title mb-0 small">{{ player.player__first_name }}</h6>
-                                        <small class="text-muted">HCP: <span class="playing-hcp" data-player-id="{{ player.id }}">-</span></small>
+                                        <small class="text-body-secondary">HCP: <span class="playing-hcp" data-player-id="{{ player.id }}">-</span></small>
                                     </div>
 
                                     <!-- Compact Score Input -->
@@ -106,10 +142,10 @@
 
                                     <!-- Compact Stableford Display -->
                                     <div class="text-center mb-2">
-                                        <div class="stableford-display-mobile rounded" 
-                                             style="background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 4px;">
-                                            <small class="text-muted d-block" style="font-size: 0.7rem;">Points</small>
-                                            <span class="stableford-value fw-bold" data-player-id="{{ player.id }}" style="font-size: 1.1rem;">
+                                        <div class="stableford-display-mobile rounded bg-body-tertiary border" 
+                                             style="padding: 4px;">
+                                            <small class="text-body-secondary d-block" style="font-size: 0.7rem;">Points</small>
+                                            <span class="stableford-value fw-bold text-body" data-player-id="{{ player.id }}" style="font-size: 1.1rem;">
                                                 {% if player.stableford %}{{ player.stableford }}{% else %}-{% endif %}
                                             </span>
                                         </div>
@@ -190,12 +226,11 @@
 
 .player-card, .player-card-mobile {
     transition: transform 0.2s, box-shadow 0.2s;
-    border: 1px solid #dee2e6;
 }
 
 .player-card:hover, .player-card-mobile:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 8px var(--bs-box-shadow);
 }
 
 .player-card-mobile {
@@ -212,8 +247,8 @@
 }
 
 .stableford-display.updated, .stableford-display-mobile.updated {
-    background-color: #d4edda !important;
-    border-color: #28a745 !important;
+    background-color: var(--bs-success-bg-subtle) !important;
+    border-color: var(--bs-success-border-subtle) !important;
     animation: pulse 0.5s;
 }
 
@@ -421,17 +456,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function getStablefordColor(points) {
-        if (points >= 4) return '#d4edda'; // Green for excellent
-        if (points >= 2) return '#fff3cd'; // Yellow for par/good
-        if (points >= 1) return '#f8d7da'; // Light red for bogey
-        return '#f5c6cb'; // Red for worse
+        const style = getComputedStyle(document.documentElement);
+        if (points >= 4) return style.getPropertyValue('--bs-success-bg-subtle'); // Green for excellent
+        if (points >= 2) return style.getPropertyValue('--bs-warning-bg-subtle'); // Yellow for par/good
+        if (points >= 1) return style.getPropertyValue('--bs-danger-bg-subtle'); // Light red for bogey
+        return style.getPropertyValue('--bs-danger-bg-subtle'); // Red for worse
     }
 
     function getStablefordBorderColor(points) {
-        if (points >= 4) return '#28a745'; // Green
-        if (points >= 2) return '#ffc107'; // Yellow
-        if (points >= 1) return '#dc3545'; // Red
-        return '#dc3545'; // Red
+        const style = getComputedStyle(document.documentElement);
+        if (points >= 4) return style.getPropertyValue('--bs-success-border-subtle'); // Green
+        if (points >= 2) return style.getPropertyValue('--bs-warning-border-subtle'); // Yellow
+        if (points >= 1) return style.getPropertyValue('--bs-danger-border-subtle'); // Red
+        return style.getPropertyValue('--bs-danger-border-subtle'); // Red
     }
 });
 </script>
