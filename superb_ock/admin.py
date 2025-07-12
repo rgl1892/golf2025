@@ -1,11 +1,55 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.forms import ModelForm, CharField
+from django.core.files.storage import default_storage
+from django.contrib import messages
+from django.contrib.admin import SimpleListFilter
+import os
+import cv2
+from PIL import Image, ImageEnhance, ImageFilter
+from django.core.files.base import ContentFile
+import io
 from .models import *
 
 # Customize admin site header
 admin.site.site_header = "The Superb Ock Golf Admin"
 admin.site.site_title = "Golf Admin"
 admin.site.index_title = "Golf Tournament Management"
+
+# Custom filters
+class HasVideoFilter(SimpleListFilter):
+    title = 'has video'
+    parameter_name = 'has_video'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('yes', 'Has Video'),
+            ('no', 'No Video'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'yes':
+            return queryset.exclude(video='')
+        if self.value() == 'no':
+            return queryset.filter(video='')
+        return queryset
+
+class HasHighlightFilter(SimpleListFilter):
+    title = 'has highlights'
+    parameter_name = 'has_highlights'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('yes', 'Has Highlights'),
+            ('no', 'No Highlights'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'yes':
+            return queryset.filter(highlight__isnull=False).distinct()
+        if self.value() == 'no':
+            return queryset.filter(highlight__isnull=True)
+        return queryset
 
 @admin.register(CarouselImage)
 class CarouselImageAdmin(admin.ModelAdmin):
@@ -169,11 +213,12 @@ class GolfRoundAdmin(admin.ModelAdmin):
 
 @admin.register(Score)
 class ScoreAdmin(admin.ModelAdmin):
-    list_display = ['player_name', 'round_info', 'hole_info', 'shots_taken', 'stableford', 'handicap_display']
+    list_display = ['player_name', 'round_info', 'hole_info', 'shots_taken', 'stableford', 'highlight_count', 'handicap_display']
     list_editable = ['shots_taken', 'stableford']
-    list_filter = ['golf_round__event', 'hole__golf_course', 'sandy']
+    list_filter = ['golf_round__event', 'hole__golf_course', 'sandy', HasHighlightFilter]
     search_fields = ['player__first_name', 'player__second_name', 'hole__golf_course__name']
     ordering = ['-golf_round__id', 'hole__hole_number']
+    filter_horizontal = ['highlight']  # Makes it easier to select multiple highlights
     
     fieldsets = (
         ('Score Information', {
@@ -185,7 +230,7 @@ class ScoreAdmin(admin.ModelAdmin):
         }),
         ('Highlights', {
             'fields': ('highlight',),
-            'description': 'Special achievements on this hole'
+            'description': 'Link video highlights to this score. You can select multiple highlights.'
         }),
     )
     
@@ -204,19 +249,206 @@ class ScoreAdmin(admin.ModelAdmin):
     def handicap_display(self, obj):
         return f"{obj.handicap_index:.1f}"
     handicap_display.short_description = "HCP"
+    
+    def highlight_count(self, obj):
+        count = obj.highlight.count()
+        if count > 0:
+            return f"🎬 {count}"
+        return "-"
+    highlight_count.short_description = "Highlights"
+
+class HighlightAdminForm(ModelForm):
+    custom_filename = CharField(
+        max_length=100,
+        required=False,
+        help_text="Optional: Custom filename for the video (without extension). Leave blank to use uploaded filename."
+    )
+    
+    class Meta:
+        model = Highlight
+        fields = '__all__'
 
 @admin.register(Highlight)
 class HighlightAdmin(admin.ModelAdmin):
-    list_display = ['title', 'has_video', 'has_thumbnail']
+    form = HighlightAdminForm
+    list_display = ['title', 'has_video', 'has_thumbnail', 'preview_count', 'linked_scores', 'created_date']
+    list_filter = [HasVideoFilter]
     search_fields = ['title']
-    ordering = ['title']
+    ordering = ['-id']
+    readonly_fields = ['thumbnail_preview', 'video_preview', 'preview_images']
     
     fieldsets = (
-        ('Highlight Information', {
-            'fields': ('title', 'video', 'thumbnail'),
-            'description': 'Golf highlight videos and thumbnails'
+        ('Video Upload', {
+            'fields': ('title', 'video', 'custom_filename'),
+            'description': 'Upload a new golf highlight video'
+        }),
+        ('Generated Content (Auto-generated)', {
+            'fields': ('thumbnail', 'thumbnail_preview'),
+            'description': 'Thumbnails are automatically generated when you save'
+        }),
+        ('Preview Images', {
+            'fields': ('preview_images',),
+            'description': 'Preview images for hover effects (auto-generated)'
+        }),
+        ('Video Preview', {
+            'fields': ('video_preview',),
+            'description': 'Embedded video player'
         }),
     )
+    
+    def save_model(self, request, obj, form, change):
+        # Handle custom filename
+        if form.cleaned_data.get('custom_filename') and obj.video:
+            custom_name = form.cleaned_data['custom_filename']
+            # Get the file extension from the original video
+            original_name = obj.video.name
+            extension = os.path.splitext(original_name)[1]
+            # Create new filename
+            new_filename = f"highlights/{custom_name}{extension}"
+            
+            # Save with custom filename
+            if not change:  # New object
+                obj.video.name = new_filename
+        
+        super().save_model(request, obj, form, change)
+        
+        # Generate thumbnails and previews after saving
+        if obj.video:
+            try:
+                self.generate_thumbnails_and_previews(obj, request)
+                messages.success(request, f'Thumbnails and previews generated successfully for "{obj.title}"')
+            except Exception as e:
+                messages.error(request, f'Error generating thumbnails: {str(e)}')
+    
+    def generate_thumbnails_and_previews(self, highlight, request):
+        """Generate thumbnails and preview images for the highlight"""
+        video_path = highlight.video.path
+        
+        if not os.path.exists(video_path):
+            raise Exception(f"Video file not found: {video_path}")
+        
+        # Open video with OpenCV
+        cap = cv2.VideoCapture(video_path)
+        
+        if not cap.isOpened():
+            raise Exception(f"Cannot open video file: {video_path}")
+        
+        try:
+            # Get video properties
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            duration = total_frames / fps if fps > 0 else 0
+            
+            if duration == 0:
+                raise Exception("Cannot determine video duration")
+            
+            # Generate thumbnail (middle frame)
+            thumbnail_timestamp = duration / 2
+            self.generate_thumbnail(cap, highlight, thumbnail_timestamp, fps)
+            
+            # Generate 3 preview images at 25%, 50%, 75% of video
+            preview_timestamps = [duration * 0.25, duration * 0.5, duration * 0.75]
+            
+            # Clear existing previews
+            highlight.previews.all().delete()
+            
+            for i, timestamp in enumerate(preview_timestamps):
+                self.generate_preview(cap, highlight, timestamp, fps, i)
+                
+        finally:
+            cap.release()
+    
+    def generate_thumbnail(self, cap, highlight, timestamp, fps):
+        """Generate main thumbnail"""
+        frame_number = int(timestamp * fps)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+        
+        ret, frame = cap.read()
+        if not ret:
+            raise Exception("Cannot read frame for thumbnail")
+        
+        # Convert BGR to RGB
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        
+        # Convert to PIL Image and enhance
+        pil_image = Image.fromarray(frame_rgb)
+        pil_image = self.enhance_image(pil_image)
+        
+        # Resize to high-quality thumbnail size
+        pil_image.thumbnail((800, 600), Image.Resampling.LANCZOS)
+        
+        # Save to BytesIO
+        img_io = io.BytesIO()
+        pil_image.save(img_io, format='JPEG', quality=95, optimize=True)
+        img_io.seek(0)
+        
+        # Save to model
+        filename = f'{highlight.id}_thumbnail.jpg'
+        highlight.thumbnail.save(
+            filename,
+            ContentFile(img_io.getvalue()),
+            save=True
+        )
+    
+    def generate_preview(self, cap, highlight, timestamp, fps, order):
+        """Generate preview image"""
+        frame_number = int(timestamp * fps)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+        
+        ret, frame = cap.read()
+        if not ret:
+            raise Exception(f"Cannot read frame for preview {order}")
+        
+        # Convert BGR to RGB
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        
+        # Convert to PIL Image and enhance
+        pil_image = Image.fromarray(frame_rgb)
+        pil_image = self.enhance_image(pil_image)
+        
+        # Resize to high-quality preview size
+        pil_image.thumbnail((600, 400), Image.Resampling.LANCZOS)
+        
+        # Save to BytesIO
+        img_io = io.BytesIO()
+        pil_image.save(img_io, format='JPEG', quality=95, optimize=True)
+        img_io.seek(0)
+        
+        # Create HighlightPreview
+        preview = HighlightPreview.objects.create(
+            highlight=highlight,
+            timestamp=timestamp,
+            order=order
+        )
+        
+        filename = f'{highlight.id}_preview_{order}.jpg'
+        preview.image.save(
+            filename,
+            ContentFile(img_io.getvalue()),
+            save=True
+        )
+    
+    def enhance_image(self, image):
+        """Enhance image quality"""
+        try:
+            # Apply subtle sharpening
+            image = image.filter(ImageFilter.UnsharpMask(radius=1, percent=120, threshold=3))
+            
+            # Enhance contrast slightly
+            enhancer = ImageEnhance.Contrast(image)
+            image = enhancer.enhance(1.1)
+            
+            # Enhance color saturation slightly
+            enhancer = ImageEnhance.Color(image)
+            image = enhancer.enhance(1.05)
+            
+            # Enhance sharpness
+            enhancer = ImageEnhance.Sharpness(image)
+            image = enhancer.enhance(1.1)
+            
+            return image
+        except Exception:
+            return image  # Return original if enhancement fails
     
     def has_video(self, obj):
         return bool(obj.video)
@@ -227,4 +459,70 @@ class HighlightAdmin(admin.ModelAdmin):
         return bool(obj.thumbnail)
     has_thumbnail.boolean = True
     has_thumbnail.short_description = "Thumbnail"
+    
+    def preview_count(self, obj):
+        return obj.previews.count()
+    preview_count.short_description = "Previews"
+    
+    def linked_scores(self, obj):
+        count = obj.score_set.count()
+        return f"{count} score{'s' if count != 1 else ''}"
+    linked_scores.short_description = "Linked to"
+    
+    def created_date(self, obj):
+        return obj.id  # Using ID as a proxy for creation order
+    created_date.short_description = "ID"
+    
+    def thumbnail_preview(self, obj):
+        if obj.thumbnail:
+            return format_html(
+                '<img src="{}" style="max-width: 200px; max-height: 150px;" />',
+                obj.thumbnail.url
+            )
+        return "No thumbnail"
+    thumbnail_preview.short_description = "Thumbnail Preview"
+    
+    def video_preview(self, obj):
+        if obj.video:
+            return format_html(
+                '<video controls style="max-width: 400px; max-height: 300px;"><source src="{}" type="video/mp4">Your browser does not support the video tag.</video>',
+                obj.video.url
+            )
+        return "No video"
+    video_preview.short_description = "Video Preview"
+    
+    def preview_images(self, obj):
+        previews = obj.previews.all().order_by('order')
+        if previews:
+            html = '<div style="display: flex; gap: 10px;">'
+            for preview in previews:
+                html += format_html(
+                    '<img src="{}" style="max-width: 100px; max-height: 75px; border: 1px solid #ccc;" title="Preview {}"/>',
+                    preview.image.url,
+                    preview.order + 1
+                )
+            html += '</div>'
+            return format_html(html)
+        return "No preview images"
+    preview_images.short_description = "Preview Images"
+
+@admin.register(HighlightPreview)
+class HighlightPreviewAdmin(admin.ModelAdmin):
+    list_display = ['highlight_title', 'order', 'timestamp', 'image_preview']
+    list_filter = ['highlight', 'order']
+    ordering = ['highlight', 'order']
+    readonly_fields = ['image_preview']
+    
+    def highlight_title(self, obj):
+        return obj.highlight.title
+    highlight_title.short_description = "Highlight"
+    
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" style="max-width: 150px; max-height: 100px;" />',
+                obj.image.url
+            )
+        return "No image"
+    image_preview.short_description = "Preview"
  

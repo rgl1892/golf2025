@@ -18,7 +18,7 @@ class Command(BaseCommand):
             help='Regenerate thumbnails even if they already exist',
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *_args, **options):
         self.stdout.write('Starting thumbnail generation...')
         
         highlights = Highlight.objects.all()
