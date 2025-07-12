@@ -379,9 +379,10 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
-// Highlight preview cycling for round highlights
+// Highlight preview cycling and video preloading for round highlights
 document.addEventListener('DOMContentLoaded', function() {
     const previewContainers = document.querySelectorAll('.preview-images-small');
+    const preloadedRoundVideos = new Set(); // Track preloaded videos
     
     previewContainers.forEach(container => {
         const images = container.querySelectorAll('.preview-image-small');
@@ -392,8 +393,10 @@ document.addEventListener('DOMContentLoaded', function() {
             let interval;
             
             const parentCard = container.closest('.highlight-card-small');
+            const videoUrl = parentCard.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
             
             parentCard.addEventListener('mouseenter', function() {
+                // Start image cycling
                 interval = setInterval(() => {
                     // Hide current image
                     images[currentIndex].classList.remove('active');
@@ -404,6 +407,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Show next image
                     images[currentIndex].classList.add('active');
                 }, 800);
+                
+                // Preload video on hover (after a brief delay)
+                if (videoUrl && !preloadedRoundVideos.has(videoUrl)) {
+                    setTimeout(() => {
+                        preloadRoundVideo(videoUrl);
+                        preloadedRoundVideos.add(videoUrl);
+                    }, 500); // Wait 500ms before preloading
+                }
             });
             
             parentCard.addEventListener('mouseleave', function() {
@@ -418,21 +429,57 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Video player function for round highlights
+// Preload video function for round highlights
+function preloadRoundVideo(videoUrl) {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'video';
+    link.href = videoUrl;
+    link.setAttribute('crossorigin', 'anonymous');
+    document.head.appendChild(link);
+    
+    console.log('Preloading round video:', videoUrl);
+}
+
+// Video player function for round highlights with loading optimization
 function playRoundVideo(videoUrl, title, context) {
     const video = document.getElementById('roundHighlightVideo');
     const modal = new bootstrap.Modal(document.getElementById('roundVideoModal'));
     const modalTitle = document.getElementById('roundVideoModalTitle');
     
+    // Show loading state
+    video.style.opacity = '0.7';
+    
+    // Set video source and metadata
     video.src = videoUrl;
+    video.load(); // Force reload with new source
     modalTitle.textContent = `${title} - ${context}`;
+    
+    // Show modal
     modal.show();
+    
+    // Handle video loading events
+    video.addEventListener('loadstart', function() {
+        console.log('Round video loading started...');
+    }, { once: true });
+    
+    video.addEventListener('canplay', function() {
+        video.style.opacity = '1';
+        // Optionally auto-play when ready
+        // video.play();
+    }, { once: true });
+    
+    video.addEventListener('error', function(e) {
+        console.error('Round video loading error:', e);
+        video.style.opacity = '1';
+    }, { once: true });
     
     // Pause video when modal is closed
     document.getElementById('roundVideoModal').addEventListener('hidden.bs.modal', function() {
         video.pause();
         video.currentTime = 0;
-    });
+        video.src = ''; // Clear source to free memory
+    }, { once: true });
 }
 </script>
 
@@ -445,7 +492,7 @@ function playRoundVideo(videoUrl, title, context) {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <video id="roundHighlightVideo" controls style="width: 100%; max-width: 100%; max-height: 70vh; height: auto;">
+                <video id="roundHighlightVideo" controls preload="metadata" style="width: 100%; max-width: 100%; max-height: 70vh; height: auto;">
                     Your browser does not support the video tag.
                 </video>
             </div>

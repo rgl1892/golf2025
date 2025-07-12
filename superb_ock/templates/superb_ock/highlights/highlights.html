@@ -251,7 +251,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <video id="highlightVideo" controls style="width: 100%; max-width: 100%; max-height: 70vh; height: auto;">
+                <video id="highlightVideo" controls preload="metadata" style="width: 100%; max-width: 100%; max-height: 70vh; height: auto;">
                     Your browser does not support the video tag.
                 </video>
             </div>
@@ -260,9 +260,10 @@
 </div>
 
 <script>
-// Preview image cycling on hover
+// Preview image cycling and video preloading on hover
 document.addEventListener('DOMContentLoaded', function() {
     const previewContainers = document.querySelectorAll('.preview-images');
+    const preloadedVideos = new Set(); // Track preloaded videos
     
     previewContainers.forEach(container => {
         const images = container.querySelectorAll('.preview-image');
@@ -273,8 +274,10 @@ document.addEventListener('DOMContentLoaded', function() {
             let interval;
             
             const parentCard = container.closest('.highlight-card');
+            const videoUrl = parentCard.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
             
             parentCard.addEventListener('mouseenter', function() {
+                // Start image cycling
                 interval = setInterval(() => {
                     // Hide current image
                     images[currentIndex].classList.remove('active');
@@ -285,6 +288,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Show next image
                     images[currentIndex].classList.add('active');
                 }, 800); // Change image every 800ms
+                
+                // Preload video on hover (after a brief delay)
+                if (videoUrl && !preloadedVideos.has(videoUrl)) {
+                    setTimeout(() => {
+                        preloadVideo(videoUrl);
+                        preloadedVideos.add(videoUrl);
+                    }, 500); // Wait 500ms before preloading
+                }
             });
             
             parentCard.addEventListener('mouseleave', function() {
@@ -299,19 +310,55 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Video player function
+// Preload video function
+function preloadVideo(videoUrl) {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'video';
+    link.href = videoUrl;
+    link.setAttribute('crossorigin', 'anonymous');
+    document.head.appendChild(link);
+    
+    console.log('Preloading video:', videoUrl);
+}
+
+// Video player function with loading optimization
 function playVideo(videoUrl) {
     const video = document.getElementById('highlightVideo');
     const modal = new bootstrap.Modal(document.getElementById('videoModal'));
     
+    // Show loading state
+    video.style.opacity = '0.7';
+    
+    // Set video source and load
     video.src = videoUrl;
+    video.load(); // Force reload with new source
+    
+    // Show modal and try to play when ready
     modal.show();
+    
+    // Handle video loading events
+    video.addEventListener('loadstart', function() {
+        console.log('Video loading started...');
+    }, { once: true });
+    
+    video.addEventListener('canplay', function() {
+        video.style.opacity = '1';
+        // Optionally auto-play when ready
+        // video.play();
+    }, { once: true });
+    
+    video.addEventListener('error', function(e) {
+        console.error('Video loading error:', e);
+        video.style.opacity = '1';
+    }, { once: true });
     
     // Pause video when modal is closed
     document.getElementById('videoModal').addEventListener('hidden.bs.modal', function() {
         video.pause();
         video.currentTime = 0;
-    });
+        video.src = ''; // Clear source to free memory
+    }, { once: true });
 }
 </script>
 {% endblock %}
