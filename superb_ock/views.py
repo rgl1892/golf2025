@@ -610,6 +610,29 @@ class GolfRoundView(View):
                         'score': score
                     })
         
+        # Get round info for display
+        round_info = {
+            'round': current_round,
+            'event': current_round.event,
+            'date': current_round.date_started,
+        }
+        
+        # Get course info from first score if available
+        first_score = scores.first()
+        if first_score:
+            course_data = Score.objects.filter(golf_round__id=round_id).select_related(
+                'hole__golf_course'
+            ).first()
+            if course_data and course_data.hole and course_data.hole.golf_course:
+                round_info.update({
+                    'course': course_data.hole.golf_course,
+                    'course_name': course_data.hole.golf_course.name,
+                    'tees': course_data.hole.golf_course.tees,
+                    'par': course_data.hole.golf_course.par,
+                    'course_rating': course_data.hole.golf_course.course_rating,
+                    'slope_rating': course_data.hole.golf_course.slope_rating,
+                })
+        
         return render(
             request,
             self.template_name,
@@ -618,7 +641,8 @@ class GolfRoundView(View):
                 "round_id": round_id,
                 "summary": summary_data,
                 "other_rounds": other_rounds,
-                "highlights_data": highlights_data
+                "highlights_data": highlights_data,
+                "round_info": round_info
                 },
         )
 
