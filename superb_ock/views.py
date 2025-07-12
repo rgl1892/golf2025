@@ -973,3 +973,58 @@ class EventView(View):
             })
         
         return cumulative_data
+
+
+class HighlightsView(View):
+    
+    template_name = 'superb_ock/highlights/highlights.html'
+    
+    def get(self, request):
+        # Get all scores with highlights and related data
+        scores_with_highlights = Score.objects.select_related(
+            'player', 'hole__golf_course', 'golf_round'
+        ).prefetch_related('highlight__previews').filter(
+            highlight__isnull=False
+        ).distinct()
+        
+        # Get all highlights to find unassociated ones
+        all_highlights = Highlight.objects.prefetch_related('previews').all()
+        associated_highlight_ids = set()
+        
+        # Organize highlights by player
+        player_highlights = {}
+        
+        for score in scores_with_highlights:
+            if score.player and score.player.first_name and score.player.second_name:
+                player_name = f"{score.player.first_name} {score.player.second_name}"
+                if player_name not in player_highlights:
+                    player_highlights[player_name] = []
+                
+                # Add each highlight for this score
+                for highlight in score.highlight.all():
+                    associated_highlight_ids.add(highlight.id)
+                    highlight_with_context = {
+                        'highlight': highlight,
+                        'score': score,
+                        'hole': score.hole,
+                        'course': score.hole.golf_course if score.hole else None,
+                        'round': score.golf_round
+                    }
+                    player_highlights[player_name].append(highlight_with_context)
+        
+        # Find unassociated highlights
+        unassociated_highlights = []
+        for highlight in all_highlights:
+            if highlight.id not in associated_highlight_ids:
+                unassociated_highlights.append({'highlight': highlight})
+        
+        # Sort players alphabetically
+        sorted_players = sorted(player_highlights.items())
+        
+        context = {
+            'player_highlights': sorted_players,
+            'unassociated_highlights': unassociated_highlights,
+            'total_highlights': all_highlights.count()
+        }
+        
+        return render(request, self.template_name, context)

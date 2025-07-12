@@ -93,10 +93,23 @@ class Player(models.Model):
 class Highlight(models.Model):
     title = models.CharField(max_length=40)
     video = models.FileField(upload_to='highlights')
-    thumbnail = models.ImageField(blank=True)
+    thumbnail = models.ImageField(blank=True, upload_to='highlights/thumbnails')
 
     def __str__(self):
         return self.title
+
+class HighlightPreview(models.Model):
+    highlight = models.ForeignKey(Highlight, on_delete=models.CASCADE, related_name='previews')
+    image = models.ImageField(upload_to='highlights/previews')
+    timestamp = models.FloatField(help_text="Timestamp in seconds where this preview was captured")
+    order = models.PositiveIntegerField(default=0, help_text="Display order (0=first, 1=second, 2=third)")
+    
+    class Meta:
+        ordering = ['order']
+        unique_together = [['highlight', 'order']]
+    
+    def __str__(self):
+        return f"{self.highlight.title} - Preview {self.order + 1}"
 
 class Score(models.Model):
 

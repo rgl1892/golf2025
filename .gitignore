@@ -2,7 +2,7 @@ sqlite3.exe
 .venv
 golf2025/dev.py
 *.sqlite3
-media/
+media/carousel/
 *.pyc
 */__pycache__/
 golf2025-react

@@ -11,6 +11,7 @@ urlpatterns = [
     path("rounds/<int:round_id>/<int:hole_number>",views.EditScore.as_view() , name="edit_score"),
     path("event/<int:event_id>",views.EventView.as_view(), name='event'),
     path("heatmap/",views.HeatMap.as_view() , name="heatmap"),
+    path("highlights/",views.HighlightsView.as_view() , name="highlights"),
 
     
 ]
