@@ -3,7 +3,7 @@ import os
 from django.core.management.base import BaseCommand
 from django.core.files.base import ContentFile
 from django.conf import settings
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageFilter
 import io
 from superb_ock.models import Highlight, HighlightPreview
 
@@ -98,12 +98,15 @@ class Command(BaseCommand):
         # Convert to PIL Image
         pil_image = Image.fromarray(frame_rgb)
         
-        # Resize to reasonable thumbnail size
-        pil_image.thumbnail((400, 300), Image.Resampling.LANCZOS)
+        # Enhance image quality
+        pil_image = self.enhance_image(pil_image)
         
-        # Save to BytesIO
+        # Resize to high-quality thumbnail size (HD-ready)
+        pil_image.thumbnail((800, 600), Image.Resampling.LANCZOS)
+        
+        # Save to BytesIO with high quality
         img_io = io.BytesIO()
-        pil_image.save(img_io, format='JPEG', quality=85)
+        pil_image.save(img_io, format='JPEG', quality=95, optimize=True)
         img_io.seek(0)
         
         # Save to model
@@ -129,12 +132,15 @@ class Command(BaseCommand):
         # Convert to PIL Image
         pil_image = Image.fromarray(frame_rgb)
         
-        # Resize to reasonable preview size
-        pil_image.thumbnail((300, 200), Image.Resampling.LANCZOS)
+        # Enhance image quality
+        pil_image = self.enhance_image(pil_image)
         
-        # Save to BytesIO
+        # Resize to high-quality preview size (HD-ready)
+        pil_image.thumbnail((600, 400), Image.Resampling.LANCZOS)
+        
+        # Save to BytesIO with high quality
         img_io = io.BytesIO()
-        pil_image.save(img_io, format='JPEG', quality=85)
+        pil_image.save(img_io, format='JPEG', quality=95, optimize=True)
         img_io.seek(0)
         
         # Create HighlightPreview
@@ -150,3 +156,28 @@ class Command(BaseCommand):
             ContentFile(img_io.getvalue()),
             save=True
         )
+    
+    def enhance_image(self, image):
+        """Enhance image quality with sharpening and color adjustment"""
+        try:
+            # Apply subtle sharpening
+            image = image.filter(ImageFilter.UnsharpMask(radius=1, percent=120, threshold=3))
+            
+            # Enhance contrast slightly
+            enhancer = ImageEnhance.Contrast(image)
+            image = enhancer.enhance(1.1)
+            
+            # Enhance color saturation slightly
+            enhancer = ImageEnhance.Color(image)
+            image = enhancer.enhance(1.05)
+            
+            # Enhance sharpness
+            enhancer = ImageEnhance.Sharpness(image)
+            image = enhancer.enhance(1.1)
+            
+            return image
+        except Exception as e:
+            self.stdout.write(
+                self.style.WARNING(f'Image enhancement failed: {str(e)}')
+            )
+            return image  # Return original if enhancement fails
