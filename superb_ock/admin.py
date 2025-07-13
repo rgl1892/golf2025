@@ -219,6 +219,7 @@ class ScoreAdmin(admin.ModelAdmin):
     search_fields = ['player__first_name', 'player__second_name', 'hole__golf_course__name']
     ordering = ['-golf_round__id', 'hole__hole_number']
     filter_horizontal = ['highlight']  # Makes it easier to select multiple highlights
+    actions = ['bulk_link_highlight', 'bulk_unlink_highlights']
     
     fieldsets = (
         ('Score Information', {
@@ -256,6 +257,28 @@ class ScoreAdmin(admin.ModelAdmin):
             return f"🎬 {count}"
         return "-"
     highlight_count.short_description = "Highlights"
+    
+    def bulk_link_highlight(self, request, queryset):
+        """Bulk action to link a highlight to multiple scores"""
+        from django.http import HttpResponseRedirect
+        from django.urls import reverse
+        
+        selected_ids = list(queryset.values_list('id', flat=True))
+        request.session['bulk_score_ids'] = selected_ids
+        
+        return HttpResponseRedirect(reverse('admin:bulk_highlight_link'))
+    bulk_link_highlight.short_description = "🎬 Link highlight to selected scores"
+    
+    def bulk_unlink_highlights(self, request, queryset):
+        """Bulk action to remove all highlights from selected scores"""
+        count = 0
+        for score in queryset:
+            if score.highlight.exists():
+                score.highlight.clear()
+                count += 1
+        
+        self.message_user(request, f"Removed highlights from {count} scores.")
+    bulk_unlink_highlights.short_description = "🗑️ Remove all highlights from selected scores"
 
 class HighlightAdminForm(ModelForm):
     custom_filename = CharField(

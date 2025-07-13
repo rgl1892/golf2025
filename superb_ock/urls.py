@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import views, admin_views
 from .views_stats import stats, player_stats, course_stats
 
 urlpatterns = [
@@ -38,5 +38,15 @@ urlpatterns.extend(
     path('stats/players/<int:player_id>/', player_stats.player_detail_stats, name='player_detail'),
     path('stats/courses/', course_stats.course_stats_overview, name='course_stats'),
     path('stats/courses/<int:course_id>/', course_stats.course_detail_stats, name='course_detail'),
+    ]
+)
+
+# Admin management URLs
+urlpatterns.extend(
+    [
+    path('admin/bulk-highlight-link/', admin_views.bulk_highlight_link, name='admin:bulk_highlight_link'),
+    path('admin/highlight-management/', admin_views.highlight_management, name='admin:highlight_management'),
+    path('admin/ajax/toggle-highlight/', admin_views.ajax_toggle_highlight, name='admin:ajax_toggle_highlight'),
+    path('rounds/<int:round_id>/add-highlight/', admin_views.add_round_highlight, name='add_round_highlight'),
     ]
 )

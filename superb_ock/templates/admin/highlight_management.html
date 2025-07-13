@@ -1,0 +1,429 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title|default:"Django site admin" }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+<div class="module aligned">
+    <h2>🎬 Advanced Highlight-Score Management</h2>
+    <p>Quickly link/unlink highlights to scores with visual feedback. Filter by round or player to find specific scores.</p>
+    
+    <!-- Filters -->
+    <form method="get" class="filters">
+        <div class="form-row">
+            <div class="field-box">
+                <label for="round">Round:</label>
+                <select name="round" id="round">
+                    <option value="">All Rounds</option>
+                    {% for round in rounds %}
+                    <option value="{{ round.id }}" {% if selected_round == round.id|stringformat:"s" %}selected{% endif %}>
+                        Round {{ round.id }} - {{ round.event.name }}
+                        {% if round.date_started %} ({{ round.date_started }}){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="field-box">
+                <label for="player">Player:</label>
+                <select name="player" id="player">
+                    <option value="">All Players</option>
+                    {% for player in players %}
+                    <option value="{{ player.id }}" {% if selected_player == player.id|stringformat:"s" %}selected{% endif %}>
+                        {{ player.first_name }} {{ player.second_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="field-box">
+                <input type="submit" value="Filter" class="default" />
+                <a href="{% url 'admin:highlight_management' %}" class="button">Clear</a>
+            </div>
+        </div>
+    </form>
+    
+    <!-- Highlight Selection Panel -->
+    <div class="highlight-panel">
+        <h3>Available Highlights</h3>
+        <div class="highlight-list">
+            {% for highlight in highlights %}
+            <div class="highlight-item" data-highlight-id="{{ highlight.id }}">
+                <span class="highlight-title">{{ highlight.title }}</span>
+                {% if highlight.thumbnail %}
+                <img src="{{ highlight.thumbnail.url }}" alt="Thumbnail" class="highlight-thumb">
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Scores Display -->
+    <div class="scores-container">
+        {% for round_name, players in grouped_scores.items %}
+        <div class="round-section">
+            <h3>{{ round_name }}</h3>
+            
+            {% for player_name, scores in players.items %}
+            <div class="player-section">
+                <h4>{{ player_name }}</h4>
+                
+                <div class="scores-grid">
+                    {% for score in scores %}
+                    <div class="score-item" data-score-id="{{ score.id }}">
+                        <div class="score-info">
+                            <strong>Hole {{ score.hole.hole_number }}</strong>
+                            <span class="course-name">{{ score.hole.golf_course.name }}</span>
+                            {% if score.shots_taken %}
+                            <span class="score-details">{{ score.shots_taken }} shots, {{ score.stableford }} pts</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="score-highlights">
+                            {% for highlight in score.highlight.all %}
+                            <span class="linked-highlight" data-highlight-id="{{ highlight.id }}">
+                                {{ highlight.title }}
+                                <button class="remove-btn" data-action="remove">×</button>
+                            </span>
+                            {% endfor %}
+                            
+                            <div class="drop-zone" data-score-id="{{ score.id }}">
+                                Drop highlight here or click to add
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% empty %}
+        <p>No scores found. Try adjusting your filters.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.filters {
+    background: #f8f8f8;
+    padding: 15px;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+}
+
+.filters .form-row {
+    display: flex;
+    gap: 20px;
+    align-items: end;
+}
+
+.field-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.field-box label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.highlight-panel {
+    background: #e8f4f8;
+    padding: 15px;
+    border: 1px solid #b8dce8;
+    margin-bottom: 20px;
+}
+
+.highlight-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.highlight-item {
+    background: #417690;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: move;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+}
+
+.highlight-item:hover {
+    background: #2e5a75;
+}
+
+.highlight-item.dragging {
+    opacity: 0.5;
+}
+
+.highlight-thumb {
+    width: 30px;
+    height: 20px;
+    object-fit: cover;
+    border-radius: 3px;
+}
+
+.round-section {
+    margin-bottom: 30px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.round-section h3 {
+    background: #417690;
+    color: white;
+    padding: 10px 15px;
+    margin: 0;
+    border-radius: 5px 5px 0 0;
+}
+
+.player-section {
+    margin: 15px;
+}
+
+.player-section h4 {
+    background: #f0f0f0;
+    padding: 8px 12px;
+    margin: 0 0 10px 0;
+    border-radius: 3px;
+}
+
+.scores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.score-item {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    background: white;
+}
+
+.score-info {
+    margin-bottom: 10px;
+}
+
+.score-info strong {
+    display: block;
+    color: #333;
+}
+
+.course-name {
+    font-size: 12px;
+    color: #666;
+}
+
+.score-details {
+    font-size: 11px;
+    color: #888;
+}
+
+.score-highlights {
+    min-height: 40px;
+}
+
+.linked-highlight {
+    display: inline-block;
+    background: #28a745;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    margin: 2px;
+    position: relative;
+}
+
+.remove-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-weight: bold;
+    margin-left: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.remove-btn:hover {
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+}
+
+.drop-zone {
+    border: 2px dashed #ddd;
+    padding: 8px;
+    text-align: center;
+    font-size: 11px;
+    color: #999;
+    border-radius: 3px;
+    margin-top: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.drop-zone:hover {
+    border-color: #417690;
+    background: #f0f8ff;
+}
+
+.drop-zone.drag-over {
+    border-color: #28a745;
+    background: #f0fff0;
+}
+
+.message {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    padding: 10px 15px;
+    border-radius: 5px;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const highlightItems = document.querySelectorAll('.highlight-item');
+    const dropZones = document.querySelectorAll('.drop-zone');
+    const removeBtns = document.querySelectorAll('.remove-btn');
+    
+    // Make highlights draggable
+    highlightItems.forEach(item => {
+        item.draggable = true;
+        
+        item.addEventListener('dragstart', function(e) {
+            e.dataTransfer.setData('text/plain', this.dataset.highlightId);
+            this.classList.add('dragging');
+        });
+        
+        item.addEventListener('dragend', function() {
+            this.classList.remove('dragging');
+        });
+    });
+    
+    // Handle drop zones
+    dropZones.forEach(zone => {
+        zone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+        });
+        
+        zone.addEventListener('dragleave', function() {
+            this.classList.remove('drag-over');
+        });
+        
+        zone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            const highlightId = e.dataTransfer.getData('text/plain');
+            const scoreId = this.dataset.scoreId;
+            
+            linkHighlight(scoreId, highlightId, 'add');
+        });
+        
+        zone.addEventListener('click', function() {
+            // Show selection dropdown or modal
+            showHighlightSelector(this.dataset.scoreId);
+        });
+    });
+    
+    // Handle remove buttons
+    removeBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const highlightSpan = this.closest('.linked-highlight');
+            const highlightId = highlightSpan.dataset.highlightId;
+            const scoreItem = this.closest('.score-item');
+            const scoreId = scoreItem.dataset.scoreId;
+            
+            linkHighlight(scoreId, highlightId, 'remove');
+        });
+    });
+    
+    function linkHighlight(scoreId, highlightId, action) {
+        fetch('{% url "admin:ajax_toggle_highlight" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                score_id: scoreId,
+                highlight_id: highlightId,
+                action: action
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(data.message, 'success');
+                // Refresh the page to show updated highlights
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showMessage(data.error, 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('Network error occurred', 'error');
+        });
+    }
+    
+    function showMessage(message, type) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        messageDiv.textContent = message;
+        document.body.appendChild(messageDiv);
+        
+        setTimeout(() => {
+            messageDiv.style.opacity = '0';
+            setTimeout(() => messageDiv.remove(), 300);
+        }, 3000);
+    }
+    
+    function showHighlightSelector(scoreId) {
+        // Simple implementation - could be enhanced with a proper modal
+        const highlights = Array.from(document.querySelectorAll('.highlight-item'));
+        const options = highlights.map(h => h.querySelector('.highlight-title').textContent);
+        
+        const selected = prompt('Select highlight:\n' + options.map((opt, i) => `${i+1}. ${opt}`).join('\n'));
+        
+        if (selected && !isNaN(selected)) {
+            const index = parseInt(selected) - 1;
+            if (index >= 0 && index < highlights.length) {
+                const highlightId = highlights[index].dataset.highlightId;
+                linkHighlight(scoreId, highlightId, 'add');
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

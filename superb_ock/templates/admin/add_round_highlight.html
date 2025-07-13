@@ -1,0 +1,314 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title|default:"Django site admin" }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'golf_round' round_id %}">Round {{ round_id }}</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+<div class="module aligned">
+    <h2>🎬 Upload Highlight for Round {{ round_id }}</h2>
+    
+    <!-- Round Context Information -->
+    <div class="round-context" style="background: #e8f4f8; padding: 15px; border: 1px solid #b8dce8; margin-bottom: 20px; border-radius: 5px;">
+        <h3 style="margin-top: 0; color: #2c5282;">Round Information</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div>
+                <strong>Event:</strong> {{ round_obj.event.name }}<br>
+                {% if round_obj.date_started %}
+                <strong>Date:</strong> {{ round_obj.date_started|date:"M d, Y" }}<br>
+                {% endif %}
+                <strong>Round ID:</strong> {{ round_id }}
+            </div>
+            {% if players_scores %}
+            <div>
+                <strong>Players in Round:</strong><br>
+                {% for player_name, scores in players_scores.items %}
+                    <small>{{ player_name }} ({{ scores|length }} holes)</small><br>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if form.errors %}
+    <div class="errornote">
+        <h3>Please correct the error{{ form.errors|pluralize }} below.</h3>
+        {{ form.errors }}
+    </div>
+    {% endif %}
+    
+    <form method="post" enctype="multipart/form-data" class="highlight-upload-form">
+        {% csrf_token %}
+        
+        <fieldset class="module aligned">
+            <h2>Highlight Details</h2>
+            
+            <div class="form-row field-title">
+                <div>
+                    <label for="{{ form.title.id_for_label }}" class="required">Title:</label>
+                    {{ form.title }}
+                    {% if form.title.help_text %}
+                    <div class="help">{{ form.title.help_text }}</div>
+                    {% endif %}
+                    {% if form.title.errors %}
+                    <ul class="errorlist">{{ form.title.errors }}</ul>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-row field-video_file">
+                <div>
+                    <label for="{{ form.video_file.id_for_label }}" class="required">Video File:</label>
+                    {{ form.video_file }}
+                    {% if form.video_file.help_text %}
+                    <div class="help">{{ form.video_file.help_text }}</div>
+                    {% endif %}
+                    {% if form.video_file.errors %}
+                    <ul class="errorlist">{{ form.video_file.errors }}</ul>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-row field-custom_filename">
+                <div>
+                    <label for="{{ form.custom_filename.id_for_label }}">Custom Filename:</label>
+                    {{ form.custom_filename }}
+                    {% if form.custom_filename.help_text %}
+                    <div class="help">{{ form.custom_filename.help_text }}</div>
+                    {% endif %}
+                    {% if form.custom_filename.errors %}
+                    <ul class="errorlist">{{ form.custom_filename.errors }}</ul>
+                    {% endif %}
+                </div>
+            </div>
+        </fieldset>
+        
+        <fieldset class="module aligned">
+            <h2>Link to Score (Optional)</h2>
+            <p class="help">Select a player and hole to automatically link this highlight to a specific score. Leave blank to create an unlinked highlight.</p>
+            
+            <div class="form-row field-player">
+                <div>
+                    <label for="{{ form.player.id_for_label }}">Player:</label>
+                    {{ form.player }}
+                    {% if form.player.help_text %}
+                    <div class="help">{{ form.player.help_text }}</div>
+                    {% endif %}
+                    {% if form.player.errors %}
+                    <ul class="errorlist">{{ form.player.errors }}</ul>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-row field-hole_number">
+                <div>
+                    <label for="{{ form.hole_number.id_for_label }}">Hole:</label>
+                    {{ form.hole_number }}
+                    {% if form.hole_number.help_text %}
+                    <div class="help">{{ form.hole_number.help_text }}</div>
+                    {% endif %}
+                    {% if form.hole_number.errors %}
+                    <ul class="errorlist">{{ form.hole_number.errors }}</ul>
+                    {% endif %}
+                </div>
+            </div>
+        </fieldset>
+        
+        <!-- Preview Section -->
+        {% if players_scores %}
+        <fieldset class="module aligned">
+            <h2>Available Scores in This Round</h2>
+            <div class="scores-preview" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+                {% for player_name, scores in players_scores.items %}
+                <div class="player-scores" style="margin-bottom: 15px;">
+                    <h4 style="color: #2c5282; margin-bottom: 8px;">{{ player_name }}</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px;">
+                        {% for score in scores %}
+                        <div class="score-box" style="border: 1px solid #ddd; padding: 6px; text-align: center; border-radius: 3px; background: #f9f9f9;">
+                            <strong>Hole {{ score.hole.hole_number }}</strong><br>
+                            <small>{{ score.hole.golf_course.name }}</small><br>
+                            {% if score.shots_taken %}
+                            <small>{{ score.shots_taken }} shots, {{ score.stableford }} pts</small>
+                            {% else %}
+                            <small class="text-muted">No score yet</small>
+                            {% endif %}
+                            {% if score.highlight.exists %}
+                            <br><small style="color: #28a745;">📹 Has highlights</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </fieldset>
+        {% endif %}
+        
+        <div class="submit-row">
+            <input type="submit" value="Upload Highlight" class="default" />
+            <a href="{% url 'golf_round' round_id %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.round-context h3 {
+    margin-top: 0;
+    color: #2c5282;
+}
+
+.highlight-upload-form .form-row {
+    margin-bottom: 15px;
+}
+
+.highlight-upload-form label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.highlight-upload-form input[type="text"],
+.highlight-upload-form input[type="file"],
+.highlight-upload-form select {
+    width: 100%;
+    max-width: 400px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.highlight-upload-form input[type="file"] {
+    background: white;
+}
+
+.highlight-upload-form .help {
+    font-size: 11px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.cancel-link {
+    margin-left: 15px;
+}
+
+.player-scores h4 {
+    color: #2c5282;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 4px;
+}
+
+.score-box {
+    transition: background-color 0.2s ease;
+}
+
+.score-box:hover {
+    background: #e8f4f8 !important;
+}
+
+.errorlist {
+    color: #ba2121;
+    margin: 5px 0;
+    padding: 0;
+    list-style: none;
+}
+
+.errornote {
+    background: #ffc;
+    border: 1px solid #ddb;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .round-context > div {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .scores-preview .player-scores > div {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const playerSelect = document.getElementById('{{ form.player.id_for_label }}');
+    const holeSelect = document.getElementById('{{ form.hole_number.id_for_label }}');
+    
+    // Highlight corresponding score box when player/hole is selected
+    function highlightScoreBox() {
+        // Remove previous highlights
+        document.querySelectorAll('.score-box').forEach(box => {
+            box.style.background = '#f9f9f9';
+            box.style.border = '1px solid #ddd';
+        });
+        
+        const selectedPlayer = playerSelect.value;
+        const selectedHole = holeSelect.value;
+        
+        if (selectedPlayer && selectedHole) {
+            // Find and highlight the corresponding score box
+            const playerSections = document.querySelectorAll('.player-scores');
+            playerSections.forEach(section => {
+                const playerName = section.querySelector('h4').textContent.trim();
+                const playerOption = Array.from(playerSelect.options).find(opt => opt.value === selectedPlayer);
+                
+                if (playerOption && playerName === playerOption.textContent.trim()) {
+                    const scoreBoxes = section.querySelectorAll('.score-box');
+                    scoreBoxes.forEach(box => {
+                        const holeText = box.querySelector('strong').textContent;
+                        if (holeText.includes(`Hole ${selectedHole}`)) {
+                            box.style.background = '#d4edda';
+                            box.style.border = '2px solid #28a745';
+                            box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+                }
+            });
+        }
+    }
+    
+    // Add event listeners
+    playerSelect.addEventListener('change', highlightScoreBox);
+    holeSelect.addEventListener('change', highlightScoreBox);
+    
+    // Form validation
+    const form = document.querySelector('.highlight-upload-form');
+    form.addEventListener('submit', function(e) {
+        const titleField = document.getElementById('{{ form.title.id_for_label }}');
+        const videoField = document.getElementById('{{ form.video_file.id_for_label }}');
+        
+        if (!titleField.value.trim()) {
+            alert('Please enter a title for the highlight.');
+            titleField.focus();
+            e.preventDefault();
+            return;
+        }
+        
+        if (!videoField.value) {
+            alert('Please select a video file to upload.');
+            videoField.focus();
+            e.preventDefault();
+            return;
+        }
+        
+        // Show loading message
+        const submitBtn = form.querySelector('input[type="submit"]');
+        submitBtn.value = 'Uploading and Processing...';
+        submitBtn.disabled = true;
+    });
+});
+</script>
+{% endblock %}

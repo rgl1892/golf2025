@@ -1,0 +1,107 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title|default:"Django site admin" }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; <a href="{% url 'admin:superb_ock_score_changelist' %}">Scores</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+<div class="module aligned">
+    <h2>Selected Scores ({{ scores_count }})</h2>
+    
+    {% if scores %}
+    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Course & Hole</th>
+                    <th>Round</th>
+                    <th>Current Highlights</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for score in scores %}
+                <tr>
+                    <td>{{ score.player.first_name }} {{ score.player.second_name }}</td>
+                    <td>{{ score.hole.golf_course.name }} - Hole {{ score.hole.hole_number }}</td>
+                    <td>Round {{ score.golf_round.id }} ({{ score.golf_round.event.name }})</td>
+                    <td>
+                        {% for highlight in score.highlight.all %}
+                            <span class="tag">{{ highlight.title }}</span>
+                        {% empty %}
+                            <em>No highlights</em>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <fieldset class="module aligned">
+            <h2>Select Highlight to Link</h2>
+            
+            <div class="form-row">
+                <div>
+                    <label for="id_highlight">Choose highlight:</label>
+                    <select name="highlight_id" id="id_highlight" required>
+                        <option value="">---------</option>
+                        {% for highlight in highlights %}
+                        <option value="{{ highlight.id }}">{{ highlight.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+        
+        <div class="submit-row">
+            <input type="submit" value="Link Highlight to {{ scores_count }} Score{{ scores_count|pluralize }}" class="default" />
+            <a href="{% url 'admin:superb_ock_score_changelist' %}" class="button cancel-link">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.tag {
+    background: #417690;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    margin-right: 5px;
+}
+
+.cancel-link {
+    margin-left: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+</style>
+{% endblock %}
