@@ -97,6 +97,73 @@
     padding: 0.5rem;
 }
 
+/* Round navigation buttons */
+.btn-group .btn {
+    white-space: nowrap;
+}
+
+.btn-group .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.round-navigation-info {
+    font-size: 0.9rem;
+}
+
+/* Sticky first column for scorecard table */
+.scoring-table {
+    position: relative;
+}
+
+.scoring-table th:first-child,
+.scoring-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background-color: var(--bs-primary);
+    color: white;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    border-right: 2px solid var(--bs-primary-border-subtle);
+}
+
+.scoring-table thead th:first-child {
+    background-color: var(--bs-primary);
+    color: white;
+    z-index: 11;
+}
+
+/* Maintain primary theme for sticky column in different views */
+.scoring-table tbody[name="to_par"] td:first-child {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+.scoring-table tbody[name="to_stableford"] td:first-child {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+.scoring-table tbody[name="general"] td:first-child {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+/* Ensure proper table layout */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Add some padding to the first column for better readability */
+.scoring-table th:first-child,
+.scoring-table td:first-child {
+    padding-left: 12px;
+    padding-right: 12px;
+    min-width: 120px;
+    white-space: nowrap;
+}
+
 @media (max-width: 768px) {
     .highlight-thumbnail-small,
     .preview-image-small {
@@ -107,6 +174,64 @@
         margin: 1rem;
         max-width: calc(100vw - 2rem);
     }
+    
+    /* Stack navigation buttons on mobile */
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.375rem !important;
+        margin-bottom: 0.25rem;
+    }
+    
+    .btn-group .btn:last-child {
+        margin-bottom: 0;
+    }
+    
+    /* Make header stack on mobile */
+    .d-flex.justify-content-between.align-items-center {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .d-flex.justify-content-between.align-items-center > div {
+        width: 100%;
+    }
+    
+    .d-flex.justify-content-between.align-items-center .text-end {
+        text-align: left !important;
+        margin-top: 1rem;
+    }
+    
+    /* Mobile adjustments for sticky column */
+    .scoring-table th:first-child,
+    .scoring-table td:first-child {
+        min-width: 100px;
+        font-size: 0.875rem;
+    }
+    
+    /* Ensure table scrolls properly on mobile */
+    .table-responsive {
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Adjust shadow on mobile */
+    .scoring-table th:first-child,
+    .scoring-table td:first-child {
+        box-shadow: 1px 0 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Ensure primary theme is maintained on mobile */
+    .scoring-table tbody[name="to_par"] td:first-child,
+    .scoring-table tbody[name="to_stableford"] td:first-child,
+    .scoring-table tbody[name="general"] td:first-child {
+        background-color: var(--bs-primary) !important;
+        color: white !important;
+    }
 }
 </style>
 {% endblock %}
@@ -114,8 +239,48 @@
 {% block content %}
 
 <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
-    <h1>Golf Round Summary</h1>
+    <div>
+        <h1>Golf Round Summary</h1>
+        {% if navigation_info.current_round %}
+        <small class="text-muted round-navigation-info">
+            Round {{ navigation_info.current_round.round_number }} of {{ navigation_info.current_round.total_rounds }}
+            {% if round_info.event %} - {{ round_info.event.name }}{% endif %}
+        </small>
+        {% if navigation_info.previous_round or navigation_info.next_round %}
+        <br>
+        <small class="text-muted" style="font-size: 0.75rem;">
+            <i class="fas fa-keyboard"></i> Use arrow keys or A/D to navigate
+        </small>
+        {% endif %}
+        {% endif %}
+    </div>
     <div class="text-end">
+        <!-- Round Navigation -->
+        {% if navigation_info.previous_round or navigation_info.next_round %}
+        <div class="btn-group mb-2" role="group" aria-label="Round navigation">
+            {% if navigation_info.previous_round %}
+            <a href="{% url 'golf_round' navigation_info.previous_round.id %}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-chevron-left"></i> Previous Round
+            </a>
+            {% else %}
+            <button class="btn btn-outline-secondary btn-sm" disabled>
+                <i class="fas fa-chevron-left"></i> Previous Round
+            </button>
+            {% endif %}
+            
+            {% if navigation_info.next_round %}
+            <a href="{% url 'golf_round' navigation_info.next_round.id %}" class="btn btn-outline-primary btn-sm">
+                Next Round <i class="fas fa-chevron-right"></i>
+            </a>
+            {% else %}
+            <button class="btn btn-outline-secondary btn-sm" disabled>
+                Next Round <i class="fas fa-chevron-right"></i>
+            </button>
+            {% endif %}
+        </div>
+        <br>
+        {% endif %}
+        
         {% if user.is_staff %}
         <a href="{% url 'add_round_highlight' round_id %}" class="btn btn-success btn-sm mb-2">
             <i class="fas fa-plus"></i> Add Highlight
@@ -381,6 +546,30 @@ document.addEventListener("DOMContentLoaded", function() {
             redrawAllCharts(playerData);
         }, 250);
     });
+    
+    // Add keyboard navigation for rounds
+    document.addEventListener('keydown', function(e) {
+        // Only handle keyboard navigation if not in an input field
+        if (e.target.tagName.toLowerCase() !== 'input' && 
+            e.target.tagName.toLowerCase() !== 'textarea' && 
+            e.target.tagName.toLowerCase() !== 'select') {
+            
+            {% if navigation_info.previous_round %}
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                e.preventDefault();
+                window.location.href = '{% url "golf_round" navigation_info.previous_round.id %}';
+            }
+            {% endif %}
+            
+            {% if navigation_info.next_round %}
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                e.preventDefault();
+                window.location.href = '{% url "golf_round" navigation_info.next_round.id %}';
+            }
+            {% endif %}
+        }
+    });
+    
 });
 
 // Highlight preview cycling and video preloading for round highlights

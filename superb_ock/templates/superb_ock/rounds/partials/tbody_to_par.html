@@ -1,7 +1,12 @@
 <tbody name="to_par">
     {% for player_name, player_data in scores.items %}
         <tr class="text-center">
-            <td scope="row">{{ player_name }}</td>
+            <td scope="row" style="text-align: left;">
+                <strong>{{ player_name }}</strong>
+                {% if player_data.scores.0.handicap_index %}
+                    <br><small style="color: rgba(255,255,255,0.8);">{{ player_data.scores.0.handicap_index }}</small>
+                {% endif %}
+            </td>
             {% for score_sum in player_data.scores %}
                 {% if score_sum.shots_taken %}
                     <td class="p-2 text-center">

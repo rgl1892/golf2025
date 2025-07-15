@@ -1,6 +1,6 @@
 <thead>
     <tr>
-        <th scope="col" style="width: 50px; text-align: center;">Hole<sub><small>S.I.</small></sub></th>
+        <th scope="col" style="width: 120px; text-align: center;">Hole<sub><small>S.I.</small></sub></th>
         {% for player_name, player_data in scores.items %}
             {% if forloop.first %}
                 {% for score in player_data.scores %}
@@ -12,7 +12,7 @@
         {% endfor %}
     </tr>
     <tr>
-        <th scope="col" style="width: 50px; text-align: center;">Par<sub><small>Yards</small></sub></th>
+        <th scope="col" style="width: 120px; text-align: center;">Par<sub><small>Yards</small></sub></th>
         {% for player_name, player_data in scores.items %}
             {% if forloop.first %}
                 {% for score in player_data.scores %}

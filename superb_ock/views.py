@@ -633,6 +633,52 @@ class GolfRoundView(View):
                     'slope_rating': course_data.hole.golf_course.slope_rating,
                 })
         
+        # Get navigation data for next/previous rounds in the same event
+        # Find all rounds in the same event, ordered by ID
+        event_rounds = GolfRound.objects.filter(
+            event_id=event_id
+        ).order_by('id').values_list('id', flat=True)
+        
+        # Convert to list for easier manipulation
+        round_ids = list(event_rounds)
+        current_index = round_ids.index(round_id) if round_id in round_ids else -1
+        
+        # Determine next and previous round IDs
+        next_round_id = None
+        previous_round_id = None
+        
+        if current_index != -1:
+            if current_index > 0:
+                previous_round_id = round_ids[current_index - 1]
+            if current_index < len(round_ids) - 1:
+                next_round_id = round_ids[current_index + 1]
+        
+        # Get additional info for next/previous rounds
+        navigation_info = {}
+        if next_round_id:
+            next_round = GolfRound.objects.get(id=next_round_id)
+            navigation_info['next_round'] = {
+                'id': next_round_id,
+                'round_obj': next_round,
+                'round_number': current_index + 2,  # Human-readable round number
+                'total_rounds': len(round_ids)
+            }
+        
+        if previous_round_id:
+            previous_round = GolfRound.objects.get(id=previous_round_id)
+            navigation_info['previous_round'] = {
+                'id': previous_round_id,
+                'round_obj': previous_round,
+                'round_number': current_index,  # Human-readable round number
+                'total_rounds': len(round_ids)
+            }
+        
+        # Add current round info
+        navigation_info['current_round'] = {
+            'round_number': current_index + 1,
+            'total_rounds': len(round_ids)
+        }
+        
         return render(
             request,
             self.template_name,
@@ -642,7 +688,8 @@ class GolfRoundView(View):
                 "summary": summary_data,
                 "other_rounds": other_rounds,
                 "highlights_data": highlights_data,
-                "round_info": round_info
+                "round_info": round_info,
+                "navigation_info": navigation_info
                 },
         )
 
