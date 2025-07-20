@@ -54,8 +54,8 @@
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
                 <img src="{% static 'superb_ock/images/logo.png' %}" alt="The Superb Ock Logo" height="40" class="me-2">
-                <span class="d-none d-md-inline">The Superb Ock</span>
-                <span class="d-md-none">TSO</span>
+                <span class="d-none d-xl-inline">The Superb Ock - 2025</span>
+                <span class="d-xl-none">The Superb Ock</span>
             </a>
             <button
                 class="navbar-toggler d-lg-none"
@@ -71,24 +71,33 @@
             <div class="collapse navbar-collapse align-items-lg-center" id="collapsibleNavId">
                 <ul class="navbar-nav me-auto mt-2 mt-lg-0" style="margin-top: 0 !important;">
                     <style>
-                        @media (min-width: 992px) {
-                            .navbar-nav .nav-link {
-                                padding-left: 0.4rem !important;
-                                padding-right: 0.4rem !important;
-                            }
-                        }
-                        
-                        /* Compact navbar items */
-                        .navbar-nav .nav-link {
-                            font-size: 0.9rem;
-                        }
-                        
-                        /* Mobile-first: show only icons on smaller screens */
-                        @media (max-width: 991px) {
+                        /* Extra large screens: compact with icons only */
+                        @media (min-width: 1200px) {
                             .navbar-nav .nav-link {
                                 padding-left: 0.3rem !important;
                                 padding-right: 0.3rem !important;
                             }
+                        }
+                        
+                        /* Large screens: normal spacing with full text */
+                        @media (min-width: 992px) and (max-width: 1199px) {
+                            .navbar-nav .nav-link {
+                                padding-left: 0.5rem !important;
+                                padding-right: 0.5rem !important;
+                            }
+                        }
+                        
+                        /* Medium and small screens: full text with icons */
+                        @media (max-width: 991px) {
+                            .navbar-nav .nav-link {
+                                padding-left: 0.75rem !important;
+                                padding-right: 0.75rem !important;
+                            }
+                        }
+                        
+                        /* General navbar styling */
+                        .navbar-nav .nav-link {
+                            font-size: 0.9rem;
                         }
                         
                         /* Ensure dropdown menus are properly aligned */
@@ -99,19 +108,19 @@
                     </style>
                     <li class="nav-item">
                         <a class="nav-link active" href="{% url 'home' %}" aria-current="page"
-                            ><i class="fas fa-home me-1"></i><span class="d-none d-lg-inline">Home</span>
+                            ><i class="fas fa-home me-1"></i><span class="d-none d-xl-inline">Home</span><span class="d-xl-none">Home</span>
                             <span class="visually-hidden">(current)</span></a
                         >
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'rounds_overview' %}"><i class="fas fa-golf-ball me-1"></i><span class="d-none d-lg-inline">Rounds</span></a>
+                        <a class="nav-link" href="{% url 'rounds_overview' %}"><i class="fas fa-golf-ball me-1"></i><span class="d-none d-xl-inline">Rounds</span><span class="d-xl-none">Rounds</span></a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'highlights' %}"><i class="fas fa-video me-1"></i><span class="d-none d-lg-inline">Highlights</span></a>
+                        <a class="nav-link" href="{% url 'highlights' %}"><i class="fas fa-video me-1"></i><span class="d-none d-xl-inline">Highlights</span><span class="d-xl-none">Highlights</span></a>
                     </li>
                     {% if user.is_staff %}
                     <li class="nav-item">
-                        <a class="nav-link text-nowrap" href="{% url 'new_round' %}"><i class="fas fa-plus me-1"></i><span class="d-none d-lg-inline">New</span></a>
+                        <a class="nav-link text-nowrap" href="{% url 'new_round' %}"><i class="fas fa-plus me-1"></i><span class="d-none d-xl-inline">New Round</span><span class="d-xl-none">New Round</span></a>
                     </li>
                     {% endif %}
                     <li class="nav-item dropdown">
@@ -122,7 +131,7 @@
                             data-bs-toggle="dropdown"
                             aria-haspopup="true"
                             aria-expanded="false"
-                            ><i class="fas fa-chart-bar me-1"></i><span class="d-none d-lg-inline">Stats</span></a
+                            ><i class="fas fa-chart-bar me-1"></i><span class="d-none d-xl-inline">Stats</span><span class="d-xl-none">Stats</span></a
                         >
                         <div
                             class="dropdown-menu"
@@ -148,7 +157,7 @@
                             data-bs-toggle="dropdown"
                             aria-haspopup="true"
                             aria-expanded="false"
-                            ><i class="fas fa-trophy me-1"></i><span class="d-none d-lg-inline">Tournaments</span></a
+                            ><i class="fas fa-trophy me-1"></i><span class="d-none d-xl-inline">Tournaments</span><span class="d-xl-none">Tournaments</span></a
                         >
                         <div
                             class="dropdown-menu"
@@ -168,8 +177,8 @@
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-user me-1"></i>
-                                <span class="d-none d-md-inline">{{user.first_name}} {{user.last_name|first}}</span>
-                                <span class="d-md-none">{{user.first_name|first}}{{user.last_name|first}}</span>
+                                <span class="d-none d-xl-inline">{{user.first_name}} {{user.last_name|first}}</span>
+                                <span class="d-xl-none">{{user.first_name}} {{user.last_name|first}}</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                 <a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a>
@@ -182,10 +191,10 @@
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}"><i class="fas fa-sign-in-alt me-1"></i><span class="d-none d-lg-inline">Login</span></a>
+                            <a class="nav-link" href="{% url 'login' %}"><i class="fas fa-sign-in-alt me-1"></i><span class="d-none d-xl-inline">Login</span><span class="d-xl-none">Login</span></a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'sign_up_user' %}"><i class="fas fa-user-plus me-1"></i><span class="d-none d-lg-inline">Sign Up</span></a>
+                            <a class="nav-link" href="{% url 'sign_up_user' %}"><i class="fas fa-user-plus me-1"></i><span class="d-none d-xl-inline">Sign Up</span><span class="d-xl-none">Sign Up</span></a>
                         </li>
                     {% endif %}
                 </ul>
