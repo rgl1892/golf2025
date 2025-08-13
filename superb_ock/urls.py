@@ -44,9 +44,9 @@ urlpatterns.extend(
 # Admin management URLs
 urlpatterns.extend(
     [
-    path('admin/bulk-highlight-link/', admin_views.bulk_highlight_link, name='admin:bulk_highlight_link'),
-    path('admin/highlight-management/', admin_views.highlight_management, name='admin:highlight_management'),
-    path('admin/ajax/toggle-highlight/', admin_views.ajax_toggle_highlight, name='admin:ajax_toggle_highlight'),
+    path('admin/bulk-highlight-link/', admin_views.bulk_highlight_link, name='admin_bulk_highlight_link'),
+    path('admin/highlight-management/', admin_views.highlight_management, name='admin_highlight_management'),
+    path('admin/ajax/toggle-highlight/', admin_views.ajax_toggle_highlight, name='admin_ajax_toggle_highlight'),
     path('rounds/<int:round_id>/add-highlight/', admin_views.add_round_highlight, name='add_round_highlight'),
     ]
 )
