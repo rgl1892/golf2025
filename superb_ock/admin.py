@@ -535,11 +535,11 @@ class HighlightPreviewAdmin(admin.ModelAdmin):
     list_filter = ['highlight', 'order']
     ordering = ['highlight', 'order']
     readonly_fields = ['image_preview']
-    
+
     def highlight_title(self, obj):
         return obj.highlight.title
     highlight_title.short_description = "Highlight"
-    
+
     def image_preview(self, obj):
         if obj.image:
             return format_html(
@@ -548,4 +548,50 @@ class HighlightPreviewAdmin(admin.ModelAdmin):
             )
         return "No image"
     image_preview.short_description = "Preview"
- 
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'notifications_enabled', 'notify_round_start', 'notify_hole_completed', 'notify_round_completed']
+    list_filter = ['notifications_enabled', 'notify_round_start', 'notify_hole_completed', 'notify_round_completed']
+    search_fields = ['user__username', 'user__email']
+    ordering = ['user__username']
+
+@admin.register(PushDevice)
+class PushDeviceAdmin(admin.ModelAdmin):
+    list_display = ['user', 'device_name', 'browser', 'is_active', 'has_subscription', 'last_used', 'created_at']
+    list_filter = ['is_active', 'browser', 'created_at']
+    search_fields = ['user__username', 'device_name', 'browser']
+    ordering = ['-last_used']
+    readonly_fields = ['created_at', 'last_used', 'user_agent', 'subscription_endpoint']
+
+    fieldsets = (
+        ('Device Information', {
+            'fields': ('user', 'device_name', 'browser', 'is_active')
+        }),
+        ('Subscription Details', {
+            'fields': ('subscription_info', 'subscription_endpoint'),
+            'description': 'Push notification subscription information'
+        }),
+        ('Technical Details', {
+            'fields': ('user_agent',),
+            'classes': ('collapse',),
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'last_used'),
+        }),
+    )
+
+    def has_subscription(self, obj):
+        return obj.subscription_info is not None
+    has_subscription.boolean = True
+    has_subscription.short_description = "Has Sub"
+
+    def subscription_endpoint(self, obj):
+        if obj.subscription_info:
+            endpoint = obj.subscription_info.endpoint
+            # Show first 50 and last 20 characters for readability
+            if len(endpoint) > 70:
+                return f"{endpoint[:50]}...{endpoint[-20:]}"
+            return endpoint
+        return "No subscription"
+    subscription_endpoint.short_description = "Subscription Endpoint"

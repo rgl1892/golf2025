@@ -62,6 +62,8 @@ try:
 except:
     ALLOWED_HOSTS = ['www.thesuperbock.co.uk','thesuperbock.co.uk',]
 
+SITE_URL = 'https://www.thesuperbock.co.uk'
+
 # CSRF settings for production
 CSRF_TRUSTED_ORIGINS = [
     'https://www.thesuperbock.co.uk',

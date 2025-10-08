@@ -805,9 +805,26 @@ class EditScore(View):
         formatted_data.update(players)
 
         print(formatted_data)
-        
+
         for score_id,points in formatted_data.items():
             Score.objects.filter(pk=score_id).update(shots_taken=points['shots'],stableford=points['stable'])
+
+            # Send notification for completed hole
+            try:
+                from .notifications import send_hole_completed_notification
+                score = Score.objects.get(pk=score_id)
+                if score.shots_taken is not None:  # Only notify if a score was actually entered
+                    # Calculate player's total stableford points for the round
+                    player_total = Score.objects.filter(
+                        golf_round=score.golf_round,
+                        player=score.player,
+                        shots_taken__isnull=False
+                    ).aggregate(total=models.Sum('stableford'))['total'] or 0
+
+                    send_hole_completed_notification(score, player_total)
+            except Exception as e:
+                print(f"[NOTIFICATION] Error sending hole completed notification: {e}")
+
         return render(
             request, self.template_name, self.get_context_data(round_id, hole_number)
         )

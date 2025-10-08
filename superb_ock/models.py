@@ -132,6 +132,11 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     notifications_enabled = models.BooleanField(default=True)
 
+    # Notification preferences
+    notify_round_start = models.BooleanField(default=True, help_text="Notify when a new round starts")
+    notify_hole_completed = models.BooleanField(default=True, help_text="Notify when you complete a hole")
+    notify_round_completed = models.BooleanField(default=True, help_text="Notify when a round is completed")
+
     def __str__(self):
         return f"{self.user.username} - Notifications: {self.notifications_enabled}"
 
@@ -144,3 +149,26 @@ def create_user_profile(sender, instance, created, **kwargs):
 def save_user_profile(sender, instance, **kwargs):
     if hasattr(instance, 'profile'):
         instance.profile.save()
+
+class PushDevice(models.Model):
+    """Represents a device registered for push notifications"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='push_devices')
+    subscription_info = models.OneToOneField('webpush.SubscriptionInfo', on_delete=models.CASCADE, null=True, blank=True)
+
+    # Device identification
+    device_name = models.CharField(max_length=100, help_text="User-friendly device name (e.g., 'iPhone', 'Chrome on Laptop')")
+    browser = models.CharField(max_length=50, blank=True)
+    user_agent = models.TextField(blank=True)
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used = models.DateTimeField(auto_now=True)
+
+    # Active status
+    is_active = models.BooleanField(default=True, help_text="Enable/disable notifications for this device")
+
+    class Meta:
+        ordering = ['-last_used']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.device_name}"

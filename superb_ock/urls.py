@@ -58,5 +58,8 @@ urlpatterns.extend(
     path('notifications/toggle/', views_notifications.toggle_notifications, name='toggle_notifications'),
     path('notifications/test/', views_notifications.test_notification, name='test_notification'),
     path('notifications/subscribe/', views_notifications.save_subscription, name='save_subscription'),
+    path('notifications/preferences/', views_notifications.update_preferences, name='update_preferences'),
+    path('notifications/device/toggle/', views_notifications.toggle_device, name='toggle_device'),
+    path('notifications/device/delete/', views_notifications.delete_device, name='delete_device'),
     ]
 )
