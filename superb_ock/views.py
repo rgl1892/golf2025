@@ -352,6 +352,10 @@ class NewRound(View):
             date_started=timezone.now().date()
         )
 
+        # Send notification to subscribed users
+        from .notifications import send_round_start_notification
+        send_round_start_notification(golf_round)
+
         # Fetch all holes for the course in a single query, indexed by hole_number
         holes = {
             hole.hole_number: hole

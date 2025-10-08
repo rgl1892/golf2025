@@ -18,12 +18,24 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import TemplateView
+from django.http import HttpResponse
+import os
+
+
+def service_worker(request):
+    """Serve the service worker from the static directory"""
+    sw_path = os.path.join(settings.BASE_DIR, 'superb_ock/static/superb_ock/js/sw.js')
+    with open(sw_path, 'r') as f:
+        sw_content = f.read()
+    return HttpResponse(sw_content, content_type='application/javascript')
 
 
 urlpatterns = [
     path('',include('superb_ock.urls')),
     path('admin/', admin.site.urls),
     path("__debug__/", include("debug_toolbar.urls")),
+    path('sw.js', service_worker, name='service_worker'),
 
 ]
 

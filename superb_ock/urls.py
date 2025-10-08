@@ -1,6 +1,6 @@
-from django.urls import path
+from django.urls import path, include
 
-from . import views, admin_views
+from . import views, admin_views, views_notifications
 from .views_stats import stats, player_stats, course_stats
 
 urlpatterns = [
@@ -48,5 +48,15 @@ urlpatterns.extend(
     path('admin/highlight-management/', admin_views.highlight_management, name='admin_highlight_management'),
     path('admin/ajax/toggle-highlight/', admin_views.ajax_toggle_highlight, name='admin_ajax_toggle_highlight'),
     path('rounds/<int:round_id>/add-highlight/', admin_views.add_round_highlight, name='add_round_highlight'),
+    ]
+)
+
+# Notification URLs
+urlpatterns.extend(
+    [
+    path('notifications/settings/', views_notifications.notifications_settings, name='notifications_settings'),
+    path('notifications/toggle/', views_notifications.toggle_notifications, name='toggle_notifications'),
+    path('notifications/test/', views_notifications.test_notification, name='test_notification'),
+    path('notifications/subscribe/', views_notifications.save_subscription, name='save_subscription'),
     ]
 )

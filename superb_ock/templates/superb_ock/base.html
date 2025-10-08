@@ -9,9 +9,17 @@
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{% static 'superb_ock/images/logo.ico' %}">
     <link rel="icon" type="image/png" href="{% static 'superb_ock/images/logo.png' %}">
-    
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{% static 'superb_ock/manifest.json' %}">
+
     <!-- Apple Touch Icon for Safari on iPhone -->
     <link rel="apple-touch-icon" href="{% static 'superb_ock/images/logo.png' %}">
+
+    <!-- iOS Meta Tags for PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Superb Ock">
     
     <!-- Open Graph / Social Media Meta Tags -->
     <meta property="og:title" content="{% block og_title %}The Superb Ock{% endblock %}">
@@ -181,7 +189,7 @@
                                 <span class="d-xl-none">{{user.first_name}} {{user.last_name|first}}</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a>
+                                <a class="dropdown-item" href="{% url 'notifications_settings' %}"><i class="fas fa-bell me-2"></i>Notifications</a>
                                 {% if user.is_staff %}
                                     <a class="dropdown-item" href="{% url 'admin:index' %}"><i class="fas fa-shield-alt me-2"></i>Admin</a>
                                 {% endif %}
@@ -208,6 +216,18 @@
 
         {% endblock content %}
     </div>
-    
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(function(registration) {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch(function(error) {
+                    console.error('Service Worker registration failed:', error);
+                });
+        }
+    </script>
 </body>
 </html>

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'superb_ock',
     'mathfilters',
+    'webpush',
 ]
 
 MIDDLEWARE = [
@@ -137,3 +138,10 @@ MEDIA_ROOT = BASE_DIR / 'media/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Web Push Notifications
+WEBPUSH_SETTINGS = {
+    "VAPID_PUBLIC_KEY": "BF_gEW4A2xLbFOQBC74MwscvxyBLeouPm0AkSyNdBCnapa0xpNzA7im3yizKpRYxMsDmI3GBOLJhgIFYGfkrQ0g",
+    "VAPID_PRIVATE_KEY": str(BASE_DIR / "vapid_private.pem"),
+    "VAPID_ADMIN_EMAIL": "admin@thesuperbock.co.uk"
+}

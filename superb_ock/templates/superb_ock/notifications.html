@@ -1,0 +1,209 @@
+{% extends 'superb_ock/base.html' %}
+{% load static %}
+
+{% block title %}Notification Settings{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-bell me-2"></i>Push Notifications</h4>
+                </div>
+                <div class="card-body">
+                    <div id="notification-status" class="alert" style="display: none;"></div>
+                    
+                    <p>Get notified when:</p>
+                    <ul>
+                        <li>A new golf round starts</li>
+                        <li>You complete a hole</li>
+                    </ul>
+
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="notificationToggle" {% if notifications_enabled %}checked{% endif %}>
+                        <label class="form-check-label" for="notificationToggle">
+                            Enable notifications
+                        </label>
+                    </div>
+
+                    <button id="testNotification" class="btn btn-primary mt-3">Test Notification</button>
+
+                    <small class="text-muted d-block mt-3">
+                        Note: You must also allow notifications in your browser when prompted.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const toggle = document.getElementById('notificationToggle');
+const status = document.getElementById('notification-status');
+
+function showStatus(message, type) {
+    status.className = `alert alert-${type}`;
+    status.textContent = message;
+    status.style.display = 'block';
+    setTimeout(() => {
+        status.style.display = 'none';
+    }, 3000);
+}
+
+// Convert VAPID key from base64 to Uint8Array
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+const applicationServerKey = urlBase64ToUint8Array('{{ webpush_settings.VAPID_PUBLIC_KEY }}');
+
+// Test notification button
+document.getElementById('testNotification').addEventListener('click', async function() {
+    try {
+        const response = await fetch('/notifications/test/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+
+        if (response.ok) {
+            showStatus('Test notification sent! Check your browser.', 'success');
+        } else {
+            const error = await response.text();
+            showStatus('Failed to send test: ' + error, 'danger');
+        }
+    } catch (error) {
+        console.error('Test error:', error);
+        showStatus('Error sending test notification', 'danger');
+    }
+});
+
+toggle.addEventListener('change', async function() {
+    console.log('Toggle clicked, new state:', toggle.checked);
+    try {
+        // Toggle preference on server
+        console.log('Sending toggle request...');
+        const response = await fetch('/notifications/toggle/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+
+        const result = await response.json();
+        console.log('Toggle result:', result);
+
+        if (result.enabled) {
+            console.log('Notifications enabled, checking permission...');
+            console.log('Current permission:', Notification.permission);
+
+            // Request browser permission if enabling
+            if ('Notification' in window && Notification.permission === 'default') {
+                console.log('Requesting permission...');
+                const permission = await Notification.requestPermission();
+                console.log('Permission result:', permission);
+
+                if (permission === 'granted') {
+                    // Subscribe to push notifications
+                    if ('serviceWorker' in navigator && 'PushManager' in window) {
+                        console.log('Getting SW registration...');
+                        const registration = await navigator.serviceWorker.ready;
+                        console.log('Got registration, subscribing...');
+
+                        const subscription = await registration.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: applicationServerKey
+                        });
+                        console.log('Subscription created:', subscription);
+
+                        console.log('Saving subscription...');
+                        const subData = subscription.toJSON();
+                        const payload = {
+                            endpoint: subData.endpoint,
+                            keys: {
+                                p256dh: subData.keys.p256dh,
+                                auth: subData.keys.auth
+                            }
+                        };
+                        console.log('Payload:', payload);
+                        const saveResponse = await fetch('/notifications/subscribe/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        console.log('Save response status:', saveResponse.status);
+                        if (saveResponse.status === 201) {
+                            console.log('Subscription saved successfully');
+                        } else {
+                            const errorText = await saveResponse.text();
+                            console.error('Save failed:', saveResponse.status);
+                            console.error('Error details:', errorText);
+                        }
+                    }
+                }
+            } else if (Notification.permission === 'granted') {
+                console.log('Permission already granted, subscribing...');
+                if ('serviceWorker' in navigator && 'PushManager' in window) {
+                    const registration = await navigator.serviceWorker.ready;
+                    const subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: applicationServerKey
+                    });
+                    console.log('Subscription created:', subscription);
+
+                    const subData = subscription.toJSON();
+                    const payload = {
+                        endpoint: subData.endpoint,
+                        keys: {
+                            p256dh: subData.keys.p256dh,
+                            auth: subData.keys.auth
+                        }
+                    };
+                    console.log('Payload:', payload);
+                    const saveResponse = await fetch('/notifications/subscribe/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    console.log('Save response status:', saveResponse.status);
+                    if (saveResponse.status === 201) {
+                        console.log('Subscription saved successfully');
+                    } else {
+                        const errorText = await saveResponse.text();
+                        console.error('Save failed:', saveResponse.status);
+                        console.error('Error details:', errorText);
+                    }
+                }
+            }
+            showStatus('Notifications enabled', 'success');
+        } else {
+            showStatus('Notifications disabled', 'info');
+        }
+    } catch (error) {
+        console.error('Error toggling notifications:', error);
+        showStatus('Error updating preferences', 'danger');
+        // Revert toggle on error
+        toggle.checked = !toggle.checked;
+    }
+});
+</script>
+{% endblock %}
