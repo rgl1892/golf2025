@@ -23,11 +23,18 @@ def notifications_settings(request):
 @require_POST
 def toggle_notifications(request):
     """Toggle user notification preference"""
-    profile, created = UserProfile.objects.get_or_create(user=request.user)
-    profile.notifications_enabled = not profile.notifications_enabled
-    profile.save()
-
-    return JsonResponse({'enabled': profile.notifications_enabled})
+    print(f"[TOGGLE] User: {request.user.username}, Method: {request.method}")
+    try:
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        profile.notifications_enabled = not profile.notifications_enabled
+        profile.save()
+        print(f"[TOGGLE] Saved: enabled={profile.notifications_enabled}")
+        return JsonResponse({'enabled': profile.notifications_enabled})
+    except Exception as e:
+        print(f"[TOGGLE] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
 @require_POST
