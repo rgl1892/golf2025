@@ -62,6 +62,17 @@ try:
 except:
     ALLOWED_HOSTS = ['www.thesuperbock.co.uk','thesuperbock.co.uk',]
 
+# CSRF settings for production
+CSRF_TRUSTED_ORIGINS = [
+    'https://www.thesuperbock.co.uk',
+    'https://thesuperbock.co.uk',
+]
+
+# Ensure CSRF cookie is sent
+CSRF_COOKIE_SECURE = not DEBUG  # Only secure in production
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read it
+CSRF_COOKIE_SAMESITE = 'Lax'
+
 ROOT_URLCONF = 'golf2025.urls'
 
 TEMPLATES = [

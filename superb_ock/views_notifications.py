@@ -3,9 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import UserProfile
 
 @login_required
+@ensure_csrf_cookie
 def notifications_settings(request):
     """Display notification settings page"""
     # Get or create user profile
