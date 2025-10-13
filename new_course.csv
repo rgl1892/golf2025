@@ -1,3 +1,4 @@
+id,course_name,location,tee_color,rating,slope,slug,par
 1,Faldo,Portugal,White,72.8,137,faldo-white,72
 2,Faldo,Portugal,Yellow,70.6,132,faldo-yellow,72
 3,O'Connor Junior,Portugal,White,72.8,132,oconnor-junior-white,72
@@ -32,5 +33,9 @@
 32,Royal Palm,Morocco,Yellow,72.6,134,palm-yellow,72
 33,Hoebridge,UK,White,71.7,129,hoebridge-white,73
 34,Hoebridge,UK,Yellow,70.7,126,hoebridge-yellow,73
-
-
+35,Sueno Dunes,Turkey,White,70.4,139,sueno-dunes-white,69
+36,Sueno Dunes,Turkey,Yellow,67.8,134,sueno-dunes-yellow,69
+37,Sueno Pines,Turkey,White,74.5,148,sueno-pines-white,72
+38,Sueno Pines,Turkey,Yellow,71,138,sueno-pines-yellow,72
+39,Carya,Turkey,White,75.9,140,carya-white,72
+40,Carya,Turkey,Yellow,72.3,136,carya-yellow,72
