@@ -122,32 +122,43 @@ class Home(View):
     template_name = "superb_ock/homepage/home.html"
 
     def get_context(self):
-        
-        scores = list(Score.objects.filter(golf_round__event=3).values(
+
+        scores = list(Score.objects.filter(golf_round__event=5).values(
             'player__first_name', 'player__second_name','stableford', 'golf_round_id', 'hole_id',
-            'shots_taken','hole__golf_course__name','hole__golf_course__tees','golf_round__event__scoring'
+            'shots_taken','hole__golf_course__name','hole__golf_course__tees','golf_round__event__scoring',
+            'golf_round__date_started'
             ))
 
-        # manip the data to get infor per player per round
+        # manip the data to get info per player per round
+        # Group by (date, course) to combine rounds at same course on same day
         player_rounds = {}
 
         for score in scores:
             name = f"{score['player__first_name']} {score['player__second_name']}"
             round_id = score['golf_round_id']
+            round_date = score['golf_round__date_started']
             course = f"{score['hole__golf_course__name']} - {score['hole__golf_course__tees']}"
-            
+
+            # Create a unique key for (date, course) combination
+            date_course_key = (round_date, course)
+
             if name not in player_rounds:
                 player_rounds[name] = {}
-            if round_id not in player_rounds[name]:
-                player_rounds[name][round_id] = {'total': 0, 'course': ''}
-            
-            player_rounds[name][round_id]['total'] += score['stableford'] or 0
-            player_rounds[name][round_id]['course'] = course  
-            player_rounds[name][round_id]['scoring'] = score['golf_round__event__scoring']  
+            if date_course_key not in player_rounds[name]:
+                player_rounds[name][date_course_key] = {
+                    'total': 0,
+                    'course': course,
+                    'date': round_date,
+                    'round_ids': set()
+                }
+
+            player_rounds[name][date_course_key]['total'] += score['stableford'] or 0
+            player_rounds[name][date_course_key]['round_ids'].add(round_id)
+            player_rounds[name][date_course_key]['scoring'] = score['golf_round__event__scoring']  
             
     
         # Get event scoring format for calculating totals
-        event = GolfEvent.objects.get(id=3)
+        event = GolfEvent.objects.get(id=5)
         scoring_format = event.scoring
 
         # get the totals
@@ -155,8 +166,9 @@ class Home(View):
 
         for player__first_name, round_scores in player_rounds.items():
             # Calculate total based on scoring format
-            valid_rounds = [{'num': k, 'total': v['total']} for k, v in round_scores.items() if v['total'] is not None]
-            
+            # Note: keys are now (date, course) tuples
+            valid_rounds = [{'key': k, 'total': v['total']} for k, v in round_scores.items() if v['total'] is not None]
+
             if scoring_format == "best_three_of_five":
                 # Best 3 rounds overall
                 top3_scores = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
@@ -164,7 +176,7 @@ class Home(View):
             elif scoring_format == "best_last_rounds_counts":
                 # Best 2 of first rounds + last round counts
                 if len(valid_rounds) >= 3:
-                    sorted_rounds = sorted(valid_rounds, key=lambda x: x['num'])
+                    sorted_rounds = sorted(valid_rounds, key=lambda x: x['key'][0])  # Sort by date
                     last_round = sorted_rounds[-1]
                     first_rounds = sorted_rounds[:-1]
                     best_first_two = sorted(first_rounds, key=lambda x: x['total'], reverse=True)[:2]
@@ -175,7 +187,7 @@ class Home(View):
                 # Default to best 3
                 top3_scores = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
                 total_score = sum(r['total'] for r in top3_scores)
-            
+
             leaderboard.append({
                 'player__first_name': player__first_name,
                 'round_totals': dict(round_scores),
@@ -185,59 +197,66 @@ class Home(View):
 
         # Step 4: Sort leaderboard
         leaderboard = sorted(leaderboard, key=lambda x: x['best_3_total'], reverse=True)
-        all_round_numbers = set()
+        all_date_course_keys = set()
         for player in leaderboard:
-            all_round_numbers.update(player['round_totals'].keys())
-        round_numbers = sorted(all_round_numbers)
+            all_date_course_keys.update(player['round_totals'].keys())
+        # Sort by date first, then by course name
+        date_course_keys_sorted = sorted(all_date_course_keys, key=lambda x: (x[0], x[1]))
 
         cleaned_leaderboard = []
         for player in leaderboard:
             rounds = []
             round_dict = player['round_totals']
-            
+
             # Determine counting rounds based on scoring format
-            valid_rounds = [{'num': k, 'total': v['total']} for k, v in round_dict.items() if v['total'] is not None]
-            
+            valid_rounds = [{'key': k, 'total': v['total']} for k, v in round_dict.items() if v['total'] is not None]
+
             if scoring_format == "best_three_of_five":
                 # Best 3 rounds overall
                 counting_rounds = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
-                counting_round_ids = [r['num'] for r in counting_rounds]
+                counting_keys = [r['key'] for r in counting_rounds]
             elif scoring_format == "best_last_rounds_counts":
                 # Best 2 of first rounds + last round counts
                 if len(valid_rounds) >= 3:
-                    sorted_rounds = sorted(valid_rounds, key=lambda x: x['num'])
+                    sorted_rounds = sorted(valid_rounds, key=lambda x: x['key'][0])  # Sort by date
                     last_round = sorted_rounds[-1]
                     first_rounds = sorted_rounds[:-1]
                     best_first_two = sorted(first_rounds, key=lambda x: x['total'], reverse=True)[:2]
-                    counting_round_ids = [r['num'] for r in best_first_two] + [last_round['num']]
+                    counting_keys = [r['key'] for r in best_first_two] + [last_round['key']]
                 else:
-                    counting_round_ids = [r['num'] for r in valid_rounds]
+                    counting_keys = [r['key'] for r in valid_rounds]
             else:
                 # Default to best 3
                 counting_rounds = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
-                counting_round_ids = [r['num'] for r in counting_rounds]
-            
+                counting_keys = [r['key'] for r in counting_rounds]
+
             best_round_score = max([r['total'] for r in round_dict.values()] or [0])
-            
-            for round_num in round_numbers:
-                round_info = round_dict.get(round_num)
+
+            for date_course_key in date_course_keys_sorted:
+                round_info = round_dict.get(date_course_key)
                 if round_info:
+                    # Get the first round_id from the set for linking purposes
+                    first_round_id = min(round_info['round_ids']) if round_info['round_ids'] else None
                     rounds.append({
-                        'num': round_num,
+                        'key': date_course_key,
+                        'num': first_round_id,  # For linking to a specific round
                         'total': round_info['total'],
                         'course': round_info['course'],
+                        'date': round_info['date'],
                         'is_best': round_info['total'] == best_round_score,
-                        'is_counting': round_num in counting_round_ids
+                        'is_counting': date_course_key in counting_keys
                     })
                 else:
                     rounds.append({
-                        'num': round_num,
+                        'key': date_course_key,
+                        'num': None,
                         'total': None,
-                        'course': None,
+                        'course': date_course_key[1],  # Course name from the key
+                        'date': date_course_key[0],    # Date from the key
                         'is_best': False,
                         'is_counting': False
                     })
-            
+
             cleaned_leaderboard.append({
                 'player': player['player__first_name'],
                 'rounds': rounds,
@@ -245,10 +264,16 @@ class Home(View):
             })
         courses = []
         if cleaned_leaderboard:
-            for rounds in cleaned_leaderboard[0]['rounds']:
-                courses.append({'course':rounds['course'],'id':rounds['num']})
+            for round_data in cleaned_leaderboard[0]['rounds']:
+                # Include all rounds, even if no scores entered yet
+                # Use the first available round ID, or None if truly no rounds exist
+                courses.append({
+                    'course': round_data['course'],
+                    'id': round_data['num'],  # Will be None if no scores yet
+                    'date': round_data['date']
+                })
 
-            
+
         # Get active carousel images
         carousel_images = CarouselImage.objects.filter(is_active=True).order_by('order', '-created_at')
         
@@ -296,7 +321,6 @@ class Home(View):
         
         context = {
             'leaderboard': cleaned_leaderboard,
-            'round_numbers': round_numbers,
             'courses': courses,
             'carousel_images': carousel_images,
             'recent_rounds': recent_rounds_data
@@ -426,7 +450,7 @@ class RoundsOverview(View):
             event = entry["golf_round__event__name"]
             course = f"{entry['hole__golf_course__name']} - {entry['hole__golf_course__tees']}{entry['golf_round_id']:05}"
             id = entry["golf_round_id"]
-            player = entry["player__first_name"]
+            player = f"{entry['player__first_name']} {entry['player__second_name']}"
 
             if event not in grouped:
                 grouped[event] = {}
@@ -449,9 +473,10 @@ class RoundsOverview(View):
     def get(self, request):
         scores = (
             Score.objects.all()
-            .order_by("-golf_round__event__name", "golf_round_id", "player__first_name")
+            .order_by("-golf_round__event__name", "golf_round_id", "player__first_name", "player__second_name")
             .values(
                 "player__first_name",
+                "player__second_name",
                 "shots_taken",
                 "stableford",
                 "golf_round__event__name",
@@ -473,12 +498,13 @@ class GolfRoundView(View):
         scores = (
             Score.objects.filter(golf_round__id=round_id)
             .select_related()
-            .order_by("player__first_name")
+            .order_by("player__first_name", "player__second_name")
             .values(
                 "player_id",
                 "shots_taken",
                 "stableford",
                 "player__first_name",
+                "player__second_name",
                 "hole__hole_number",
                 "hole__par",
                 "hole__yards",
@@ -502,7 +528,7 @@ class GolfRoundView(View):
                 golf_round__date_started=current_round.date_started
             )
             .exclude(golf_round__id=round_id)
-            .values("golf_round_id", "player__first_name")
+            .values("golf_round_id", "player__first_name", "player__second_name")
             .annotate(
                 total_stableford=models.Sum("stableford"),
                 total_shots=models.Sum("shots_taken"),
@@ -521,7 +547,7 @@ class GolfRoundView(View):
                     "max_holes_played": 0
                 }
             other_rounds[round_id_key]["players"].append({
-                "player": summary["player__first_name"],
+                "player": f"{summary['player__first_name']} {summary['player__second_name']}",
                 "total_stableford": summary["total_stableford"] or 0,
                 "total_shots": summary["total_shots"] or 0,
                 "holes_played": summary["holes_played"]
@@ -534,16 +560,16 @@ class GolfRoundView(View):
 
         grouped_summary = {}
         for item in scores:
-            player_id = item["player__first_name"]
-            if player_id not in grouped_summary:
-                grouped_summary[player_id] = {"total_shots": 0, "total_stableford": 0, "scores": []}
-            grouped_summary[player_id]["total_shots"] += (
+            player_full_name = f"{item['player__first_name']} {item['player__second_name']}"
+            if player_full_name not in grouped_summary:
+                grouped_summary[player_full_name] = {"total_shots": 0, "total_stableford": 0, "scores": []}
+            grouped_summary[player_full_name]["total_shots"] += (
                 item["shots_taken"] if item["shots_taken"] else 0
             )
-            grouped_summary[player_id]["total_stableford"] += (
+            grouped_summary[player_full_name]["total_stableford"] += (
                 item["stableford"] if item["stableford"] else 0
             )
-            grouped_summary[player_id]["scores"].append(item)
+            grouped_summary[player_full_name]["scores"].append(item)
         grouped_data = dict(grouped_summary)
         summary_data = {}
         for player, data in grouped_data.items():
@@ -734,7 +760,7 @@ class EditScore(View):
         # Calculate current totals for each player
         player_totals = {}
         for score in scores:
-            player_name = score["player__first_name"]
+            player_name = f"{score['player__first_name']} {score['player__second_name']}"
             if player_name not in player_totals:
                 player_totals[player_name] = {
                     "total_shots": 0,
@@ -742,7 +768,7 @@ class EditScore(View):
                     "played_holes_par": 0,
                     "holes_played": 0
                 }
-            
+
             # Only count holes that have been played
             if score["shots_taken"] is not None:
                 player_totals[player_name]["total_shots"] += score["shots_taken"]

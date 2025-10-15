@@ -135,7 +135,7 @@
   </div>
   {% endif %}
 
-  <h2 class="mb-4 text-center fw-bold">🇲🇦 Superb Ock 3 🇲🇦</h2>
+  <h2 class="mb-4 text-center fw-bold">🇹🇷 The Ock 4 🇹🇷</h2>
 
   <!-- Desktop Table -->
   <div id="tournament-table" class="table-responsive d-none d-md-block">
@@ -144,7 +144,7 @@
         <tr>
           <th scope="col">Player</th>
           {% for course in courses %}
-          <th scope="col" data-url="{% url 'golf_round' course.id %}" style="cursor: pointer;">
+          <th scope="col" {% if course.id %}data-url="{% url 'golf_round' course.id %}" style="cursor: pointer;"{% endif %}>
               {{ course.course }}
           </th>
           {% endfor %}
