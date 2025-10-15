@@ -130,7 +130,7 @@ class Score(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    notifications_enabled = models.BooleanField(default=True)
+    notifications_enabled = models.BooleanField(default=False)
 
     # Notification preferences
     notify_round_start = models.BooleanField(default=True, help_text="Notify when a new round starts")
