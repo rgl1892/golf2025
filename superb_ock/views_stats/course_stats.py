@@ -130,7 +130,8 @@ def course_detail_stats(request, course_id):
     
     course = GolfCourse.objects.get(id=course_id)
     holes = Hole.objects.filter(golf_course=course).order_by('hole_number')
-    scores = Score.objects.filter(hole__golf_course=course).select_related('player', 'golf_round')
+    # Use optimized manager method
+    scores = Score.objects.for_course(course)
     
     # Hole-by-hole stats
     hole_stats = []

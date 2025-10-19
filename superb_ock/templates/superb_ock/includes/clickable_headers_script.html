@@ -1,0 +1,21 @@
+{# Reusable Script for Clickable Table Headers #}
+{# Makes table headers with data-url attributes clickable #}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Select all header cells with clickable-header class or data-url attribute
+    const headerCells = document.querySelectorAll('th[data-url], th.clickable-header');
+
+    // Loop through each header cell and add an event listener
+    headerCells.forEach(function(cell) {
+      // Get the URL from the "data-url" attribute
+      const url = cell.getAttribute('data-url');
+
+      // Add click event listener to the header cell
+      if (url) {
+        cell.addEventListener('click', function() {
+          window.location.href = url;  // Redirect to the stored URL
+        });
+      }
+    });
+  });
+</script>

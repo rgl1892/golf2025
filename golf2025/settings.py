@@ -10,20 +10,28 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!5774!yb)7)bi=%+x=r&n3n80=ot4onu6@5)ml4l3=i*y*&5(l'
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    'django-insecure-!5774!yb)7)bi=%+x=r&n3n80=ot4onu6@5)ml4l3=i*y*&5(l'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 
 
@@ -54,21 +62,32 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Load development overrides if available
 try:
     from .dev import *
     ALLOWED_HOSTS = hosts
     INSTALLED_APPS.extend(apps)
     MIDDLEWARE.extend(middleware)
-except:
-    ALLOWED_HOSTS = ['www.thesuperbock.co.uk','thesuperbock.co.uk',]
+except ImportError:
+    pass
 
-SITE_URL = 'https://www.thesuperbock.co.uk'
+# Allowed hosts configuration
+if not hasattr(locals(), 'ALLOWED_HOSTS'):
+    allowed_hosts_str = os.getenv(
+        'ALLOWED_HOSTS',
+        'localhost,127.0.0.1,www.thesuperbock.co.uk,thesuperbock.co.uk'
+    )
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',')]
 
-# CSRF settings for production
-CSRF_TRUSTED_ORIGINS = [
-    'https://www.thesuperbock.co.uk',
-    'https://thesuperbock.co.uk',
-]
+# Site URL
+SITE_URL = os.getenv('SITE_URL', 'https://www.thesuperbock.co.uk')
+
+# CSRF settings
+csrf_origins_str = os.getenv(
+    'CSRF_TRUSTED_ORIGINS',
+    'https://www.thesuperbock.co.uk,https://thesuperbock.co.uk'
+)
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins_str.split(',')]
 
 # Ensure CSRF cookie is sent
 CSRF_COOKIE_SECURE = not DEBUG  # Only secure in production
@@ -154,7 +173,23 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Web Push Notifications
 WEBPUSH_SETTINGS = {
-    "VAPID_PUBLIC_KEY": "BF_gEW4A2xLbFOQBC74MwscvxyBLeouPm0AkSyNdBCnapa0xpNzA7im3yizKpRYxMsDmI3GBOLJhgIFYGfkrQ0g",
-    "VAPID_PRIVATE_KEY": str(BASE_DIR / "vapid_private.pem"),
-    "VAPID_ADMIN_EMAIL": "admin@thesuperbock.co.uk"
+    "VAPID_PUBLIC_KEY": os.getenv(
+        'VAPID_PUBLIC_KEY',
+        "BF_gEW4A2xLbFOQBC74MwscvxyBLeouPm0AkSyNdBCnapa0xpNzA7im3yizKpRYxMsDmI3GBOLJhgIFYGfkrQ0g"
+    ),
+    "VAPID_PRIVATE_KEY": str(BASE_DIR / os.getenv('VAPID_PRIVATE_KEY_PATH', 'vapid_private.pem')),
+    "VAPID_ADMIN_EMAIL": os.getenv('VAPID_ADMIN_EMAIL', 'admin@thesuperbock.co.uk')
 }
+
+# Logging configuration
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+ENABLE_FILE_LOGGING = os.getenv('ENABLE_FILE_LOGGING', 'True') == 'True'
+LOG_DIR = BASE_DIR / os.getenv('LOG_DIR', 'logs')
+
+# Initialize logging
+from superb_ock.logging_config import setup_logging
+setup_logging(
+    log_dir=LOG_DIR if ENABLE_FILE_LOGGING else None,
+    level=getattr(__import__('logging'), LOG_LEVEL),
+    enable_file_logging=ENABLE_FILE_LOGGING
+)

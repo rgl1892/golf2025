@@ -1,0 +1,24 @@
+{# Reusable Page Header Component #}
+{# Parameters:
+   - title: The page title
+   - icon: Optional icon (emoji or font-awesome class)
+   - subtitle: Optional subtitle
+   - align: Text alignment (default: "center")
+#}
+
+<h2 class="mb-4 text-{{ align|default:"center" }} fw-bold">
+  {% if icon %}
+    {% if icon|slice:":2" == "fa" %}
+      <i class="fas {{ icon }}"></i>
+    {% else %}
+      {{ icon }}
+    {% endif %}
+  {% endif %}
+  {{ title }}
+</h2>
+
+{% if subtitle %}
+<p class="text-{{ align|default:"center" }} text-muted mb-4">
+  {{ subtitle }}
+</p>
+{% endif %}

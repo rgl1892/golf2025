@@ -3,22 +3,36 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from .constants import (
+    HOLES_PER_ROUND,
+    MAX_PLAYERS_PER_ROUND,
+    ScoringFormat,
+    Handedness,
+    CarouselSettings,
+    NotificationSettings,
+)
+from .managers import ScoreManager, GolfRoundManager, HighlightManager
+
+
 # Create your models here.
 
 class CarouselImage(models.Model):
     title = models.CharField(max_length=100, help_text="Title displayed on the image")
     description = models.TextField(max_length=200, help_text="Description displayed on the image")
     image = models.ImageField(upload_to='carousel/', help_text="Upload carousel image")
-    order = models.PositiveIntegerField(default=0, help_text="Display order (lower numbers first)")
+    order = models.PositiveIntegerField(
+        default=CarouselSettings.DEFAULT_ORDER,
+        help_text="Display order (lower numbers first)"
+    )
     is_active = models.BooleanField(default=True, help_text="Show this image in the carousel")
-    
+
     # Focal point controls (0-100 percentage)
     focal_point_x = models.PositiveIntegerField(
-        default=50, 
+        default=CarouselSettings.DEFAULT_FOCAL_POINT_X,
         help_text="Horizontal focal point (0=left, 50=center, 100=right)"
     )
     focal_point_y = models.PositiveIntegerField(
-        default=50, 
+        default=CarouselSettings.DEFAULT_FOCAL_POINT_Y,
         help_text="Vertical focal point (0=top, 50=center, 100=bottom)"
     )
     
@@ -33,7 +47,8 @@ class CarouselImage(models.Model):
         return f"{self.title} (Order: {self.order})"
 
 def hole_choice():
-    return [(x+1,f'{x+1}') for x in range(18)]
+    """Generate choices for hole numbers (1-18)."""
+    return [(x + 1, f'{x + 1}') for x in range(HOLES_PER_ROUND)]
 
 class GolfCourse(models.Model):
     
@@ -50,13 +65,12 @@ class GolfCourse(models.Model):
 
 class GolfEvent(models.Model):
 
-    format_choices = [
-        ("best_three_of_five", "Best Three of All"),
-        ("best_last_rounds_counts", "Best Two of First, Last Round Counts"),
-    ]
-
     name = models.CharField(max_length=40)
-    scoring = models.TextField(max_length=40,choices=format_choices,default='best_three_of_five')
+    scoring = models.TextField(
+        max_length=40,
+        choices=ScoringFormat.CHOICES,
+        default=ScoringFormat.BEST_THREE_OF_FIVE
+    )
 
     def __str__(self):
         return self.name
@@ -66,28 +80,38 @@ class GolfRound(models.Model):
     event = models.ForeignKey(GolfEvent,on_delete=models.CASCADE,default=1)
     date_started = models.DateField(blank=True,null=True)
 
+    # Custom manager for optimized queries
+    objects = GolfRoundManager()
+
     def __str__(self):
         return f"{self.event} - {self.pk}"
 
 class Hole(models.Model):
-    
+
     hole_number = models.IntegerField(choices=hole_choice())
-    golf_course = models.ForeignKey(GolfCourse,on_delete=models.CASCADE,null=True) # tees implied by choice 
-    par = models.IntegerField(choices=[(3,'3'),(4,'4'),(5,'5')],default=4)
+    golf_course = models.ForeignKey(GolfCourse, on_delete=models.CASCADE, null=True)  # tees implied by choice
+    par = models.IntegerField(
+        choices=[(3, '3'), (4, '4'), (5, '5')],
+        default=4
+    )
     yards = models.IntegerField(default=400)
-    stroke_index = models.IntegerField(choices=hole_choice(),default=1)
+    stroke_index = models.IntegerField(choices=hole_choice(), default=1)
 
     def __str__(self):
         return f"{self.golf_course} - Hole {self.hole_number}"
 
 class Player(models.Model):
 
-    first_name = models.CharField(max_length=20,null=True)
-    second_name = models.CharField(max_length=20,null=True)
+    first_name = models.CharField(max_length=20, null=True)
+    second_name = models.CharField(max_length=20, null=True)
     ocks = models.IntegerField(default=0)
-    handedness = models.CharField(max_length=20,default='Right')
-    picture = models.ImageField(blank=True,null=True)
-    info = models.TextField(blank=True,null=True)
+    handedness = models.CharField(
+        max_length=20,
+        choices=Handedness.CHOICES,
+        default=Handedness.RIGHT
+    )
+    picture = models.ImageField(blank=True, null=True)
+    info = models.TextField(blank=True, null=True)
     slug = models.SlugField(default="", null=False)
 
     def __str__(self):
@@ -97,6 +121,9 @@ class Highlight(models.Model):
     title = models.CharField(max_length=40)
     video = models.FileField(upload_to='highlights')
     thumbnail = models.ImageField(blank=True, upload_to='highlights/thumbnails')
+
+    # Custom manager for optimized queries
+    objects = HighlightManager()
 
     def __str__(self):
         return self.title
@@ -125,17 +152,29 @@ class Score(models.Model):
     sandy = models.BooleanField(default=False)
     highlight = models.ManyToManyField(Highlight,blank=True)
 
+    # Custom manager for optimized queries
+    objects = ScoreManager()
+
     def __str__(self):
         return f"{self.player} {self.hole} {self.golf_round}"
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    notifications_enabled = models.BooleanField(default=False)
+    notifications_enabled = models.BooleanField(default=NotificationSettings.DEFAULT_ENABLED)
 
     # Notification preferences
-    notify_round_start = models.BooleanField(default=True, help_text="Notify when a new round starts")
-    notify_hole_completed = models.BooleanField(default=True, help_text="Notify when you complete a hole")
-    notify_round_completed = models.BooleanField(default=True, help_text="Notify when a round is completed")
+    notify_round_start = models.BooleanField(
+        default=NotificationSettings.DEFAULT_NOTIFY_ROUND_START,
+        help_text="Notify when a new round starts"
+    )
+    notify_hole_completed = models.BooleanField(
+        default=NotificationSettings.DEFAULT_NOTIFY_HOLE_COMPLETED,
+        help_text="Notify when you complete a hole"
+    )
+    notify_round_completed = models.BooleanField(
+        default=NotificationSettings.DEFAULT_NOTIFY_ROUND_COMPLETED,
+        help_text="Notify when a round is completed"
+    )
 
     def __str__(self):
         return f"{self.user.username} - Notifications: {self.notifications_enabled}"

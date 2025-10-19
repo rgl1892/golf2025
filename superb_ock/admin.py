@@ -5,10 +5,6 @@ from django.core.files.storage import default_storage
 from django.contrib import messages
 from django.contrib.admin import SimpleListFilter
 import os
-import cv2
-from PIL import Image, ImageEnhance, ImageFilter
-from django.core.files.base import ContentFile
-import io
 from .models import *
 
 # Customize admin site header
@@ -344,134 +340,14 @@ class HighlightAdmin(admin.ModelAdmin):
                 messages.error(request, f'Error generating thumbnails: {str(e)}')
     
     def generate_thumbnails_and_previews(self, highlight, request):
-        """Generate thumbnails and preview images for the highlight"""
-        video_path = highlight.video.path
-        
-        if not os.path.exists(video_path):
-            raise Exception(f"Video file not found: {video_path}")
-        
-        # Open video with OpenCV
-        cap = cv2.VideoCapture(video_path)
-        
-        if not cap.isOpened():
-            raise Exception(f"Cannot open video file: {video_path}")
-        
-        try:
-            # Get video properties
-            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            duration = total_frames / fps if fps > 0 else 0
-            
-            if duration == 0:
-                raise Exception("Cannot determine video duration")
-            
-            # Generate thumbnail (middle frame)
-            thumbnail_timestamp = duration / 2
-            self.generate_thumbnail(cap, highlight, thumbnail_timestamp, fps)
-            
-            # Generate 3 preview images at 25%, 50%, 75% of video
-            preview_timestamps = [duration * 0.25, duration * 0.5, duration * 0.75]
-            
-            # Clear existing previews
-            highlight.previews.all().delete()
-            
-            for i, timestamp in enumerate(preview_timestamps):
-                self.generate_preview(cap, highlight, timestamp, fps, i)
-                
-        finally:
-            cap.release()
-    
-    def generate_thumbnail(self, cap, highlight, timestamp, fps):
-        """Generate main thumbnail"""
-        frame_number = int(timestamp * fps)
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
-        
-        ret, frame = cap.read()
-        if not ret:
-            raise Exception("Cannot read frame for thumbnail")
-        
-        # Convert BGR to RGB
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        
-        # Convert to PIL Image and enhance
-        pil_image = Image.fromarray(frame_rgb)
-        pil_image = self.enhance_image(pil_image)
-        
-        # Resize to high-quality thumbnail size
-        pil_image.thumbnail((800, 600), Image.Resampling.LANCZOS)
-        
-        # Save to BytesIO
-        img_io = io.BytesIO()
-        pil_image.save(img_io, format='JPEG', quality=95, optimize=True)
-        img_io.seek(0)
-        
-        # Save to model
-        filename = f'{highlight.id}_thumbnail.jpg'
-        highlight.thumbnail.save(
-            filename,
-            ContentFile(img_io.getvalue()),
-            save=True
-        )
-    
-    def generate_preview(self, cap, highlight, timestamp, fps, order):
-        """Generate preview image"""
-        frame_number = int(timestamp * fps)
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
-        
-        ret, frame = cap.read()
-        if not ret:
-            raise Exception(f"Cannot read frame for preview {order}")
-        
-        # Convert BGR to RGB
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        
-        # Convert to PIL Image and enhance
-        pil_image = Image.fromarray(frame_rgb)
-        pil_image = self.enhance_image(pil_image)
-        
-        # Resize to high-quality preview size
-        pil_image.thumbnail((600, 400), Image.Resampling.LANCZOS)
-        
-        # Save to BytesIO
-        img_io = io.BytesIO()
-        pil_image.save(img_io, format='JPEG', quality=95, optimize=True)
-        img_io.seek(0)
-        
-        # Create HighlightPreview
-        preview = HighlightPreview.objects.create(
-            highlight=highlight,
-            timestamp=timestamp,
-            order=order
-        )
-        
-        filename = f'{highlight.id}_preview_{order}.jpg'
-        preview.image.save(
-            filename,
-            ContentFile(img_io.getvalue()),
-            save=True
-        )
-    
-    def enhance_image(self, image):
-        """Enhance image quality"""
-        try:
-            # Apply subtle sharpening
-            image = image.filter(ImageFilter.UnsharpMask(radius=1, percent=120, threshold=3))
-            
-            # Enhance contrast slightly
-            enhancer = ImageEnhance.Contrast(image)
-            image = enhancer.enhance(1.1)
-            
-            # Enhance color saturation slightly
-            enhancer = ImageEnhance.Color(image)
-            image = enhancer.enhance(1.05)
-            
-            # Enhance sharpness
-            enhancer = ImageEnhance.Sharpness(image)
-            image = enhancer.enhance(1.1)
-            
-            return image
-        except Exception:
-            return image  # Return original if enhancement fails
+        """Generate thumbnails and preview images for the highlight using media service"""
+        from .services import VideoThumbnailGenerator
+
+        generator = VideoThumbnailGenerator()
+        success = generator.generate_thumbnails_and_previews(highlight, request)
+
+        if not success:
+            raise Exception("Failed to generate thumbnails and previews")
     
     def has_video(self, obj):
         return bool(obj.video)

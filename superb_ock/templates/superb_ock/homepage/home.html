@@ -135,93 +135,13 @@
   </div>
   {% endif %}
 
-  <h2 class="mb-4 text-center fw-bold">🇹🇷 The Ock 4 🇹🇷</h2>
+  {% include "superb_ock/includes/page_header.html" with title="The Ock 4" icon="🇹🇷" %}
 
-  <!-- Desktop Table -->
-  <div id="tournament-table" class="table-responsive d-none d-md-block">
-    <table class="table table-bordered table-hover table-sm align-middle text-center table-striped">
-      <thead class="table-dark">
-        <tr>
-          <th scope="col">Player</th>
-          {% for course in courses %}
-          <th scope="col" {% if course.id %}data-url="{% url 'golf_round' course.id %}" style="cursor: pointer;"{% endif %}>
-              {{ course.course }}
-          </th>
-          {% endfor %}
-          <th scope="col">Best 3 Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for player in leaderboard %}
-          <tr>
-            <td class="fw-semibold text-start ps-3">{{ player.player }}</td>
-            {% for round in player.rounds %}
-              {% if round.total %}
-                <td class="{% if round.is_best %}bg-success text-white fw-bold{% elif round.is_counting %}border border-warning border-2{% endif %}">
-                  <div>{{ round.total }}</div>
-                </td>
-              {% else %}
-                <td class="text-muted">—</td>
-              {% endif %}
-            {% endfor %}
-            <td class="fw-bold">{{ player.best_3_total }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Mobile Table -->
-  <div class="table-responsive d-md-none">
-    <table class="table table-bordered table-hover table-sm align-middle text-center table-striped">
-      <thead class="table-dark">
-        <tr>
-          <th scope="col" class="text-start">Player</th>
-          <th scope="col">Scores</th>
-          <th scope="col">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for player in leaderboard %}
-          <tr>
-            <td class="fw-semibold text-start ps-2">{{ player.player }}</td>
-            <td class="small">
-              {% for round in player.rounds %}
-                {% if round.total %}
-                  <span class="{% if round.is_best %}bg-success text-white fw-bold px-1 rounded{% elif round.is_counting %}border border-warning border-2 px-1 rounded{% endif %}">{{ round.total }}</span>
-                  {% if not forloop.last %} | {% endif %}
-                {% else %}
-                  <span class="text-muted">—</span>
-                  {% if not forloop.last %} | {% endif %}
-                {% endif %}
-              {% endfor %}
-            </td>
-            <td class="fw-bold">{{ player.best_3_total }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div id="tournament-table">
+    {% include "superb_ock/includes/leaderboard_table.html" with leaderboard=leaderboard courses=courses show_mobile=True %}
   </div>
 </div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    // Select all the header cells
-    const headerCells = document.querySelectorAll('th');
-
-    // Loop through each header cell and add an event listener
-    headerCells.forEach(function(cell) {
-      // Get the URL from the "data-url" attribute
-      const url = cell.getAttribute('data-url');
-      
-      // Add click event listener to the header cell
-      if (url) {
-        cell.addEventListener('click', function() {
-          window.location.href = url;  // Redirect to the stored URL
-        });
-      }
-    });
-  });
-</script>
+{% include "superb_ock/includes/clickable_headers_script.html" %}
 
 {% endblock content %}

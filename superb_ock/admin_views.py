@@ -7,11 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.forms import ModelForm, CharField, FileField, ChoiceField
 from .models import Score, Highlight, Player, GolfRound, Hole
 import json
-import cv2
 import os
-from PIL import Image, ImageEnhance, ImageFilter
-from django.core.files.base import ContentFile
-import io
 
 @staff_member_required
 def bulk_highlight_link(request):
@@ -47,10 +43,8 @@ def bulk_highlight_link(request):
         else:
             messages.error(request, 'Please select a highlight.')
     
-    # Get the selected scores for display
-    scores = Score.objects.filter(id__in=score_ids).select_related(
-        'player', 'hole__golf_course', 'golf_round__event'
-    ).order_by('player__first_name', 'hole__hole_number')
+    # Get the selected scores for display (using optimized manager)
+    scores = Score.objects.filter(id__in=score_ids).with_related_data().order_by('player__first_name', 'hole__hole_number')
     
     # Get all available highlights
     highlights = Highlight.objects.all().order_by('title')
@@ -73,11 +67,9 @@ def highlight_management(request):
     player_id = request.GET.get('player')
     highlight_id = request.GET.get('highlight')
     
-    # Base queryset
-    scores = Score.objects.select_related(
-        'player', 'hole__golf_course', 'golf_round__event'
-    ).prefetch_related('highlight')
-    
+    # Base queryset (using optimized manager)
+    scores = Score.objects.with_all_related()
+
     # Apply filters
     if round_id:
         scores = scores.filter(golf_round_id=round_id)
@@ -87,8 +79,8 @@ def highlight_management(request):
     # Order by round, then player, then hole
     scores = scores.order_by('-golf_round_id', 'player__first_name', 'hole__hole_number')
     
-    # Get filter options
-    rounds = GolfRound.objects.select_related('event').order_by('-id')[:20]
+    # Get filter options (using optimized manager)
+    rounds = GolfRound.objects.with_event().order_by('-id')[:20]
     players = Player.objects.order_by('first_name', 'second_name')
     highlights = Highlight.objects.all().order_by('title')
     
@@ -262,10 +254,8 @@ def add_round_highlight(request, round_id):
     else:
         form = RoundHighlightForm(round_id=round_id)
     
-    # Get round context for display
-    round_scores = Score.objects.filter(golf_round_id=round_id).select_related(
-        'player', 'hole__golf_course'
-    ).order_by('player__first_name', 'hole__hole_number')
+    # Get round context for display (using optimized manager)
+    round_scores = Score.objects.for_round(round_id).order_by('player__first_name', 'hole__hole_number')
     
     # Group by player for better display
     players_scores = {}
@@ -286,133 +276,11 @@ def add_round_highlight(request, round_id):
     return render(request, 'admin/add_round_highlight.html', context)
 
 def generate_thumbnails_for_highlight(highlight):
-    """Generate thumbnails and preview images for a highlight"""
-    video_path = highlight.video.path
-    
-    if not os.path.exists(video_path):
-        raise Exception(f"Video file not found: {video_path}")
-    
-    # Open video with OpenCV
-    cap = cv2.VideoCapture(video_path)
-    
-    if not cap.isOpened():
-        raise Exception(f"Cannot open video file: {video_path}")
-    
-    try:
-        # Get video properties
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        duration = total_frames / fps if fps > 0 else 0
-        
-        if duration == 0:
-            raise Exception("Cannot determine video duration")
-        
-        # Generate thumbnail (middle frame)
-        thumbnail_timestamp = duration / 2
-        generate_thumbnail_for_highlight(cap, highlight, thumbnail_timestamp, fps)
-        
-        # Generate 3 preview images at 25%, 50%, 75% of video
-        preview_timestamps = [duration * 0.25, duration * 0.5, duration * 0.75]
-        
-        # Clear existing previews
-        highlight.previews.all().delete()
-        
-        for i, timestamp in enumerate(preview_timestamps):
-            generate_preview_for_highlight(cap, highlight, timestamp, fps, i)
-            
-    finally:
-        cap.release()
+    """Generate thumbnails and preview images for a highlight using media service"""
+    from .services import VideoThumbnailGenerator
 
-def generate_thumbnail_for_highlight(cap, highlight, timestamp, fps):
-    """Generate main thumbnail"""
-    frame_number = int(timestamp * fps)
-    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
-    
-    ret, frame = cap.read()
-    if not ret:
-        raise Exception("Cannot read frame for thumbnail")
-    
-    # Convert BGR to RGB
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    
-    # Convert to PIL Image and enhance
-    pil_image = Image.fromarray(frame_rgb)
-    pil_image = enhance_image(pil_image)
-    
-    # Resize to high-quality thumbnail size
-    pil_image.thumbnail((800, 600), Image.Resampling.LANCZOS)
-    
-    # Save to BytesIO
-    img_io = io.BytesIO()
-    pil_image.save(img_io, format='JPEG', quality=95, optimize=True)
-    img_io.seek(0)
-    
-    # Save to model
-    filename = f'{highlight.id}_thumbnail.jpg'
-    highlight.thumbnail.save(
-        filename,
-        ContentFile(img_io.getvalue()),
-        save=True
-    )
+    generator = VideoThumbnailGenerator()
+    success = generator.generate_thumbnails_and_previews(highlight)
 
-def generate_preview_for_highlight(cap, highlight, timestamp, fps, order):
-    """Generate preview image"""
-    from .models import HighlightPreview
-    
-    frame_number = int(timestamp * fps)
-    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
-    
-    ret, frame = cap.read()
-    if not ret:
-        raise Exception(f"Cannot read frame for preview {order}")
-    
-    # Convert BGR to RGB
-    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    
-    # Convert to PIL Image and enhance
-    pil_image = Image.fromarray(frame_rgb)
-    pil_image = enhance_image(pil_image)
-    
-    # Resize to high-quality preview size
-    pil_image.thumbnail((600, 400), Image.Resampling.LANCZOS)
-    
-    # Save to BytesIO
-    img_io = io.BytesIO()
-    pil_image.save(img_io, format='JPEG', quality=95, optimize=True)
-    img_io.seek(0)
-    
-    # Create HighlightPreview
-    preview = HighlightPreview.objects.create(
-        highlight=highlight,
-        timestamp=timestamp,
-        order=order
-    )
-    
-    filename = f'{highlight.id}_preview_{order}.jpg'
-    preview.image.save(
-        filename,
-        ContentFile(img_io.getvalue()),
-        save=True
-    )
-
-def enhance_image(image):
-    """Enhance image quality"""
-    try:
-        # Apply subtle sharpening
-        image = image.filter(ImageFilter.UnsharpMask(radius=1, percent=120, threshold=3))
-        
-        # Enhance contrast slightly
-        enhancer = ImageEnhance.Contrast(image)
-        image = enhancer.enhance(1.1)
-        
-        # Enhance color saturation slightly
-        enhancer = ImageEnhance.Color(image)
-        image = enhancer.enhance(1.05)
-        
-        # Enhance sharpness
-        enhancer = ImageEnhance.Sharpness(image)
-        image = enhancer.enhance(1.1)
-        
-        return image
-    except Exception:
-        return image  # Return original if enhancement fails
+    if not success:
+        raise Exception("Failed to generate thumbnails and previews")

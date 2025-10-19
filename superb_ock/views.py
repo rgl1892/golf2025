@@ -122,156 +122,16 @@ class Home(View):
     template_name = "superb_ock/homepage/home.html"
 
     def get_context(self):
+        # Use DateCourseLeaderboardBuilder service to generate leaderboard
+        # Event ID 5 is hardcoded for the main tournament homepage
+        from .services.leaderboard import DateCourseLeaderboardBuilder
 
-        scores = list(Score.objects.filter(golf_round__event=5).values(
-            'player__first_name', 'player__second_name','stableford', 'golf_round_id', 'hole_id',
-            'shots_taken','hole__golf_course__name','hole__golf_course__tees','golf_round__event__scoring',
-            'golf_round__date_started'
-            ))
+        builder = DateCourseLeaderboardBuilder(event_id=5)
+        entries = builder.build()
 
-        # manip the data to get info per player per round
-        # Group by (date, course) to combine rounds at same course on same day
-        player_rounds = {}
-
-        for score in scores:
-            name = f"{score['player__first_name']} {score['player__second_name']}"
-            round_id = score['golf_round_id']
-            round_date = score['golf_round__date_started']
-            course = f"{score['hole__golf_course__name']} - {score['hole__golf_course__tees']}"
-
-            # Create a unique key for (date, course) combination
-            date_course_key = (round_date, course)
-
-            if name not in player_rounds:
-                player_rounds[name] = {}
-            if date_course_key not in player_rounds[name]:
-                player_rounds[name][date_course_key] = {
-                    'total': 0,
-                    'course': course,
-                    'date': round_date,
-                    'round_ids': set()
-                }
-
-            player_rounds[name][date_course_key]['total'] += score['stableford'] or 0
-            player_rounds[name][date_course_key]['round_ids'].add(round_id)
-            player_rounds[name][date_course_key]['scoring'] = score['golf_round__event__scoring']  
-            
-    
-        # Get event scoring format for calculating totals
-        event = GolfEvent.objects.get(id=5)
-        scoring_format = event.scoring
-
-        # get the totals
-        leaderboard = []
-
-        for player__first_name, round_scores in player_rounds.items():
-            # Calculate total based on scoring format
-            # Note: keys are now (date, course) tuples
-            valid_rounds = [{'key': k, 'total': v['total']} for k, v in round_scores.items() if v['total'] is not None]
-
-            if scoring_format == "best_three_of_five":
-                # Best 3 rounds overall
-                top3_scores = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
-                total_score = sum(r['total'] for r in top3_scores)
-            elif scoring_format == "best_last_rounds_counts":
-                # Best 2 of first rounds + last round counts
-                if len(valid_rounds) >= 3:
-                    sorted_rounds = sorted(valid_rounds, key=lambda x: x['key'][0])  # Sort by date
-                    last_round = sorted_rounds[-1]
-                    first_rounds = sorted_rounds[:-1]
-                    best_first_two = sorted(first_rounds, key=lambda x: x['total'], reverse=True)[:2]
-                    total_score = sum(r['total'] for r in best_first_two) + last_round['total']
-                else:
-                    total_score = sum(r['total'] for r in valid_rounds)
-            else:
-                # Default to best 3
-                top3_scores = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
-                total_score = sum(r['total'] for r in top3_scores)
-
-            leaderboard.append({
-                'player__first_name': player__first_name,
-                'round_totals': dict(round_scores),
-                'best_3_total': total_score,
-
-            })
-
-        # Step 4: Sort leaderboard
-        leaderboard = sorted(leaderboard, key=lambda x: x['best_3_total'], reverse=True)
-        all_date_course_keys = set()
-        for player in leaderboard:
-            all_date_course_keys.update(player['round_totals'].keys())
-        # Sort by date first, then by course name
-        date_course_keys_sorted = sorted(all_date_course_keys, key=lambda x: (x[0], x[1]))
-
-        cleaned_leaderboard = []
-        for player in leaderboard:
-            rounds = []
-            round_dict = player['round_totals']
-
-            # Determine counting rounds based on scoring format
-            valid_rounds = [{'key': k, 'total': v['total']} for k, v in round_dict.items() if v['total'] is not None]
-
-            if scoring_format == "best_three_of_five":
-                # Best 3 rounds overall
-                counting_rounds = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
-                counting_keys = [r['key'] for r in counting_rounds]
-            elif scoring_format == "best_last_rounds_counts":
-                # Best 2 of first rounds + last round counts
-                if len(valid_rounds) >= 3:
-                    sorted_rounds = sorted(valid_rounds, key=lambda x: x['key'][0])  # Sort by date
-                    last_round = sorted_rounds[-1]
-                    first_rounds = sorted_rounds[:-1]
-                    best_first_two = sorted(first_rounds, key=lambda x: x['total'], reverse=True)[:2]
-                    counting_keys = [r['key'] for r in best_first_two] + [last_round['key']]
-                else:
-                    counting_keys = [r['key'] for r in valid_rounds]
-            else:
-                # Default to best 3
-                counting_rounds = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
-                counting_keys = [r['key'] for r in counting_rounds]
-
-            best_round_score = max([r['total'] for r in round_dict.values()] or [0])
-
-            for date_course_key in date_course_keys_sorted:
-                round_info = round_dict.get(date_course_key)
-                if round_info:
-                    # Get the first round_id from the set for linking purposes
-                    first_round_id = min(round_info['round_ids']) if round_info['round_ids'] else None
-                    rounds.append({
-                        'key': date_course_key,
-                        'num': first_round_id,  # For linking to a specific round
-                        'total': round_info['total'],
-                        'course': round_info['course'],
-                        'date': round_info['date'],
-                        'is_best': round_info['total'] == best_round_score,
-                        'is_counting': date_course_key in counting_keys
-                    })
-                else:
-                    rounds.append({
-                        'key': date_course_key,
-                        'num': None,
-                        'total': None,
-                        'course': date_course_key[1],  # Course name from the key
-                        'date': date_course_key[0],    # Date from the key
-                        'is_best': False,
-                        'is_counting': False
-                    })
-
-            cleaned_leaderboard.append({
-                'player': player['player__first_name'],
-                'rounds': rounds,
-                'best_3_total': player['best_3_total']
-            })
-        courses = []
-        if cleaned_leaderboard:
-            for round_data in cleaned_leaderboard[0]['rounds']:
-                # Include all rounds, even if no scores entered yet
-                # Use the first available round ID, or None if truly no rounds exist
-                courses.append({
-                    'course': round_data['course'],
-                    'id': round_data['num'],  # Will be None if no scores yet
-                    'date': round_data['date']
-                })
+        # Convert to template-compatible format
+        cleaned_leaderboard = builder.to_dict_format(entries)
+        courses = builder.get_courses_list(entries)
 
 
         # Get active carousel images
@@ -866,133 +726,19 @@ class EventView(View):
 
     template_name = 'superb_ock/events/overview.html'
 
-    def get(self,request,event_id):
-        # get scores
-        scores = list(Score.objects.filter(golf_round__event=event_id).values(
-            'player__first_name', 'player__second_name','stableford', 'golf_round_id', 'hole_id',
-            'shots_taken','hole__golf_course__name','hole__golf_course__tees','golf_round__event__scoring'
-            ))
+    def get(self, request, event_id):
+        # Use LeaderboardBuilder service to generate leaderboard
+        from .services import LeaderboardBuilder
 
-        # manip the data to get infor per player per round
-        player_rounds = {}
+        builder = LeaderboardBuilder(event_id)
+        entries = builder.build()
 
-        for score in scores:
-            name = f"{score['player__first_name']} {score['player__second_name']}"
-            round_id = score['golf_round_id']
-            course = f"{score['hole__golf_course__name']} - {score['hole__golf_course__tees']}"
-            
-            if name not in player_rounds:
-                player_rounds[name] = {}
-            if round_id not in player_rounds[name]:
-                player_rounds[name][round_id] = {'total': 0, 'course': ''}
-            
-            player_rounds[name][round_id]['total'] += score['stableford'] or 0
-            player_rounds[name][round_id]['course'] = course  
-            player_rounds[name][round_id]['scoring'] = score['golf_round__event__scoring']  
-            
-    
+        # Convert to template-compatible format
+        cleaned_leaderboard = builder.to_dict_format(entries)
+        courses = builder.get_courses_list(entries)
 
-        # Get event scoring format for calculating totals
-        event = GolfEvent.objects.get(id=event_id)
-        scoring_format = event.scoring
-
-        # get the totals
-        leaderboard = []
-
-        for player__first_name, round_scores in player_rounds.items():
-            # Calculate total based on scoring format
-            valid_rounds = [{'num': k, 'total': v['total']} for k, v in round_scores.items() if v['total'] is not None]
-            
-            if scoring_format == "best_three_of_five":
-                # Best 3 rounds overall
-                top3_scores = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
-                total_score = sum(r['total'] for r in top3_scores)
-            elif scoring_format == "best_last_rounds_counts":
-                # Best 2 of first rounds + last round counts
-                if len(valid_rounds) >= 3:
-                    sorted_rounds = sorted(valid_rounds, key=lambda x: x['num'])
-                    last_round = sorted_rounds[-1]
-                    first_rounds = sorted_rounds[:-1]
-                    best_first_two = sorted(first_rounds, key=lambda x: x['total'], reverse=True)[:2]
-                    total_score = sum(r['total'] for r in best_first_two) + last_round['total']
-                else:
-                    total_score = sum(r['total'] for r in valid_rounds)
-            else:
-                # Default to best 3
-                top3_scores = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
-                total_score = sum(r['total'] for r in top3_scores)
-            
-            leaderboard.append({
-                'player__first_name': player__first_name,
-                'round_totals': dict(round_scores),
-                'best_3_total': total_score,
-
-            })
-
-        # Step 4: Sort leaderboard
-        leaderboard = sorted(leaderboard, key=lambda x: x['best_3_total'], reverse=True)
-        all_round_numbers = set()
-        for player in leaderboard:
-            all_round_numbers.update(player['round_totals'].keys())
-        round_numbers = sorted(all_round_numbers)
-
-        cleaned_leaderboard = []
-        for player in leaderboard:
-            rounds = []
-            round_dict = player['round_totals']
-            
-            # Determine counting rounds based on scoring format
-            valid_rounds = [{'num': k, 'total': v['total']} for k, v in round_dict.items() if v['total'] is not None]
-            
-            if scoring_format == "best_three_of_five":
-                # Best 3 rounds overall
-                counting_rounds = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
-                counting_round_ids = [r['num'] for r in counting_rounds]
-            elif scoring_format == "best_last_rounds_counts":
-                # Best 2 of first rounds + last round counts
-                if len(valid_rounds) >= 3:
-                    sorted_rounds = sorted(valid_rounds, key=lambda x: x['num'])
-                    last_round = sorted_rounds[-1]
-                    first_rounds = sorted_rounds[:-1]
-                    best_first_two = sorted(first_rounds, key=lambda x: x['total'], reverse=True)[:2]
-                    counting_round_ids = [r['num'] for r in best_first_two] + [last_round['num']]
-                else:
-                    counting_round_ids = [r['num'] for r in valid_rounds]
-            else:
-                # Default to best 3
-                counting_rounds = sorted(valid_rounds, key=lambda x: x['total'], reverse=True)[:3]
-                counting_round_ids = [r['num'] for r in counting_rounds]
-            
-            best_round_score = max([r['total'] for r in round_dict.values()] or [0])
-            
-            for round_num in round_numbers:
-                round_info = round_dict.get(round_num)
-                if round_info:
-                    rounds.append({
-                        'num': round_num,
-                        'total': round_info['total'],
-                        'course': round_info['course'],
-                        'is_best': round_info['total'] == best_round_score,
-                        'is_counting': round_num in counting_round_ids
-                    })
-                else:
-                    rounds.append({
-                        'num': round_num,
-                        'total': None,
-                        'course': None,
-                        'is_best': False,
-                        'is_counting': False
-                    })
-            
-            cleaned_leaderboard.append({
-                'player': player['player__first_name'],
-                'rounds': rounds,
-                'best_3_total': player['best_3_total']
-            })
-        courses = []
-        if cleaned_leaderboard:
-            for rounds in cleaned_leaderboard[0]['rounds']:
-                courses.append({'course':rounds['course'],'id':rounds['num']})
+        # Get round numbers for display
+        round_numbers = sorted(set(r['num'] for entry in entries for r in entry.rounds if r.get('num')))
 
             
         # Generate cumulative data for chart

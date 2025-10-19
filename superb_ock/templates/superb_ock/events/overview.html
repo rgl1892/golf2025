@@ -3,7 +3,7 @@
 {% block content %}
 {% load mathfilters %}
 <div class="container my-5">
-  <h2 class="mb-4 text-center fw-bold">🏆 Tournament Leaderboard</h2>
+  {% include "superb_ock/includes/page_header.html" with title="Tournament Leaderboard" icon="🏆" %}
 
   <!-- Cumulative Scoring Chart -->
   <div class="row mb-5">
@@ -24,59 +24,10 @@
     </div>
   </div>
 
-  <div class="table-responsive">
-    <table class="table table-bordered table-hover table-sm align-middle text-center table-striped">
-      <thead class="table-dark">
-        <tr>
-          <th scope="col">Player</th>
-          {% for course in courses %}
-          <th scope="col" data-url="{% url 'golf_round' course.id %}" style="cursor: pointer;">
-              {{ course.course }}
-          </th>
-          {% endfor %}
-          <th scope="col">Best 3 Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for player in leaderboard %}
-          <tr>
-            <td class="fw-semibold text-start ps-3">{{ player.player }}</td>
-            {% for round in player.rounds %}
-              {% if round.total %}
-                <td class="{% if round.is_best %}bg-success text-white fw-bold{% elif round.is_counting %}border border-warning border-2{% endif %}">
-                  <div>{{ round.total }}</div>
-                </td>
-              {% else %}
-                <td class="text-muted">—</td>
-              {% endif %}
-            {% endfor %}
-            <td class="fw-bold">{{ player.best_3_total }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  {% include "superb_ock/includes/leaderboard_table.html" with leaderboard=leaderboard courses=courses show_mobile=False %}
 </div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    // Select all the header cells
-    const headerCells = document.querySelectorAll('th');
-
-    // Loop through each header cell and add an event listener
-    headerCells.forEach(function(cell) {
-      // Get the URL from the "data-url" attribute
-      const url = cell.getAttribute('data-url');
-      
-      // Add click event listener to the header cell
-      if (url) {
-        cell.addEventListener('click', function() {
-          window.location.href = url;  // Redirect to the stored URL
-        });
-      }
-    });
-  });
-</script>
+{% include "superb_ock/includes/clickable_headers_script.html" %}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>

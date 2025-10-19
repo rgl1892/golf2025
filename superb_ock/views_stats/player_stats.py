@@ -78,7 +78,8 @@ def player_detail_stats(request, player_id):
     round_type_filter = request.GET.get('filter', 'all')
     
     player = Player.objects.get(id=player_id)
-    scores = Score.objects.filter(player=player).select_related('hole__golf_course', 'golf_round')
+    # Use optimized manager method
+    scores = Score.objects.for_player(player)
     
     # Apply round type filtering
     if round_type_filter == 'ocks':

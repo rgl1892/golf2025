@@ -1,0 +1,26 @@
+{# Reusable Card with Header Component #}
+{# Parameters:
+   - header_title: The title to display in the header
+   - header_icon: Optional icon to display before title (e.g., "🏌️" or "fa-chart-bar")
+   - header_bg: Background class for header (default: "bg-primary")
+   - card_body_class: Optional classes for card-body
+   - card_id: Optional ID for the card
+#}
+
+<div class="card{% if card_id %} id="{{ card_id }}"{% endif %}">
+  <div class="card-header {{ header_bg|default:"bg-primary" }} text-white">
+    <h5 class="mb-0">
+      {% if header_icon %}
+        {% if header_icon|slice:":2" == "fa" %}
+          <i class="fas {{ header_icon }} me-2"></i>
+        {% else %}
+          {{ header_icon }}
+        {% endif %}
+      {% endif %}
+      {{ header_title }}
+    </h5>
+  </div>
+  <div class="card-body {{ card_body_class }}">
+    {{ content }}
+  </div>
+</div>
