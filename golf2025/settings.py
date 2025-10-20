@@ -52,6 +52,10 @@ INSTALLED_APPS = [
     'webpush',
 ]
 
+# Add development-only apps
+if DEBUG:
+    INSTALLED_APPS += ['django_browser_reload']
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -60,7 +64,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Custom error handling and logging middleware
+    'superb_ock.middleware.error_handling.ErrorHandlingMiddleware',
+    'superb_ock.middleware.error_handling.RequestLoggingMiddleware',
 ]
+
+# Add development-only middleware
+if DEBUG:
+    MIDDLEWARE += ['django_browser_reload.middleware.BrowserReloadMiddleware']
 
 # Load development overrides if available
 try:
@@ -108,6 +119,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'superb_ock.context_processors.tournaments',
+                'superb_ock.context_processors.git_version',
             ],
         },
     },
@@ -180,6 +192,35 @@ WEBPUSH_SETTINGS = {
     "VAPID_PRIVATE_KEY": str(BASE_DIR / os.getenv('VAPID_PRIVATE_KEY_PATH', 'vapid_private.pem')),
     "VAPID_ADMIN_EMAIL": os.getenv('VAPID_ADMIN_EMAIL', 'admin@thesuperbock.co.uk')
 }
+
+# Cache configuration
+# Use local-memory cache for development, Redis for production
+CACHE_BACKEND = os.getenv('CACHE_BACKEND', 'locmem')  # 'locmem' or 'redis'
+
+if CACHE_BACKEND == 'redis':
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+            'KEY_PREFIX': 'golf2025',
+            'TIMEOUT': 300,  # 5 minutes default
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000,
+            }
+        }
+    }
+else:
+    # Local-memory cache for development
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'golf2025-cache',
+            'TIMEOUT': 300,  # 5 minutes default
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000,
+            }
+        }
+    }
 
 # Logging configuration
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')

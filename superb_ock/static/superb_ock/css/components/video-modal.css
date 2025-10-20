@@ -1,0 +1,41 @@
+/**
+ * Video Modal Component Styles
+ * Shared video player modal styling
+ */
+
+/* ===== VIDEO MODAL SIZING ===== */
+.video-modal .modal-dialog,
+.round-video-modal .modal-dialog {
+  max-width: 95vw;
+  margin: 2rem auto;
+}
+
+.video-modal .modal-content,
+.round-video-modal .modal-content {
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.video-modal .modal-body,
+.round-video-modal .modal-body {
+  max-height: calc(90vh - 120px); /* Account for header */
+  overflow: hidden;
+  padding: 0.5rem;
+}
+
+/* ===== VIDEO PLAYER ===== */
+.video-player {
+  width: 100%;
+  max-width: 100%;
+  max-height: var(--video-max-height);
+  height: auto;
+}
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .video-modal .modal-dialog,
+  .round-video-modal .modal-dialog {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+}

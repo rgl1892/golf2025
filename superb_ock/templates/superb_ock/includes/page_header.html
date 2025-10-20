@@ -1,10 +1,12 @@
-{# Reusable Page Header Component #}
-{# Parameters:
+{% comment %}
+Reusable Page Header Component
+
+Parameters:
    - title: The page title
    - icon: Optional icon (emoji or font-awesome class)
    - subtitle: Optional subtitle
    - align: Text alignment (default: "center")
-#}
+{% endcomment %}
 
 <h2 class="mb-4 text-{{ align|default:"center" }} fw-bold">
   {% if icon %}

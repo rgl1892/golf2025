@@ -3,133 +3,6 @@
 
 {% block title %}Highlights - The Superb Ock{% endblock %}
 
-{% block head %}
-<style>
-.highlight-card {
-    transition: transform 0.2s ease-in-out;
-    cursor: pointer;
-}
-
-.highlight-card:hover {
-    transform: translateY(-2px);
-}
-
-.highlight-thumbnail {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    border-radius: 8px;
-    transition: opacity 0.3s ease;
-}
-
-.highlight-preview-container {
-    position: relative;
-    overflow: hidden;
-    border-radius: 8px;
-}
-
-.highlight-preview-container .preview-images {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.highlight-preview-container:hover .highlight-thumbnail {
-    opacity: 0;
-}
-
-.highlight-preview-container:hover .preview-images {
-    opacity: 1;
-}
-
-.preview-image {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    position: absolute;
-    top: 0;
-    left: 0;
-    opacity: 0;
-    transition: opacity 0.6s ease;
-}
-
-.preview-image.active {
-    opacity: 1;
-}
-
-.player-section {
-    margin-bottom: 3rem;
-}
-
-.section-header {
-    border-bottom: 3px solid #007bff;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.highlight-info {
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 0.5rem;
-    border-radius: 0 0 8px 8px;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-}
-
-.highlight-title {
-    font-size: 0.9rem;
-    font-weight: bold;
-    margin-bottom: 0.25rem;
-}
-
-.highlight-context {
-    font-size: 0.75rem;
-    opacity: 0.9;
-}
-
-/* Video modal sizing */
-.modal-xl {
-    max-width: 95vw;
-}
-
-.modal-dialog {
-    margin: 2rem auto;
-}
-
-#videoModal .modal-content {
-    max-height: 90vh;
-    overflow: hidden;
-}
-
-#videoModal .modal-body {
-    max-height: calc(90vh - 120px); /* Account for header */
-    overflow: hidden;
-    padding: 0.5rem; /* Add some padding for controls */
-}
-
-@media (max-width: 768px) {
-    .highlight-thumbnail,
-    .preview-image {
-        height: 150px;
-    }
-    
-    .modal-dialog {
-        margin: 1rem;
-    }
-    
-    .modal-xl {
-        max-width: calc(100vw - 2rem);
-    }
-}
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="container my-4">
     <div class="row">
@@ -147,32 +20,41 @@
                 {% for item in highlights %}
                 <div class="col-lg-3 col-md-4 col-sm-6">
                     <div class="card highlight-card h-100" onclick="playVideo('{{ item.highlight.video.url }}')">
+                        {% if user.is_staff %}
+                        <a href="/admin/superb_ock/highlight/{{ item.highlight.id }}/change/"
+                           class="highlight-edit-btn"
+                           onclick="event.stopPropagation();"
+                           title="Edit highlight">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% endif %}
+
                         <div class="highlight-preview-container">
                             <!-- Main thumbnail -->
                             {% if item.highlight.thumbnail %}
-                                <img src="{{ item.highlight.thumbnail.url }}" 
-                                     alt="{{ item.highlight.title }}" 
+                                <img src="{{ item.highlight.thumbnail.url }}"
+                                     alt="{{ item.highlight.title }}"
                                      class="highlight-thumbnail">
                             {% else %}
                                 <div class="highlight-thumbnail d-flex align-items-center justify-content-center bg-secondary text-white">
                                     <i class="fas fa-play-circle fa-3x"></i>
                                 </div>
                             {% endif %}
-                            
+
                             <!-- Preview images for hover -->
                             {% if item.highlight.previews.all %}
-                            <div class="preview-images" 
+                            <div class="preview-images"
                                  data-preview-count="{{ item.highlight.previews.all|length }}">
                                 {% for preview in item.highlight.previews.all %}
-                                <img src="{{ preview.image.url }}" 
-                                     alt="Preview {{ forloop.counter }}" 
+                                <img src="{{ preview.image.url }}"
+                                     alt="Preview {{ forloop.counter }}"
                                      class="preview-image {% if forloop.first %}active{% endif %}"
                                      data-preview-index="{{ forloop.counter0 }}">
                                 {% endfor %}
                             </div>
                             {% endif %}
                         </div>
-                        
+
                         <div class="card-body p-2">
                             <h6 class="card-title mb-1">{{ item.highlight.title }}</h6>
                             <small class="text-muted">
@@ -197,32 +79,41 @@
             {% for item in unassociated_highlights %}
             <div class="col-lg-3 col-md-4 col-sm-6">
                 <div class="card highlight-card h-100" onclick="playVideo('{{ item.highlight.video.url }}')">
+                    {% if user.is_staff %}
+                    <a href="/admin/superb_ock/highlight/{{ item.highlight.id }}/change/"
+                       class="highlight-edit-btn"
+                       onclick="event.stopPropagation();"
+                       title="Edit highlight">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    {% endif %}
+
                     <div class="highlight-preview-container">
                         <!-- Main thumbnail -->
                         {% if item.highlight.thumbnail %}
-                            <img src="{{ item.highlight.thumbnail.url }}" 
-                                 alt="{{ item.highlight.title }}" 
+                            <img src="{{ item.highlight.thumbnail.url }}"
+                                 alt="{{ item.highlight.title }}"
                                  class="highlight-thumbnail">
                         {% else %}
                             <div class="highlight-thumbnail d-flex align-items-center justify-content-center bg-secondary text-white">
                                 <i class="fas fa-play-circle fa-3x"></i>
                             </div>
                         {% endif %}
-                        
+
                         <!-- Preview images for hover -->
                         {% if item.highlight.previews.all %}
-                        <div class="preview-images" 
+                        <div class="preview-images"
                              data-preview-count="{{ item.highlight.previews.all|length }}">
                             {% for preview in item.highlight.previews.all %}
-                            <img src="{{ preview.image.url }}" 
-                                 alt="Preview {{ forloop.counter }}" 
+                            <img src="{{ preview.image.url }}"
+                                 alt="Preview {{ forloop.counter }}"
                                  class="preview-image {% if forloop.first %}active{% endif %}"
                                  data-preview-index="{{ forloop.counter0 }}">
                             {% endfor %}
                         </div>
                         {% endif %}
                     </div>
-                    
+
                     <div class="card-body p-2">
                         <h6 class="card-title mb-1">{{ item.highlight.title }}</h6>
                         <small class="text-muted">General highlight</small>
@@ -235,130 +126,30 @@
     {% endif %}
 
     {% if not player_highlights and not unassociated_highlights %}
-    <div class="text-center py-5">
-        <h3 class="text-muted">No highlights available yet</h3>
-        <p>Highlights will appear here once they're uploaded and processed.</p>
-    </div>
+        {% include "superb_ock/includes/empty_state.html" with
+           title="No highlights available yet"
+           description="Highlights will appear here once they're uploaded and processed."
+           icon="video" %}
     {% endif %}
 </div>
 
 <!-- Video Modal -->
-<div class="modal fade" id="videoModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Golf Highlight</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <video id="highlightVideo" controls preload="metadata" style="width: 100%; max-width: 100%; max-height: 70vh; height: auto;">
-                    Your browser does not support the video tag.
-                </video>
-            </div>
-        </div>
-    </div>
-</div>
+{% include "superb_ock/includes/video_modal.html" %}
 
 <script>
-// Preview image cycling and video preloading on hover
+// Initialize video player and preview cycling
 document.addEventListener('DOMContentLoaded', function() {
-    const previewContainers = document.querySelectorAll('.preview-images');
-    const preloadedVideos = new Set(); // Track preloaded videos
-    
-    previewContainers.forEach(container => {
-        const images = container.querySelectorAll('.preview-image');
-        const previewCount = parseInt(container.dataset.previewCount);
-        
-        if (previewCount > 1) {
-            let currentIndex = 0;
-            let interval;
-            
-            const parentCard = container.closest('.highlight-card');
-            const videoUrl = parentCard.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
-            
-            parentCard.addEventListener('mouseenter', function() {
-                // Start image cycling
-                interval = setInterval(() => {
-                    // Hide current image
-                    images[currentIndex].classList.remove('active');
-                    
-                    // Move to next image
-                    currentIndex = (currentIndex + 1) % previewCount;
-                    
-                    // Show next image
-                    images[currentIndex].classList.add('active');
-                }, 800); // Change image every 800ms
-                
-                // Preload video on hover (after a brief delay)
-                if (videoUrl && !preloadedVideos.has(videoUrl)) {
-                    setTimeout(() => {
-                        preloadVideo(videoUrl);
-                        preloadedVideos.add(videoUrl);
-                    }, 500); // Wait 500ms before preloading
-                }
-            });
-            
-            parentCard.addEventListener('mouseleave', function() {
-                clearInterval(interval);
-                // Reset to first image
-                images.forEach((img, index) => {
-                    img.classList.toggle('active', index === 0);
-                });
-                currentIndex = 0;
-            });
-        }
-    });
+    // Create video player instance
+    const videoPlayer = new VideoPlayer('highlightVideo', 'videoModal', 'videoModalTitle');
+
+    // Create preview cycler with video player for preloading
+    const previewCycler = new PreviewCycler('.preview-images');
+    previewCycler.init(videoPlayer);
+
+    // Make playVideo available globally for onclick handlers
+    window.playVideo = function(videoUrl) {
+        videoPlayer.play(videoUrl);
+    };
 });
-
-// Preload video function
-function preloadVideo(videoUrl) {
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = 'video';
-    link.href = videoUrl;
-    link.setAttribute('crossorigin', 'anonymous');
-    document.head.appendChild(link);
-    
-    console.log('Preloading video:', videoUrl);
-}
-
-// Video player function with loading optimization
-function playVideo(videoUrl) {
-    const video = document.getElementById('highlightVideo');
-    const modal = new bootstrap.Modal(document.getElementById('videoModal'));
-    
-    // Show loading state
-    video.style.opacity = '0.7';
-    
-    // Set video source and load
-    video.src = videoUrl;
-    video.load(); // Force reload with new source
-    
-    // Show modal and try to play when ready
-    modal.show();
-    
-    // Handle video loading events
-    video.addEventListener('loadstart', function() {
-        console.log('Video loading started...');
-    }, { once: true });
-    
-    video.addEventListener('canplay', function() {
-        video.style.opacity = '1';
-        // Optionally auto-play when ready
-        // video.play();
-    }, { once: true });
-    
-    video.addEventListener('error', function(e) {
-        console.error('Video loading error:', e);
-        video.style.opacity = '1';
-    }, { once: true });
-    
-    // Pause video when modal is closed
-    document.getElementById('videoModal').addEventListener('hidden.bs.modal', function() {
-        video.pause();
-        video.currentTime = 0;
-        video.src = ''; // Clear source to free memory
-    }, { once: true });
-}
 </script>
 {% endblock %}

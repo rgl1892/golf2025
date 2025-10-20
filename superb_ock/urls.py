@@ -1,7 +1,8 @@
 from django.urls import path, include
+from django.conf import settings
 
 from . import views, admin_views, views_notifications
-from .views_stats import stats, player_stats, course_stats
+from .views import showcase
 
 urlpatterns = [
     path("",views.Home.as_view() , name="home"),
@@ -27,17 +28,17 @@ urlpatterns.extend(
 # For d3 charts
 urlpatterns.extend(
     [
-    path('heatmap-data/', stats.heatmap_data, name='heatmap_data'),
+    path('heatmap-data/', views.heatmap_data, name='heatmap_data'),
     ]
 )
 
 # Stats pages
 urlpatterns.extend(
     [
-    path('stats/players/', player_stats.player_stats_overview, name='player_stats'),
-    path('stats/players/<int:player_id>/', player_stats.player_detail_stats, name='player_detail'),
-    path('stats/courses/', course_stats.course_stats_overview, name='course_stats'),
-    path('stats/courses/<int:course_id>/', course_stats.course_detail_stats, name='course_detail'),
+    path('stats/players/', views.player_stats_overview, name='player_stats'),
+    path('stats/players/<int:player_id>/', views.player_detail_stats, name='player_detail'),
+    path('stats/courses/', views.course_stats_overview, name='course_stats'),
+    path('stats/courses/<int:course_id>/', views.course_detail_stats, name='course_detail'),
     ]
 )
 
@@ -63,3 +64,9 @@ urlpatterns.extend(
     path('notifications/device/delete/', views_notifications.delete_device, name='delete_device'),
     ]
 )
+
+# Development-only URLs
+if settings.DEBUG:
+    urlpatterns.append(
+        path('components/', showcase.component_showcase, name='component_showcase')
+    )

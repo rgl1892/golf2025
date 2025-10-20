@@ -1,0 +1,46 @@
+{% comment %}
+Responsive Image Component
+Generates responsive, lazy-loaded images with multiple formats
+
+Required parameters:
+  - src: Image source URL
+
+Optional parameters:
+  - alt: Alt text (default: '')
+  - class: Additional CSS classes
+  - loading: 'lazy' or 'eager' (default: 'lazy')
+  - width: Image width
+  - height: Image height
+  - sizes: Sizes attribute for responsive images
+  - object_fit: CSS object-fit value (cover, contain, etc.)
+
+Usage:
+  {% include "superb_ock/includes/responsive_image.html" with
+     src=image.url
+     alt="Golf course view"
+     class="carousel-image"
+     loading="lazy" %}
+{% endcomment %}
+
+{% comment %} Set defaults {% endcomment %}
+{% firstof alt "" as alt %}
+{% firstof loading "lazy" as loading %}
+{% firstof object_fit "cover" as object_fit %}
+{% firstof class "" as class %}
+
+<img
+  {% if loading == "lazy" %}
+    data-src="{{ src }}"
+    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {{ width|default:'800' }} {{ height|default:'600' }}'%3E%3C/svg%3E"
+  {% else %}
+    src="{{ src }}"
+  {% endif %}
+  alt="{{ alt }}"
+  loading="{{ loading }}"
+  class="{{ class }}"
+  {% if width %}width="{{ width }}"{% endif %}
+  {% if height %}height="{{ height }}"{% endif %}
+  {% if sizes %}sizes="{{ sizes }}"{% endif %}
+  style="object-fit: {{ object_fit }};"
+  decoding="async"
+>

@@ -1,0 +1,41 @@
+/**
+ * Navigation Component Styles
+ * Main navbar and responsive navigation
+ */
+
+/* ===== RESPONSIVE NAVBAR SPACING ===== */
+
+/* Extra large screens: compact with icons only */
+@media (min-width: 1200px) {
+  .navbar-nav .nav-link {
+    padding-left: 0.3rem !important;
+    padding-right: 0.3rem !important;
+  }
+}
+
+/* Large screens: normal spacing with full text */
+@media (min-width: 992px) and (max-width: 1199px) {
+  .navbar-nav .nav-link {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+}
+
+/* Medium and small screens: full text with icons */
+@media (max-width: 991px) {
+  .navbar-nav .nav-link {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+}
+
+/* ===== GENERAL NAVBAR STYLING ===== */
+.navbar-nav .nav-link {
+  font-size: 0.9rem;
+}
+
+/* Ensure dropdown menus are properly aligned */
+.dropdown-menu-end {
+  right: 0;
+  left: auto;
+}

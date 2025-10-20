@@ -1,0 +1,47 @@
+/**
+ * Carousel Component Styles
+ * Image carousel for homepage
+ */
+
+/* Carousel image sizing */
+.carousel-image {
+  height: var(--carousel-height-desktop);
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Dark overlay for better text readability */
+.carousel-caption {
+  background: var(--overlay-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+}
+
+/* Mobile responsive height */
+@media (max-width: 768px) {
+  .carousel-image {
+    height: var(--carousel-height-mobile);
+  }
+}
+
+/* Carousel controls styling */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  background-size: 100%, 100%;
+  border-radius: var(--radius-round);
+  background-color: var(--overlay-light);
+  width: var(--carousel-control-size);
+  height: var(--carousel-control-size);
+}
+
+/* Recent rounds card hover effect */
+.card-hover {
+  transition: transform var(--transition-base) var(--transition-timing),
+              box-shadow var(--transition-base) var(--transition-timing);
+  cursor: pointer;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}

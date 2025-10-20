@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+venv/
+env/
+
+# Build files
+*.pyc
+__pycache__/
+*.egg-info/
+dist/
+build/
+
+# Static collected files
+staticfiles/
+static/admin/
+static/debug_toolbar/
+
+# Media files
+media/
+
+# Database
+*.sqlite3
+db.sqlite3
+
+# Migrations
+**/migrations/*.py
+!**/migrations/__init__.py
+
+# Coverage
+.coverage
+htmlcov/
+coverage/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Third-party
+**/vendor/**
+**/bootstrap*.js
+**/bootstrap*.css
+**/d3*.js

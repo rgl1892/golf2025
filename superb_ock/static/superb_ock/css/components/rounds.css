@@ -1,0 +1,178 @@
+/**
+ * Rounds Component Styles
+ * Golf round display, scorecards, and navigation (Mobile-first approach)
+ */
+
+/* ===== ROUND NAVIGATION (Mobile-first) ===== */
+
+/* Mobile: Stack buttons vertically */
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--space-xs);
+}
+
+.btn-group .btn {
+  white-space: nowrap;
+  border-radius: var(--radius-sm) !important;
+  min-height: 44px; /* Touch-friendly */
+  transition: var(--transition-base);
+}
+
+.btn-group .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.round-navigation-info {
+  font-size: 0.9rem;
+  margin-top: var(--space-sm);
+}
+
+/* Tablet and up: Horizontal button group */
+@media (min-width: 768px) {
+  .btn-group {
+    flex-direction: row;
+    width: auto;
+    gap: 0;
+  }
+
+  .btn-group .btn {
+    border-radius: 0;
+  }
+
+  .btn-group .btn:first-child {
+    border-top-left-radius: var(--radius-sm) !important;
+    border-bottom-left-radius: var(--radius-sm) !important;
+  }
+
+  .btn-group .btn:last-child {
+    border-top-right-radius: var(--radius-sm) !important;
+    border-bottom-right-radius: var(--radius-sm) !important;
+  }
+
+  .round-navigation-info {
+    margin-top: 0;
+  }
+}
+
+/* ===== STICKY SCORECARD TABLE (Mobile-first) ===== */
+
+.scoring-table {
+  position: relative;
+  font-size: 0.875rem; /* Smaller on mobile */
+}
+
+/* Table responsive container */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  position: relative;
+}
+
+/* Add scroll indicator shadow on mobile */
+.table-responsive::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.1), transparent);
+  pointer-events: none;
+}
+
+/* Sticky first column (mobile default) */
+.scoring-table th:first-child,
+.scoring-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: var(--z-sticky);
+  background-color: var(--bs-primary);
+  color: white;
+  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.1);
+  border-right: 2px solid var(--bs-primary-border-subtle);
+  padding: var(--space-sm);
+  min-width: 100px;
+  white-space: nowrap;
+}
+
+.scoring-table thead th:first-child {
+  background-color: var(--bs-primary);
+  color: white;
+  z-index: calc(var(--z-sticky) + 1);
+}
+
+/* Maintain primary theme for sticky column in different views */
+.scoring-table tbody[name="to_par"] td:first-child,
+.scoring-table tbody[name="to_stableford"] td:first-child,
+.scoring-table tbody[name="general"] td:first-child {
+  background-color: var(--bs-primary) !important;
+  color: white !important;
+}
+
+/* Tablet and up: Larger sticky column, regular font size */
+@media (min-width: 768px) {
+  .scoring-table {
+    font-size: 1rem;
+  }
+
+  .scoring-table th:first-child,
+  .scoring-table td:first-child {
+    min-width: var(--table-sticky-column-width);
+    box-shadow: var(--shadow-sticky);
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Remove mobile scroll indicator */
+  .table-responsive::after {
+    display: none;
+  }
+}
+
+/* ===== LAYOUT HELPERS (Mobile-first) ===== */
+
+/* Mobile: Stack page headers */
+.d-flex.justify-content-between.align-items-center {
+  flex-direction: column;
+  align-items: flex-start !important;
+  gap: var(--space-md);
+}
+
+.d-flex.justify-content-between.align-items-center > div {
+  width: 100%;
+}
+
+/* Tablet and up: Horizontal layout */
+@media (min-width: 768px) {
+  .d-flex.justify-content-between.align-items-center {
+    flex-direction: row;
+    align-items: center !important;
+    gap: 0;
+  }
+
+  .d-flex.justify-content-between.align-items-center > div {
+    width: auto;
+  }
+}
+
+/* ===== TABLE CELLS ===== */
+
+/* Make table cells touch-friendly on mobile */
+.scoring-table td,
+.scoring-table th {
+  padding: var(--space-sm);
+  min-height: 44px;
+  vertical-align: middle;
+}
+
+/* Desktop: Smaller padding */
+@media (min-width: 768px) {
+  .scoring-table td,
+  .scoring-table th {
+    padding: 8px;
+  }
+}

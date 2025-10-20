@@ -1,0 +1,106 @@
+/**
+ * CSS Variables - Golf2025 Design System
+ * Centralized design tokens for consistency across the application
+ */
+
+:root {
+  /* ===== COLOR PALETTE ===== */
+  /* Primary Colors */
+  --color-primary: #007bff;
+  --color-primary-hover: #0056b3;
+  --color-primary-active: #004085;
+
+  /* Status Colors */
+  --color-success: #28a745;
+  --color-danger: #dc3545;
+  --color-warning: #ffc107;
+  --color-info: #17a2b8;
+
+  /* Neutral Colors */
+  --color-text: #212529;
+  --color-text-muted: #6c757d;
+  --color-border: #dee2e6;
+  --color-bg-light: #f8f9fa;
+  --color-bg-dark: #343a40;
+
+  /* Overlay Colors */
+  --overlay-light: rgba(0, 0, 0, 0.5);
+  --overlay-dark: rgba(0, 0, 0, 0.7);
+  --overlay-very-light: rgba(0, 0, 0, 0.1);
+
+  /* ===== SPACING SCALE ===== */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-xxl: 48px;
+
+  /* ===== BORDER RADIUS ===== */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 16px;
+  --radius-round: 50%;
+
+  /* ===== TRANSITIONS ===== */
+  --transition-fast: 150ms;
+  --transition-base: 200ms;
+  --transition-slow: 300ms;
+  --transition-timing: ease-in-out;
+
+  /* ===== SHADOWS ===== */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
+  --shadow-sticky: 2px 0 5px rgba(0, 0, 0, 0.1);
+
+  /* ===== BREAKPOINTS (for reference in JS) ===== */
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+
+  /* ===== Z-INDEX SCALE ===== */
+  --z-base: 1;
+  --z-dropdown: 10;
+  --z-sticky: 100;
+  --z-fixed: 1000;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+
+  /* ===== CHART COLORS ===== */
+  --chart-text-color: var(--color-text);
+  --chart-axis-color: var(--color-border);
+  --chart-success-color: var(--color-success);
+  --chart-danger-color: var(--color-danger);
+  --chart-warning-color: var(--color-warning);
+
+  /* ===== COMPONENT SPECIFIC ===== */
+  /* Carousel */
+  --carousel-height-desktop: 400px;
+  --carousel-height-mobile: 250px;
+  --carousel-control-size: 40px;
+
+  /* Highlight Cards */
+  --highlight-thumbnail-height-desktop: 200px;
+  --highlight-thumbnail-height-mobile: 150px;
+  --highlight-preview-duration: 800ms;
+
+  /* Video */
+  --video-max-height: 70vh;
+
+  /* Tables */
+  --table-sticky-column-width: 120px;
+}
+
+/* Dark theme adjustments (if needed in future) */
+[data-bs-theme="dark"] {
+  --color-text: #f8f9fa;
+  --color-text-muted: #adb5bd;
+  --color-border: #495057;
+  --color-bg-light: #212529;
+  --color-bg-dark: #f8f9fa;
+}

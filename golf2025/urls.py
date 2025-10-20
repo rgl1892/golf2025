@@ -42,3 +42,5 @@ urlpatterns = [
 # Serve media files during development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # Add browser reload for development
+    urlpatterns.append(path("__reload__/", include("django_browser_reload.urls")))

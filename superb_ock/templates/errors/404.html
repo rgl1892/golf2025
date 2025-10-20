@@ -1,0 +1,54 @@
+{% extends "superb_ock/base.html" %}
+{% load static %}
+
+{% block title %}Page Not Found - The Superb Ock{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="text-center mb-5">
+                <i class="fas fa-golf-ball fa-5x text-primary mb-4"></i>
+                <h1 class="display-1 fw-bold">404</h1>
+                <h2 class="mb-3">Lost Ball!</h2>
+                <p class="lead text-muted">
+                    The page you're looking for seems to have gone out of bounds.
+                </p>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Where would you like to go?</h5>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'home' %}" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>
+                            Home
+                        </a>
+                        <a href="{% url 'rounds_overview' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-golf-ball me-2"></i>
+                            View Rounds
+                        </a>
+                        <a href="{% url 'highlights' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-video me-2"></i>
+                            Watch Highlights
+                        </a>
+                        <button onclick="history.back()" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Go Back
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4 text-muted">
+                <p>
+                    <small>
+                        If you think this is a mistake, please
+                        <a href="mailto:{{ support_email|default:'support@example.com' }}">let us know</a>.
+                    </small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

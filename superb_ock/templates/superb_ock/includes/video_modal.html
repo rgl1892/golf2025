@@ -1,0 +1,50 @@
+{% comment %}
+Video Modal Component
+Reusable video player modal
+
+Required parameters:
+  - modal_id: Unique ID for the modal (default: 'videoModal')
+  - video_id: Unique ID for the video element (default: 'highlightVideo')
+  - title_id: Unique ID for the modal title (default: 'videoModalTitle')
+  - title: Default title text (optional, default: 'Golf Highlight')
+
+Usage:
+  {% include "superb_ock/includes/video_modal.html" with modal_id="videoModal" video_id="highlightVideo" title="Highlights" %}
+
+  or with defaults:
+  {% include "superb_ock/includes/video_modal.html" %}
+{% endcomment %}
+
+{% comment %} Set defaults if not provided {% endcomment %}
+{% firstof modal_id "videoModal" as modal_id %}
+{% firstof video_id "highlightVideo" as video_id %}
+{% firstof title_id "videoModalTitle" as title_id %}
+{% firstof title "Golf Highlight" as title %}
+
+<div class="modal fade video-modal"
+     id="{{ modal_id }}"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="{{ title_id }}"
+     aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ title_id }}">{{ title }}</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <video id="{{ video_id }}"
+                       controls
+                       preload="metadata"
+                       class="video-player"
+                       aria-label="Golf highlight video">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+    </div>
+</div>

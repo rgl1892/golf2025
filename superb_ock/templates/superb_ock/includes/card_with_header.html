@@ -1,11 +1,13 @@
 {# Reusable Card with Header Component #}
+{% comment "" %}
 {# Parameters:
-   - header_title: The title to display in the header
-   - header_icon: Optional icon to display before title (e.g., "🏌️" or "fa-chart-bar")
-   - header_bg: Background class for header (default: "bg-primary")
-   - card_body_class: Optional classes for card-body
-   - card_id: Optional ID for the card
+- header_title: The title to display in the header
+- header_icon: Optional icon to display before title (e.g., "🏌️" or "fa-chart-bar")
+- header_bg: Background class for header (default: "bg-primary")
+- card_body_class: Optional classes for card-body
+- card_id: Optional ID for the card
 #}
+{% endcomment %}
 
 <div class="card{% if card_id %} id="{{ card_id }}"{% endif %}">
   <div class="card-header {{ header_bg|default:"bg-primary" }} text-white">

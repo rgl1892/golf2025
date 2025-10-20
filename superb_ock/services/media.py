@@ -80,17 +80,17 @@ class VideoThumbnailGenerator:
         Generate thumbnail and preview images for a highlight video.
 
         Args:
-            highlight: Highlight model instance with video_file
+            highlight: Highlight model instance with video field
             request: Optional Django request object for messages
 
         Returns:
             bool: True if successful, False otherwise
         """
-        if not highlight.video_file:
+        if not highlight.video:
             media_logger.warning(f"No video file for highlight {highlight.id}")
             return False
 
-        video_path = highlight.video_file.path
+        video_path = highlight.video.path
 
         if not os.path.exists(video_path):
             media_logger.error(f"Video file not found: {video_path}")

@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.db.models import Avg, Sum, Count, Min, Max, Q, F
 from django.http import JsonResponse
-from ..models import Player, Score, GolfRound, GolfCourse
+from ...models import Player, Score, GolfRound, GolfCourse
 
 
 def player_stats_overview(request):

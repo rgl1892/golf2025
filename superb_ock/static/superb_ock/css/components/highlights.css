@@ -1,0 +1,185 @@
+/**
+ * Highlights Component Styles
+ * Video highlight cards with preview animations
+ */
+
+/* ===== HIGHLIGHT CARDS ===== */
+.highlight-card,
+.highlight-card-small {
+  transition: transform var(--transition-base) var(--transition-timing);
+  cursor: pointer;
+  position: relative;
+  border: none;
+  height: 100%;
+}
+
+.highlight-card:hover,
+.highlight-card-small:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ===== EDIT BUTTON ===== */
+.highlight-edit-btn {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  z-index: var(--z-dropdown);
+  background-color: var(--overlay-dark);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-round);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: background-color var(--transition-base),
+              transform var(--transition-base);
+}
+
+.highlight-edit-btn:hover {
+  background-color: rgba(13, 110, 253, 0.9);
+  color: white;
+  transform: scale(1.1);
+}
+
+.highlight-edit-btn i {
+  font-size: 14px;
+}
+
+/* ===== THUMBNAILS ===== */
+.highlight-thumbnail {
+  width: 100%;
+  height: var(--highlight-thumbnail-height-desktop);
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  transition: opacity var(--transition-slow) ease;
+}
+
+.highlight-thumbnail-small {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+/* ===== PREVIEW CONTAINER ===== */
+.highlight-preview-container,
+.highlight-preview-container-small {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+}
+
+.highlight-preview-container-small {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+/* Show previews on hover */
+.highlight-preview-container .preview-images,
+.highlight-preview-container-small .preview-images-small {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity var(--transition-slow) ease;
+}
+
+.highlight-preview-container:hover .highlight-thumbnail,
+.highlight-preview-container-small:hover .highlight-thumbnail-small {
+  opacity: 0;
+}
+
+.highlight-preview-container:hover .preview-images,
+.highlight-preview-container-small:hover .preview-images-small {
+  opacity: 1;
+}
+
+/* ===== PREVIEW IMAGES ===== */
+.preview-image,
+.preview-image-small {
+  width: 100%;
+  height: var(--highlight-thumbnail-height-desktop);
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.preview-image-small {
+  height: 120px;
+}
+
+.preview-image.active,
+.preview-image-small.active {
+  opacity: 1;
+}
+
+/* ===== HOLE BADGE ===== */
+.hole-badge {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  background: rgba(0, 123, 255, 0.9);
+  color: white;
+  border-radius: var(--radius-round);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+/* ===== PLAYER SECTIONS ===== */
+.player-section {
+  margin-bottom: 3rem;
+}
+
+.section-header {
+  border-bottom: 3px solid var(--color-primary);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ===== HIGHLIGHT INFO ===== */
+.highlight-info {
+  background: var(--overlay-dark);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.highlight-title {
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.highlight-context {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .highlight-thumbnail,
+  .preview-image {
+    height: var(--highlight-thumbnail-height-mobile);
+  }
+
+  .highlight-thumbnail-small,
+  .preview-image-small {
+    height: 100px;
+  }
+}

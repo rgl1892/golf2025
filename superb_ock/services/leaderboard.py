@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Tuple, Any
 from collections import defaultdict
 
+from django.core.cache import cache
+
 from superb_ock.models import Score, GolfEvent, GolfRound
 from superb_ock.services.scoring import ScoringCalculator, DateCourseScoringCalculator
 from superb_ock.logging_config import app_logger
@@ -53,13 +55,24 @@ class LeaderboardBuilder:
         self.calculator = ScoringCalculator(self.event.scoring)
         app_logger.info(f"LeaderboardBuilder initialized for event {self.event.name} (ID: {event_id})")
 
-    def build(self) -> List[LeaderboardEntry]:
+    def build(self, use_cache: bool = True) -> List[LeaderboardEntry]:
         """
         Build complete leaderboard with rankings.
+
+        Args:
+            use_cache: Whether to use cached results (default: True)
 
         Returns:
             Sorted list of LeaderboardEntry objects
         """
+        # Try to get from cache
+        if use_cache:
+            cache_key = self._get_cache_key()
+            cached_leaderboard = cache.get(cache_key)
+            if cached_leaderboard is not None:
+                app_logger.debug(f"Leaderboard cache hit for event {self.event_id}")
+                return cached_leaderboard
+
         # Fetch all scores for the event
         scores = self._fetch_scores()
 
@@ -76,6 +89,13 @@ class LeaderboardBuilder:
         entries = self._assign_positions(entries)
 
         app_logger.info(f"Leaderboard built: {len(entries)} players")
+
+        # Cache the result
+        if use_cache:
+            cache_key = self._get_cache_key()
+            cache.set(cache_key, entries, timeout=300)  # Cache for 5 minutes
+            app_logger.debug(f"Leaderboard cached for event {self.event_id}")
+
         return entries
 
     def _fetch_scores(self) -> List[Dict]:
@@ -245,6 +265,24 @@ class LeaderboardBuilder:
             for round_data in entries[0].rounds
         ]
 
+    def _get_cache_key(self) -> str:
+        """Generate cache key for this leaderboard."""
+        return f'leaderboard_event_{self.event_id}'
+
+    @classmethod
+    def invalidate_cache(cls, event_id: int) -> None:
+        """
+        Invalidate cached leaderboard for an event.
+
+        Call this when scores are added or modified.
+
+        Args:
+            event_id: ID of the GolfEvent to invalidate
+        """
+        cache_key = f'leaderboard_event_{event_id}'
+        cache.delete(cache_key)
+        app_logger.info(f"Leaderboard cache invalidated for event {event_id}")
+
 
 class DateCourseLeaderboardBuilder(LeaderboardBuilder):
     """
@@ -381,6 +419,8 @@ class DateCourseLeaderboardBuilder(LeaderboardBuilder):
     def get_courses_list(self, entries: List[LeaderboardEntry]) -> List[Dict]:
         """
         Extract courses list with date information.
+
+        Overrides base class to include date information.
         """
         if not entries or not entries[0].rounds:
             return []
