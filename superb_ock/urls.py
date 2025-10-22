@@ -2,7 +2,7 @@ from django.urls import path, include
 from django.conf import settings
 
 from . import views, admin_views, views_notifications
-from .views import showcase
+from .views import showcase, health
 
 urlpatterns = [
     path("",views.Home.as_view() , name="home"),
@@ -14,7 +14,9 @@ urlpatterns = [
     path("heatmap/",views.HeatMap.as_view() , name="heatmap"),
     path("highlights/",views.HighlightsView.as_view() , name="highlights"),
 
-    
+    # Monitoring
+    path("health/", health.health_check, name="health_check"),
+
 ]
 # Authentication
 urlpatterns.extend(

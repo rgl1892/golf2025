@@ -83,6 +83,13 @@ class GolfRound(models.Model):
     # Custom manager for optimized queries
     objects = GolfRoundManager()
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['-date_started'], name='idx_round_date'),
+            models.Index(fields=['event', '-date_started'], name='idx_round_event_date'),
+        ]
+        ordering = ['-date_started']
+
     def __str__(self):
         return f"{self.event} - {self.pk}"
 
@@ -121,9 +128,16 @@ class Highlight(models.Model):
     title = models.CharField(max_length=40)
     video = models.FileField(upload_to='highlights')
     thumbnail = models.ImageField(blank=True, upload_to='highlights/thumbnails')
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     # Custom manager for optimized queries
     objects = HighlightManager()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['-created_at'], name='idx_highlight_created'),
+        ]
+        ordering = ['-created_at']
 
     def __str__(self):
         return self.title
@@ -154,6 +168,12 @@ class Score(models.Model):
 
     # Custom manager for optimized queries
     objects = ScoreManager()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['golf_round', 'hole'], name='idx_score_round_hole'),
+            models.Index(fields=['golf_round', 'player'], name='idx_score_round_player'),
+        ]
 
     def __str__(self):
         return f"{self.player} {self.hole} {self.golf_round}"

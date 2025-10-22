@@ -207,11 +207,19 @@ class VideoThumbnailGenerator:
         pil_image.save(output, format='JPEG', quality=MediaSettings.THUMBNAIL_QUALITY)
         output.seek(0)
 
+        # Calculate timestamp in seconds from frame number
+        timestamp_seconds = timestamp / fps
+
         # Create or update HighlightPreview
         preview, created = HighlightPreview.objects.get_or_create(
             highlight=highlight,
-            order=order
+            order=order,
+            defaults={'timestamp': timestamp_seconds}
         )
+
+        # Update timestamp if not created (in case it changed)
+        if not created:
+            preview.timestamp = timestamp_seconds
 
         filename = f"preview_{highlight.id}_{order}.jpg"
         preview.image.save(filename, ContentFile(output.read()), save=True)
