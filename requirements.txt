@@ -26,7 +26,7 @@ requests==2.32.3
 scipy==1.11.4
 six==1.17.0
 sqlparse==0.5.3
-typing_extensions==3.10.0.2
+typing_extensions==4.6.0
 tzdata==2025.1
 urllib3==1.26.20
 yarl==1.20.1
