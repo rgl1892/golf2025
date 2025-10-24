@@ -56,6 +56,7 @@
     <link rel="stylesheet" href="{% static 'superb_ock/css/components/highlights.css' %}">
     <link rel="stylesheet" href="{% static 'superb_ock/css/components/rounds.css' %}">
     <link rel="stylesheet" href="{% static 'superb_ock/css/components/video-modal.css' %}">
+    <link rel="stylesheet" href="{% static 'superb_ock/css/components/accessibility.css' %}">
 
     {% comment %} Font Awesome {% endcomment %}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -69,7 +70,12 @@
     <script src="{% static 'superb_ock/js/modules/preview-cycling.js' %}"></script>
     <script src="{% static 'superb_ock/js/modules/form-validation.js' %}"></script>
     <script src="{% static 'superb_ock/js/modules/accessibility.js' %}"></script>
+    <script src="{% static 'superb_ock/js/modules/accessibility-manager.js' %}"></script>
+    <script src="{% static 'superb_ock/js/modules/keyboard-shortcuts.js' %}"></script>
     <script src="{% static 'superb_ock/js/modules/lazy-loading.js' %}"></script>
+    {% if debug %}
+    <script src="{% static 'superb_ock/js/modules/performance-monitor.js' %}"></script>
+    {% endif %}
 
     {% block head %}
 

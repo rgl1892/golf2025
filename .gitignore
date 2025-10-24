@@ -101,6 +101,19 @@ Desktop.ini
 *.o
 *.so
 
+# Node.js / npm
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.npm
+.yarn-integrity
+
+# Jest testing
+coverage/
+.jest-cache/
+
 # React / Frontend build (if used)
 golf2025-react/
 
