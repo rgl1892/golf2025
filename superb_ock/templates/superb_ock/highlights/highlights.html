@@ -18,7 +18,7 @@
             <h2 class="section-header">{{ player_name }}</h2>
             <div class="row g-3">
                 {% for item in highlights %}
-                <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                     <div class="card highlight-card h-100" onclick="playVideo('{{ item.highlight.video.url }}')">
                         {% if user.is_staff %}
                         <a href="/admin/superb_ock/highlight/{{ item.highlight.id }}/change/"
@@ -32,7 +32,8 @@
                         <div class="highlight-preview-container">
                             <!-- Main thumbnail -->
                             {% if item.highlight.thumbnail %}
-                                <img src="{{ item.highlight.thumbnail.url }}"
+                                <img loading="lazy"
+                                     src="{{ item.highlight.thumbnail.url }}"
                                      alt="{{ item.highlight.title }}"
                                      class="highlight-thumbnail">
                             {% else %}
@@ -46,7 +47,8 @@
                             <div class="preview-images"
                                  data-preview-count="{{ item.highlight.previews.all|length }}">
                                 {% for preview in item.highlight.previews.all %}
-                                <img src="{{ preview.image.url }}"
+                                <img loading="lazy"
+                                     src="{{ preview.image.url }}"
                                      alt="Preview {{ forloop.counter }}"
                                      class="preview-image {% if forloop.first %}active{% endif %}"
                                      data-preview-index="{{ forloop.counter0 }}">
