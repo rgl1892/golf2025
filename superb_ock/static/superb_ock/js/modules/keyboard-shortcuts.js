@@ -294,7 +294,6 @@ class KeyboardShortcuts {
 }
 
 // Export for module usage
-export { KeyboardShortcuts };
 
 // Auto-initialize for browser usage
 if (typeof window !== 'undefined') {

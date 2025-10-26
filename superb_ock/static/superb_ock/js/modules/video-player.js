@@ -125,9 +125,6 @@ class VideoPlayer {
   }
 }
 
-// ES6 export for module usage
-export { VideoPlayer };
-
 // Export for use in templates (browser usage)
 if (typeof window !== 'undefined') {
   window.VideoPlayer = VideoPlayer;

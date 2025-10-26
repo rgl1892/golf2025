@@ -266,8 +266,6 @@ class ToastNotification {
   }
 }
 
-// ES6 export for module usage
-export { ToastNotification };
 
 // Create global instance for browser usage
 if (typeof window !== 'undefined') {

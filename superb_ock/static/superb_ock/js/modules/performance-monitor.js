@@ -468,7 +468,6 @@ class PerformanceMonitor {
 }
 
 // Export for module usage
-export { PerformanceMonitor };
 
 // Auto-initialize for browser usage (only in development)
 if (typeof window !== 'undefined') {

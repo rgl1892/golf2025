@@ -198,8 +198,6 @@ class LazyLoader {
   }
 }
 
-// ES6 export for module usage
-export { LazyLoader };
 
 // Auto-initialize on DOM ready (browser usage only)
 if (typeof window !== 'undefined') {

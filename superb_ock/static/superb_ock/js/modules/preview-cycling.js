@@ -134,9 +134,6 @@ class PreviewCycler {
   }
 }
 
-// ES6 export for module usage
-export { PreviewCycler };
-
 // Export for use in templates
 if (typeof window !== 'undefined') {
   window.PreviewCycler = PreviewCycler;

@@ -358,7 +358,6 @@ class AccessibilityManager {
 }
 
 // Export for module usage
-export { AccessibilityManager };
 
 // Auto-initialize for browser usage
 if (typeof window !== 'undefined') {
