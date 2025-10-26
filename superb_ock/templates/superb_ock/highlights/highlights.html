@@ -137,19 +137,38 @@
 {% include "superb_ock/includes/video_modal.html" %}
 
 <script>
-// Initialize video player and preview cycling
+// Initialize video player instance globally
+let videoPlayer;
+let isPlayerReady = false;
+
+// Make playVideo available immediately for onclick handlers
+window.playVideo = function(videoUrl) {
+    if (videoPlayer && isPlayerReady) {
+        videoPlayer.play(videoUrl);
+    } else if (!isPlayerReady) {
+        // If player not ready yet, wait for DOMContentLoaded
+        console.log('Waiting for video player to initialize...');
+        document.addEventListener('DOMContentLoaded', function() {
+            if (videoPlayer) {
+                videoPlayer.play(videoUrl);
+            }
+        }, { once: true });
+    } else {
+        console.error('Video player failed to initialize');
+    }
+};
+
+// Initialize video player and preview cycling when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     // Create video player instance
-    const videoPlayer = new VideoPlayer('highlightVideo', 'videoModal', 'videoModalTitle');
+    videoPlayer = new VideoPlayer('highlightVideo', 'videoModal', 'videoModalTitle');
+
+    // Mark player as ready
+    isPlayerReady = true;
 
     // Create preview cycler with video player for preloading
     const previewCycler = new PreviewCycler('.preview-images');
     previewCycler.init(videoPlayer);
-
-    // Make playVideo available globally for onclick handlers
-    window.playVideo = function(videoUrl) {
-        videoPlayer.play(videoUrl);
-    };
 });
 </script>
 {% endblock %}
