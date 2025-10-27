@@ -1,11 +1,23 @@
 /**
  * Rounds Component Styles
- * Golf round display, scorecards, and navigation
+ * Golf round display, scorecards, and navigation (Mobile-first approach)
  */
 
-/* ===== ROUND NAVIGATION ===== */
+/* ===== ROUND NAVIGATION (Mobile-first) ===== */
+
+/* Mobile: Stack buttons vertically */
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--space-xs);
+}
+
 .btn-group .btn {
   white-space: nowrap;
+  border-radius: var(--radius-sm) !important;
+  min-height: 44px; /* Touch-friendly */
+  transition: var(--transition-base);
 }
 
 .btn-group .btn:disabled {
@@ -15,14 +27,64 @@
 
 .round-navigation-info {
   font-size: 0.9rem;
+  margin-top: var(--space-sm);
 }
 
-/* ===== STICKY SCORECARD TABLE ===== */
+/* Tablet and up: Horizontal button group */
+@media (min-width: 768px) {
+  .btn-group {
+    flex-direction: row;
+    width: auto;
+    gap: 0;
+  }
+
+  .btn-group .btn {
+    border-radius: 0;
+  }
+
+  .btn-group .btn:first-child {
+    border-top-left-radius: var(--radius-sm) !important;
+    border-bottom-left-radius: var(--radius-sm) !important;
+  }
+
+  .btn-group .btn:last-child {
+    border-top-right-radius: var(--radius-sm) !important;
+    border-bottom-right-radius: var(--radius-sm) !important;
+  }
+
+  .round-navigation-info {
+    margin-top: 0;
+  }
+}
+
+/* ===== STICKY SCORECARD TABLE (Mobile-first) ===== */
+
 .scoring-table {
+  position: relative;
+  font-size: 0.875rem; /* Smaller on mobile */
+}
+
+/* Table responsive container */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
   position: relative;
 }
 
-/* Sticky first column */
+/* Add scroll indicator shadow on mobile */
+.table-responsive::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.1), transparent);
+  pointer-events: none;
+}
+
+/* Sticky first column (mobile default) */
 .scoring-table th:first-child,
 .scoring-table td:first-child {
   position: sticky;
@@ -30,11 +92,10 @@
   z-index: var(--z-sticky);
   background-color: var(--bs-primary);
   color: white;
-  box-shadow: var(--shadow-sticky);
+  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.1);
   border-right: 2px solid var(--bs-primary-border-subtle);
-  padding-left: 12px;
-  padding-right: 12px;
-  min-width: var(--table-sticky-column-width);
+  padding: var(--space-sm);
+  min-width: 100px;
   white-space: nowrap;
 }
 
@@ -48,68 +109,70 @@
 .scoring-table tbody[name="to_par"] td:first-child,
 .scoring-table tbody[name="to_stableford"] td:first-child,
 .scoring-table tbody[name="general"] td:first-child {
-  background-color: var(--bs-primary);
-  color: white;
+  background-color: var(--bs-primary) !important;
+  color: white !important;
 }
 
-/* Ensure proper table layout */
-.table-responsive {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+/* Tablet and up: Larger sticky column, regular font size */
+@media (min-width: 768px) {
+  .scoring-table {
+    font-size: 1rem;
+  }
+
+  .scoring-table th:first-child,
+  .scoring-table td:first-child {
+    min-width: var(--table-sticky-column-width);
+    box-shadow: var(--shadow-sticky);
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Remove mobile scroll indicator */
+  .table-responsive::after {
+    display: none;
+  }
 }
 
-/* ===== MOBILE RESPONSIVE ===== */
-@media (max-width: 768px) {
-  /* Stack navigation buttons on mobile */
-  .btn-group {
-    flex-direction: column;
-    width: 100%;
-  }
+/* ===== LAYOUT HELPERS (Mobile-first) ===== */
 
-  .btn-group .btn {
-    border-radius: 0.375rem !important;
-    margin-bottom: 0.25rem;
-  }
+/* Mobile: Stack page headers */
+.d-flex.justify-content-between.align-items-center {
+  flex-direction: column;
+  align-items: flex-start !important;
+  gap: var(--space-md);
+}
 
-  .btn-group .btn:last-child {
-    margin-bottom: 0;
-  }
+.d-flex.justify-content-between.align-items-center > div {
+  width: 100%;
+}
 
-  /* Make header stack on mobile */
+/* Tablet and up: Horizontal layout */
+@media (min-width: 768px) {
   .d-flex.justify-content-between.align-items-center {
-    flex-direction: column;
-    align-items: flex-start !important;
+    flex-direction: row;
+    align-items: center !important;
+    gap: 0;
   }
 
   .d-flex.justify-content-between.align-items-center > div {
-    width: 100%;
+    width: auto;
   }
+}
 
-  .d-flex.justify-content-between.align-items-center .text-end {
-    text-align: left !important;
-    margin-top: 1rem;
-  }
+/* ===== TABLE CELLS ===== */
 
-  /* Mobile adjustments for sticky column */
-  .scoring-table th:first-child,
-  .scoring-table td:first-child {
-    min-width: 100px;
-    font-size: 0.875rem;
-    box-shadow: 1px 0 3px rgba(0, 0, 0, 0.1);
-  }
+/* Make table cells touch-friendly on mobile */
+.scoring-table td,
+.scoring-table th {
+  padding: var(--space-sm);
+  min-height: 44px;
+  vertical-align: middle;
+}
 
-  /* Ensure table scrolls properly on mobile */
-  .table-responsive {
-    max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Ensure primary theme is maintained on mobile */
-  .scoring-table tbody[name="to_par"] td:first-child,
-  .scoring-table tbody[name="to_stableford"] td:first-child,
-  .scoring-table tbody[name="general"] td:first-child {
-    background-color: var(--bs-primary) !important;
-    color: white !important;
+/* Desktop: Smaller padding */
+@media (min-width: 768px) {
+  .scoring-table td,
+  .scoring-table th {
+    padding: 8px;
   }
 }

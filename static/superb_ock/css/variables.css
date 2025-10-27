@@ -9,6 +9,7 @@
   --color-primary: #007bff;
   --color-primary-hover: #0056b3;
   --color-primary-active: #004085;
+  --color-primary-light: rgba(0, 123, 255, 0.1);
 
   /* Status Colors */
   --color-success: #28a745;
@@ -42,6 +43,8 @@
   --radius-lg: 10px;
   --radius-xl: 16px;
   --radius-round: 50%;
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
 
   /* ===== TRANSITIONS ===== */
   --transition-fast: 150ms;

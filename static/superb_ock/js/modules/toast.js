@@ -266,8 +266,9 @@ class ToastNotification {
   }
 }
 
-// Create global instance
-window.toast = new ToastNotification();
 
-// Also export the class for custom instances
-window.ToastNotification = ToastNotification;
+// Create global instance for browser usage
+if (typeof window !== 'undefined') {
+  window.toast = new ToastNotification();
+  window.ToastNotification = ToastNotification;
+}

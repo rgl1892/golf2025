@@ -125,5 +125,7 @@ class VideoPlayer {
   }
 }
 
-// Export for use in templates
-window.VideoPlayer = VideoPlayer;
+// Export for use in templates (browser usage)
+if (typeof window !== 'undefined') {
+  window.VideoPlayer = VideoPlayer;
+}

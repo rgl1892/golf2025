@@ -198,10 +198,13 @@ class LazyLoader {
   }
 }
 
-// Auto-initialize on DOM ready
-document.addEventListener('DOMContentLoaded', () => {
-  window.lazyLoader = new LazyLoader();
-});
 
-// Export for manual usage
-window.LazyLoader = LazyLoader;
+// Auto-initialize on DOM ready (browser usage only)
+if (typeof window !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    window.lazyLoader = new LazyLoader();
+  });
+
+  // Export for manual usage
+  window.LazyLoader = LazyLoader;
+}

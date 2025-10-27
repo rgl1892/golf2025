@@ -1,41 +1,130 @@
 /**
  * Navigation Component Styles
- * Main navbar and responsive navigation
+ * Main navbar and responsive navigation (Mobile-first approach)
  */
 
-/* ===== RESPONSIVE NAVBAR SPACING ===== */
+/* ===== BASE STYLES (Mobile first) ===== */
 
-/* Extra large screens: compact with icons only */
+.navbar-nav .nav-link {
+  /* Mobile default: comfortable spacing with full text */
+  padding: var(--space-sm) var(--space-md);
+  font-size: 1rem;
+  transition: var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: 44px; /* Touch-friendly minimum size */
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link:focus {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-sm, 4px);
+}
+
+/* Ensure icons have proper spacing */
+.navbar-nav .nav-link i {
+  width: 1.25rem;
+  text-align: center;
+}
+
+/* ===== RESPONSIVE BREAKPOINTS (Progressive enhancement) ===== */
+
+/* Tablets and up: Reduce spacing slightly */
+@media (min-width: 768px) {
+  .navbar-nav .nav-link {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.95rem;
+  }
+}
+
+/* Desktop: Comfortable desktop spacing */
+@media (min-width: 992px) {
+  .navbar-nav .nav-link {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.9rem;
+  }
+}
+
+/* Large desktop: Compact spacing */
 @media (min-width: 1200px) {
   .navbar-nav .nav-link {
-    padding-left: 0.3rem !important;
-    padding-right: 0.3rem !important;
+    padding: var(--space-xs) var(--space-xs);
   }
 }
 
-/* Large screens: normal spacing with full text */
-@media (min-width: 992px) and (max-width: 1199px) {
-  .navbar-nav .nav-link {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-  }
+/* ===== DROPDOWN MENUS ===== */
+
+.dropdown-menu {
+  border: none;
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.15));
+  border-radius: var(--border-radius-md, 8px);
+  margin-top: var(--space-xs);
 }
 
-/* Medium and small screens: full text with icons */
-@media (max-width: 991px) {
-  .navbar-nav .nav-link {
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
-  }
-}
-
-/* ===== GENERAL NAVBAR STYLING ===== */
-.navbar-nav .nav-link {
-  font-size: 0.9rem;
-}
-
-/* Ensure dropdown menus are properly aligned */
 .dropdown-menu-end {
   right: 0;
   left: auto;
+}
+
+.dropdown-item {
+  padding: var(--space-sm) var(--space-md);
+  transition: var(--transition-fast);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: var(--color-primary-light, rgba(0, 123, 255, 0.1));
+}
+
+/* ===== MOBILE MENU IMPROVEMENTS ===== */
+
+@media (max-width: 991px) {
+  /* Make mobile menu full-width */
+  .navbar-collapse {
+    margin-top: var(--space-sm);
+  }
+
+  /* Add visual separation between nav items on mobile */
+  .navbar-nav .nav-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .navbar-nav .nav-item:last-child {
+    border-bottom: none;
+  }
+
+  /* Full-width dropdown on mobile */
+  .dropdown-menu {
+    border: none;
+    background-color: rgba(0, 0, 0, 0.05);
+    box-shadow: none;
+  }
+}
+
+/* ===== ACCESSIBILITY IMPROVEMENTS ===== */
+
+/* Keyboard focus indicator */
+.navbar-nav .nav-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: var(--border-radius-sm, 4px);
+}
+
+/* Skip to main content link */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: var(--space-md);
+  background-color: var(--color-primary, #007bff);
+  color: white;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-sm, 4px);
+  text-decoration: none;
+  z-index: 10000;
+  transition: top var(--transition-fast);
+}
+
+.skip-link:focus {
+  top: var(--space-md);
 }

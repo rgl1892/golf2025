@@ -135,4 +135,6 @@ class PreviewCycler {
 }
 
 // Export for use in templates
-window.PreviewCycler = PreviewCycler;
+if (typeof window !== 'undefined') {
+  window.PreviewCycler = PreviewCycler;
+}

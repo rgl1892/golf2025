@@ -1,0 +1,386 @@
+/**
+ * Accessibility Styles
+ * Focus indicators, skip navigation, and ARIA enhancements
+ */
+
+/* ============================================
+   Skip Navigation Link
+   ============================================ */
+
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: var(--bs-primary);
+  color: white;
+  padding: 12px 20px;
+  text-decoration: none;
+  font-weight: 600;
+  z-index: 10000;
+  border-radius: 0 0 8px 0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 3px solid var(--bs-warning);
+  outline-offset: 2px;
+}
+
+.skip-link:hover {
+  background: var(--bs-primary);
+  color: white;
+  text-decoration: underline;
+}
+
+/* ============================================
+   Enhanced Focus Indicators
+   ============================================ */
+
+/* Global focus styles */
+*:focus-visible {
+  outline: 3px solid var(--bs-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Button focus */
+.btn:focus-visible {
+  outline: 3px solid var(--bs-primary);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Primary button focus */
+.btn-primary:focus-visible {
+  outline-color: var(--bs-warning);
+  box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+}
+
+/* Link focus */
+a:focus-visible {
+  outline: 3px solid var(--bs-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+  text-decoration: underline;
+}
+
+/* Navigation link focus */
+.nav-link:focus-visible {
+  outline: 3px solid var(--bs-warning);
+  outline-offset: 2px;
+  background: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+/* Form input focus */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--bs-primary);
+  outline-offset: 0;
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+/* Card focus (for clickable cards) */
+.card:focus-visible,
+.highlight-card:focus-visible,
+.highlight-card-small:focus-visible {
+  outline: 3px solid var(--bs-primary);
+  outline-offset: 4px;
+  transform: translateY(-2px);
+}
+
+/* Modal close button focus */
+.btn-close:focus-visible {
+  outline: 3px solid var(--bs-danger);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+/* Carousel control focus */
+.carousel-control-prev:focus-visible,
+.carousel-control-next:focus-visible {
+  outline: 3px solid var(--bs-warning);
+  outline-offset: -3px;
+}
+
+/* ============================================
+   Screen Reader Only Content
+   ============================================ */
+
+.sr-only,
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only-focusable:focus,
+.visually-hidden-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* ============================================
+   Focus Trap (for modals)
+   ============================================ */
+
+.modal.show {
+  /* Ensure modal content is keyboard accessible */
+}
+
+.modal-backdrop {
+  /* Prevent focus on backdrop */
+  pointer-events: none;
+}
+
+.modal-dialog {
+  pointer-events: all;
+}
+
+/* ============================================
+   ARIA Live Regions
+   ============================================ */
+
+.aria-live-region {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ============================================
+   Touch-Friendly Tap Targets
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* Minimum tap target size: 44x44px */
+  .btn,
+  .nav-link,
+  a.card,
+  .highlight-card,
+  .highlight-card-small {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Increase spacing between interactive elements */
+  .btn-group .btn {
+    margin: 4px;
+  }
+
+  .nav-link {
+    padding: 12px 16px;
+  }
+
+  /* Larger form inputs */
+  input,
+  select,
+  textarea,
+  .form-control {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Larger checkboxes and radios */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* ============================================
+   High Contrast Mode Support
+   ============================================ */
+
+@media (prefers-contrast: high) {
+  *:focus-visible {
+    outline-width: 4px;
+    outline-offset: 3px;
+  }
+
+  .btn {
+    border-width: 2px;
+  }
+
+  .card,
+  .highlight-card {
+    border-width: 2px;
+  }
+}
+
+/* ============================================
+   Reduced Motion Support
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .carousel {
+    transition: none;
+  }
+
+  .modal.fade .modal-dialog {
+    transition: none;
+  }
+}
+
+/* ============================================
+   Keyboard Navigation Indicators
+   ============================================ */
+
+/* Show visual indicator when navigating with keyboard */
+body.using-keyboard *:focus {
+  outline: 3px solid var(--bs-primary);
+  outline-offset: 2px;
+}
+
+body:not(.using-keyboard) *:focus {
+  outline: none;
+}
+
+/* Detect keyboard vs mouse usage */
+body.using-mouse *:focus-visible {
+  outline: none;
+}
+
+/* ============================================
+   Dark Mode Accessibility
+   ============================================ */
+
+[data-bs-theme="dark"] .skip-link {
+  background: var(--bs-warning);
+  color: var(--bs-dark);
+}
+
+[data-bs-theme="dark"] *:focus-visible {
+  outline-color: var(--bs-warning);
+}
+
+[data-bs-theme="dark"] .btn:focus-visible {
+  outline-color: var(--bs-warning);
+  box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+}
+
+/* ============================================
+   Table Scroll Indicator
+   ============================================ */
+
+.table-scroll-container {
+  position: relative;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Scroll shadow indicators */
+.table-scroll-container::before,
+.table-scroll-container::after {
+  content: '';
+  position: sticky;
+  z-index: 10;
+  width: 30px;
+  height: 100%;
+  top: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.table-scroll-container::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.1), transparent);
+  opacity: 0;
+}
+
+.table-scroll-container::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.1), transparent);
+  opacity: 1;
+}
+
+.table-scroll-container.scrolled-left::before {
+  opacity: 1;
+}
+
+.table-scroll-container.scrolled-right::after {
+  opacity: 0;
+}
+
+[data-bs-theme="dark"] .table-scroll-container::before {
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.1), transparent);
+}
+
+[data-bs-theme="dark"] .table-scroll-container::after {
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.1), transparent);
+}
+
+/* ============================================
+   Loading States for Accessibility
+   ============================================ */
+
+.loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border: 4px solid var(--bs-primary);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spinner 0.8s linear infinite;
+}
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Announce to screen readers */
+.loading[aria-busy="true"]::before {
+  content: attr(data-loading-message);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
