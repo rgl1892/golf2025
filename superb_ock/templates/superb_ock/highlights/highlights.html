@@ -19,7 +19,7 @@
             <div class="row g-3">
                 {% for item in highlights %}
                 <div class="col-lg-3 col-md-4 col-sm-6 col-12">
-                    <div class="card highlight-card h-100" onclick="playVideo('{{ item.highlight.video.url }}')">
+                    <div class="card highlight-card h-100 w-100" onclick="playVideo('{{ item.highlight.video.url }}')">
                         {% if user.is_staff %}
                         <a href="/admin/superb_ock/highlight/{{ item.highlight.id }}/change/"
                            class="highlight-edit-btn"
@@ -79,7 +79,7 @@
         <h2 class="section-header">Other Highlights</h2>
         <div class="row g-3">
             {% for item in unassociated_highlights %}
-            <div class="col-lg-3 col-md-4 col-sm-6">
+            <div class="col-lg-3 col-md-4 col-sm-6 col-12">
                 <div class="card highlight-card h-100" onclick="playVideo('{{ item.highlight.video.url }}')">
                     {% if user.is_staff %}
                     <a href="/admin/superb_ock/highlight/{{ item.highlight.id }}/change/"
