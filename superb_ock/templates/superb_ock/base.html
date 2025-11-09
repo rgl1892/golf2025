@@ -56,6 +56,7 @@
     <link rel="stylesheet" href="{% static 'superb_ock/css/components/highlights.css' %}">
     <link rel="stylesheet" href="{% static 'superb_ock/css/components/rounds.css' %}">
     <link rel="stylesheet" href="{% static 'superb_ock/css/components/video-modal.css' %}">
+    <link rel="stylesheet" href="{% static 'superb_ock/css/components/modals.css' %}">
     <link rel="stylesheet" href="{% static 'superb_ock/css/components/accessibility.css' %}">
 
     {% comment %} Font Awesome {% endcomment %}
@@ -118,17 +119,34 @@
                             <span class="visually-hidden">(current)</span></a
                         >
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'rounds_overview' %}"><i class="fas fa-golf-ball me-1"></i><span class="d-none d-xl-inline">Rounds</span><span class="d-xl-none">Rounds</span></a>
+                    <li class="nav-item dropdown">
+                        <a
+                            class="nav-link dropdown-toggle"
+                            href="#"
+                            id="roundsDropdown"
+                            data-bs-toggle="dropdown"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            ><i class="fas fa-golf-ball me-1"></i><span class="d-none d-xl-inline">Rounds</span><span class="d-xl-none">Rounds</span></a
+                        >
+                        <div
+                            class="dropdown-menu"
+                            aria-labelledby="roundsDropdown"
+                        >
+                            <a class="dropdown-item" href="{% url 'rounds_overview' %}"
+                                ><i class="fas fa-list me-2"></i>View All Rounds</a
+                            >
+                            {% if user.is_staff %}
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{% url 'new_round' %}"
+                                ><i class="fas fa-plus me-2"></i>New Round</a
+                            >
+                            {% endif %}
+                        </div>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'highlights' %}"><i class="fas fa-video me-1"></i><span class="d-none d-xl-inline">Highlights</span><span class="d-xl-none">Highlights</span></a>
                     </li>
-                    {% if user.is_staff %}
-                    <li class="nav-item">
-                        <a class="nav-link text-nowrap" href="{% url 'new_round' %}"><i class="fas fa-plus me-1"></i><span class="d-none d-xl-inline">New Round</span><span class="d-xl-none">New Round</span></a>
-                    </li>
-                    {% endif %}
                     <li class="nav-item dropdown">
                         <a
                             class="nav-link dropdown-toggle"
@@ -180,6 +198,14 @@
                 
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
+                        <!-- Notification Bell Icon -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'notifications_settings' %}" title="Notification Settings" aria-label="Notification Settings">
+                                <i class="fas fa-bell"></i>
+                            </a>
+                        </li>
+
+                        <!-- User Dropdown -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-user me-1"></i>
@@ -187,11 +213,10 @@
                                 <span class="d-xl-none">{{user.first_name}} {{user.last_name|first}}</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <a class="dropdown-item" href="{% url 'notifications_settings' %}"><i class="fas fa-bell me-2"></i>Notifications</a>
                                 {% if user.is_staff %}
                                     <a class="dropdown-item" href="{% url 'admin:index' %}"><i class="fas fa-shield-alt me-2"></i>Admin</a>
+                                    <div class="dropdown-divider"></div>
                                 {% endif %}
-                                <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
                             </div>
                         </li>
@@ -214,6 +239,19 @@
 
         {% endblock content %}
     </main>
+
+    <!-- Welcome Modal for New Users -->
+    {% include 'superb_ock/includes/welcome_modal.html' %}
+
+    <!-- Welcome Modal Script -->
+    {% if show_welcome_modal %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
+            welcomeModal.show();
+        });
+    </script>
+    {% endif %}
 
     <!-- Service Worker Registration -->
     <script>

@@ -104,7 +104,17 @@
                                     <!-- Compact Player Header -->
                                     <div class="text-center mb-2">
                                         <h6 class="card-title mb-0 small">{{ player.player__first_name }}</h6>
-                                        <small class="text-body-secondary">HCP: <span class="playing-hcp" data-player-id="{{ player.id }}">-</span></small>
+                                        <small class="text-body-secondary d-block">
+                                            HCP: <span class="playing-hcp" data-player-id="{{ player.id }}"
+                                                       data-handicap-index="{{ player.handicap_index }}"
+                                                       data-stroke-index="{{ player.hole__stroke_index }}"
+                                                       data-slope="{{ player.hole__golf_course__slope_rating }}"
+                                                       data-course-rating="{{ player.hole__golf_course__course_rating }}"
+                                                       data-course-par="{{ player.hole__golf_course__par }}">-</span>
+                                        </small>
+                                        <small class="text-body-secondary d-block hole-shots-info" data-player-id="{{ player.id }}" style="display: none;">
+                                            <i class="fas fa-plus-circle text-success"></i> <span class="hole-shots-value">-</span>
+                                        </small>
                                     </div>
 
                                     <!-- Compact Score Input -->
@@ -299,7 +309,14 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Calculate and display playing handicaps
-    // Auto-scroll to bottom on mobile for easier button access\n    if (window.innerWidth <= 768) {\n        setTimeout(() => {\n            window.scrollTo(0, document.body.scrollHeight);\n        }, 100);\n    }\n    \n    updatePlayingHandicaps();
+    // Auto-scroll to bottom on mobile for easier button access
+    if (window.innerWidth <= 768) {
+        setTimeout(() => {
+            window.scrollTo(0, document.body.scrollHeight);
+        }, 100);
+    }
+
+    updatePlayingHandicaps();
     
     // Score input event listeners
     document.querySelectorAll('.btn-minus, .btn-plus').forEach(btn => {
@@ -387,17 +404,56 @@ document.addEventListener('DOMContentLoaded', function() {
     function updatePlayingHandicaps() {
         document.querySelectorAll('.playing-hcp').forEach(span => {
             const playerId = span.dataset.playerId;
-            const playerCard = document.querySelector(`[data-player-id="${playerId}"]`);
-            const btn = playerCard.querySelector('.btn-plus');
-            
-            if (btn) {
-                const handicapIndex = parseFloat(btn.dataset.handicap) || 0;
-                const slopeRating = parseFloat(btn.dataset.slope) || 113;
-                const courseRating = parseFloat(btn.dataset.courseRating) || 72;
-                const coursePar = parseFloat(btn.dataset.coursePar) || 72;
-                
-                const courseHandicap = Math.round(handicapIndex * (slopeRating / 113) + courseRating - coursePar);
-                span.textContent = courseHandicap;
+
+            // Get handicap data directly from the span element
+            const handicapIndexStr = span.dataset.handicapIndex;
+
+            // Check if handicap index is missing or invalid
+            if (!handicapIndexStr || handicapIndexStr === 'None' || handicapIndexStr === '') {
+                span.textContent = '-';
+                const holeShotsInfo = document.querySelector(`.hole-shots-info[data-player-id="${playerId}"]`);
+                if (holeShotsInfo) {
+                    holeShotsInfo.style.display = 'none';
+                }
+                return;
+            }
+
+            const handicapIndex = parseFloat(handicapIndexStr);
+            const slopeRating = parseFloat(span.dataset.slope) || 113;
+            const courseRating = parseFloat(span.dataset.courseRating) || 72;
+            const coursePar = parseFloat(span.dataset.coursePar) || 72;
+            const strokeIndex = parseInt(span.dataset.strokeIndex) || 18;
+
+            console.log('Player:', playerId, 'HCP Index:', handicapIndex, 'SI:', strokeIndex, 'Slope:', slopeRating);
+
+            const courseHandicap = Math.round(handicapIndex * (slopeRating / 113) + (courseRating - coursePar));
+            span.textContent = courseHandicap;
+
+            // Calculate hole-specific shots
+            const extraShots = Math.floor(courseHandicap / 18);
+            const remainingHandicap = Math.abs((courseHandicap + 18) % 18);
+            const strokeIndexShots = strokeIndex <= remainingHandicap ? 1 : 0;
+            const totalHandicapStrokes = extraShots + strokeIndexShots;
+
+            console.log('Course HCP:', courseHandicap, 'Extra:', extraShots, 'SI Shots:', strokeIndexShots, 'Total:', totalHandicapStrokes);
+
+            // Update hole shots display
+            const holeShotsInfo = document.querySelector(`.hole-shots-info[data-player-id="${playerId}"]`);
+            const holeShotsValue = holeShotsInfo.querySelector('.hole-shots-value');
+            const icon = holeShotsInfo.querySelector('i');
+
+            if (totalHandicapStrokes > 0) {
+                holeShotsValue.textContent = `${totalHandicapStrokes} shot${totalHandicapStrokes > 1 ? 's' : ''}`;
+                icon.className = 'fas fa-plus-circle text-success';
+                holeShotsInfo.style.display = 'block';
+            } else if (totalHandicapStrokes < 0) {
+                holeShotsValue.textContent = `${Math.abs(totalHandicapStrokes)} shot${Math.abs(totalHandicapStrokes) > 1 ? 's' : ''}`;
+                icon.className = 'fas fa-minus-circle text-danger';
+                holeShotsInfo.style.display = 'block';
+            } else {
+                holeShotsValue.textContent = 'No shots';
+                icon.className = 'fas fa-equals text-secondary';
+                holeShotsInfo.style.display = 'block';
             }
         });
     }

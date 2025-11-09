@@ -1,0 +1,93 @@
+/**
+ * Modal Components Styling
+ * Styles for welcome modal, notification banners, and other modal dialogs
+ */
+
+/* Notification Prompt Banner */
+.notification-prompt-banner {
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #0d6efd;
+    animation: slideDown 0.4s ease-out;
+}
+
+.notification-prompt-banner .notification-prompt-icon {
+    color: #0d6efd;
+}
+
+.notification-prompt-banner .alert-heading {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Welcome Modal */
+#welcomeModal .modal-content {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+#welcomeModal .modal-header {
+    border-bottom: none;
+}
+
+#welcomeModal .btn-close {
+    opacity: 0.5;
+}
+
+#welcomeModal .btn-close:hover {
+    opacity: 1;
+}
+
+#welcomeModal .card {
+    border-radius: 8px;
+}
+
+#welcomeModal .btn-primary {
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 500;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#welcomeModal .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+#welcomeModal .btn-outline-secondary {
+    border-radius: 8px;
+    padding: 12px 24px;
+}
+
+#welcomeModal ul {
+    text-align: left;
+    display: inline-block;
+}
+
+/* Animation for modal entrance */
+#welcomeModal.show .modal-dialog {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

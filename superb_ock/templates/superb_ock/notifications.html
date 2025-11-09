@@ -3,6 +3,116 @@
 
 {% block title %}Notification Settings{% endblock %}
 
+{% block head %}
+<style>
+/* Improved toggle switches for all screen sizes */
+.form-switch .form-check-input {
+    width: 2.5em !important;
+    height: 1.25em !important;
+    min-width: 2.5em !important;
+    min-height: 1.25em !important;
+    background-color: #6c757d !important;
+    border: none !important;
+    border-radius: 1.25em !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e") !important;
+    background-position: 0.125em center !important;
+    background-size: 1em 1em !important;
+    background-repeat: no-repeat !important;
+    transition: background-position 0.2s ease-in-out, background-color 0.2s ease-in-out !important;
+    margin-left: 0 !important;
+    float: none !important;
+}
+
+.form-switch .form-check-input:checked {
+    background-color: #198754 !important;
+    background-position: calc(100% - 0.125em) center !important;
+}
+
+.form-switch .form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+    outline: 0 !important;
+    border-color: transparent !important;
+}
+
+.form-switch .form-check-input:disabled {
+    background-color: #e9ecef !important;
+    opacity: 0.5 !important;
+}
+
+/* Mobile-friendly layout */
+@media (max-width: 768px) {
+    .form-check {
+        padding-left: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        min-height: 2.5rem;
+    }
+
+    .form-check-label {
+        order: 1;
+        flex-grow: 1;
+        margin-bottom: 0;
+    }
+
+    .form-check-input {
+        order: 2;
+        margin-left: 0 !important;
+        margin-top: 0;
+        flex-shrink: 0;
+    }
+
+    .form-switch {
+        padding-left: 0 !important;
+    }
+
+    .form-switch .form-check-input {
+        width: 2.5em !important;
+        height: 1.25em !important;
+        margin-left: 0 !important;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .device-list-item {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.75rem;
+    }
+
+    .device-actions {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+/* Better spacing for all screen sizes */
+.form-check-label {
+    cursor: pointer;
+    user-select: none;
+    line-height: 1.5em;
+}
+
+.form-check-input {
+    cursor: pointer;
+}
+
+/* Dark mode support */
+[data-bs-theme="dark"] .form-switch .form-check-input {
+    background-color: #495057;
+}
+
+[data-bs-theme="dark"] .form-switch .form-check-input:checked {
+    background-color: #198754;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <div class="row">
@@ -76,8 +186,8 @@
                             {% for device in devices %}
                             <div class="card mb-2" id="device-{{ device.id }}">
                                 <div class="card-body py-2">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
+                                    <div class="d-flex justify-content-between align-items-center device-list-item">
+                                        <div class="flex-grow-1">
                                             <strong>{{ device.device_name }}</strong>
                                             {% if device.browser %}
                                                 <span class="badge bg-secondary ms-1">{{ device.browser }}</span>
@@ -85,12 +195,15 @@
                                             <br>
                                             <small class="text-muted">Last used: {{ device.last_used|timesince }} ago</small>
                                         </div>
-                                        <div>
-                                            <div class="form-check form-switch d-inline-block me-2">
+                                        <div class="device-actions d-flex align-items-center gap-2">
+                                            <div class="form-check form-switch mb-0">
                                                 <input class="form-check-input device-toggle" type="checkbox"
                                                        id="device-toggle-{{ device.id }}"
                                                        data-device-id="{{ device.id }}"
                                                        {% if device.is_active %}checked{% endif %}>
+                                                <label class="form-check-label d-md-none" for="device-toggle-{{ device.id }}">
+                                                    <small>Active</small>
+                                                </label>
                                             </div>
                                             <button class="btn btn-sm btn-outline-danger device-delete"
                                                     data-device-id="{{ device.id }}">

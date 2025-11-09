@@ -92,4 +92,10 @@ class Home(View):
 
     def get(self, request):
         """Handle GET request for homepage."""
-        return render(request, self.template_name, context=self.get_context())
+        context = self.get_context()
+
+        # Check if we should show the welcome modal for new users
+        if request.session.pop('show_welcome_modal', False):
+            context['show_welcome_modal'] = True
+
+        return render(request, self.template_name, context=context)

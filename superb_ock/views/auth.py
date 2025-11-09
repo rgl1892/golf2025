@@ -29,6 +29,10 @@ def signUpUser(request):
                 )
                 user.save()
                 login(request, user)
+
+                # Store flag in session to show welcome modal
+                request.session['show_welcome_modal'] = True
+
                 return redirect("home")
             except IntegrityError:
                 return render(
