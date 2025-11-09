@@ -131,6 +131,9 @@ class EditScore(View):
 
         print(formatted_data)
 
+        # Track which events need cache invalidation
+        events_to_invalidate = set()
+
         for score_id, points in formatted_data.items():
             Score.objects.filter(pk=score_id).update(
                 shots_taken=points['shots'],
@@ -141,6 +144,11 @@ class EditScore(View):
             try:
                 from ..notifications import send_hole_completed_notification
                 score = Score.objects.get(pk=score_id)
+
+                # Track event for cache invalidation
+                if score.golf_round and score.golf_round.event:
+                    events_to_invalidate.add(score.golf_round.event.id)
+
                 if score.shots_taken is not None:  # Only notify if a score was actually entered
                     # Calculate player's total stableford points for the round
                     player_total = Score.objects.filter(
@@ -152,6 +160,11 @@ class EditScore(View):
                     send_hole_completed_notification(score, player_total)
             except Exception as e:
                 print(f"[NOTIFICATION] Error sending hole completed notification: {e}")
+
+        # Invalidate leaderboard cache for affected events
+        from ..services.leaderboard import LeaderboardBuilder
+        for event_id in events_to_invalidate:
+            LeaderboardBuilder.invalidate_cache(event_id)
 
         return render(
             request, self.template_name, self.get_context_data(round_id, hole_number)
