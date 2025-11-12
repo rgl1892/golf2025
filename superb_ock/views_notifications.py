@@ -91,10 +91,12 @@ def test_notification(request):
 def save_subscription(request):
     """Save push notification subscription"""
     from webpush.models import SubscriptionInfo
+    import logging
+    logger = logging.getLogger('superb_ock.notifications')
 
     try:
         data = json.loads(request.body)
-        print(f"[SUBSCRIPTION] Received data: {data}")
+        logger.info(f"[SUBSCRIPTION] Received data from {request.user.username}: {data.keys() if data else 'None'}")
 
         endpoint = data.get('endpoint')
         keys = data.get('keys', {})
@@ -103,7 +105,10 @@ def save_subscription(request):
         device_name = data.get('device_name', 'Unknown Device')
 
         if not all([endpoint, p256dh, auth]):
+            logger.warning(f"[SUBSCRIPTION] Missing required fields - endpoint: {bool(endpoint)}, p256dh: {bool(p256dh)}, auth: {bool(auth)}")
             return JsonResponse({'error': 'Missing required fields'}, status=400)
+
+        logger.info(f"[SUBSCRIPTION] Creating/updating subscription for endpoint: {endpoint[:50]}...")
 
         # Check if subscription already exists, update if it does
         sub_info, sub_created = SubscriptionInfo.objects.update_or_create(
@@ -115,6 +120,7 @@ def save_subscription(request):
                 'auth': auth,
             }
         )
+        logger.info(f"[SUBSCRIPTION] SubscriptionInfo {'created' if sub_created else 'updated'} - ID: {sub_info.id}")
 
         # Detect browser from user agent (order matters - check most specific first)
         user_agent = request.META.get('HTTP_USER_AGENT', '')
@@ -145,9 +151,10 @@ def save_subscription(request):
             device.is_active = True
             device.save()
             device_created = False
-            print(f"[SUBSCRIPTION] Updated existing device '{device.device_name}' for user {request.user.username}")
+            logger.info(f"[SUBSCRIPTION] Updated existing device '{device.device_name}' for user {request.user.username}")
         else:
             # Create new device
+            logger.info(f"[SUBSCRIPTION] Creating new PushDevice for user {request.user.username}")
             device = PushDevice.objects.create(
                 user=request.user,
                 subscription_info=sub_info,
@@ -157,14 +164,12 @@ def save_subscription(request):
                 is_active=True
             )
             device_created = True
-            print(f"[SUBSCRIPTION] Created new device '{device.device_name}' for user {request.user.username}")
+            logger.info(f"[SUBSCRIPTION] Created new device '{device.device_name}' for user {request.user.username}")
 
         return JsonResponse({'status': 'success', 'device_id': device.id}, status=201)
 
     except Exception as e:
-        print(f"[SUBSCRIPTION] Error: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"[SUBSCRIPTION] Error for user {request.user.username}: {str(e)}", exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
