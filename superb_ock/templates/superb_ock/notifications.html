@@ -361,17 +361,84 @@ toggle.addEventListener('change', async function() {
                 if (permission === 'granted') {
                     // Subscribe to push notifications
                     if ('serviceWorker' in navigator && 'PushManager' in window) {
-                        console.log('Getting SW registration...');
+                        try {
+                            console.log('Getting SW registration...');
+                            const registration = await navigator.serviceWorker.ready;
+                            console.log('Got registration, subscribing...');
+
+                            const subscription = await registration.pushManager.subscribe({
+                                userVisibleOnly: true,
+                                applicationServerKey: applicationServerKey
+                            });
+                            console.log('Subscription created:', subscription);
+
+                            console.log('Saving subscription...');
+                            const subData = subscription.toJSON();
+                            const payload = {
+                                endpoint: subData.endpoint,
+                                keys: {
+                                    p256dh: subData.keys.p256dh,
+                                    auth: subData.keys.auth
+                                },
+                                device_name: getDeviceName()
+                            };
+                            console.log('Payload:', payload);
+                            const saveResponse = await fetch('/notifications/subscribe/', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': '{{ csrf_token }}'
+                                },
+                                body: JSON.stringify(payload)
+                            });
+                            console.log('Save response status:', saveResponse.status);
+                            if (saveResponse.status === 201) {
+                                console.log('Subscription saved successfully');
+                                showStatus('Notifications enabled successfully! Reloading...', 'success');
+                                setTimeout(() => location.reload(), 1500);
+                                return;
+                            } else {
+                                const errorText = await saveResponse.text();
+                                console.error('Save failed:', saveResponse.status);
+                                console.error('Error details:', errorText);
+                                showStatus('Failed to save subscription: ' + errorText, 'danger');
+                                toggle.checked = false;
+                                return;
+                            }
+                        } catch (subscribeError) {
+                            console.error('Error during subscription:', subscribeError);
+                            showStatus('Error subscribing: ' + subscribeError.message, 'danger');
+                            toggle.checked = false;
+                            return;
+                        }
+                    }
+                } else {
+                    console.log('Permission denied or dismissed');
+                    showStatus('Notifications permission denied', 'warning');
+                    toggle.checked = false;
+                    return;
+                }
+            } else if (Notification.permission === 'granted') {
+                console.log('Permission already granted, subscribing...');
+                if ('serviceWorker' in navigator && 'PushManager' in window) {
+                    try {
                         const registration = await navigator.serviceWorker.ready;
-                        console.log('Got registration, subscribing...');
+                        console.log('SW ready, getting existing subscription...');
 
-                        const subscription = await registration.pushManager.subscribe({
-                            userVisibleOnly: true,
-                            applicationServerKey: applicationServerKey
-                        });
-                        console.log('Subscription created:', subscription);
+                        // Check if subscription already exists
+                        let subscription = await registration.pushManager.getSubscription();
 
-                        console.log('Saving subscription...');
+                        if (!subscription) {
+                            console.log('No existing subscription, creating new one...');
+                            subscription = await registration.pushManager.subscribe({
+                                userVisibleOnly: true,
+                                applicationServerKey: applicationServerKey
+                            });
+                            console.log('Subscription created:', subscription);
+                        } else {
+                            console.log('Using existing subscription:', subscription);
+                        }
+
                         const subData = subscription.toJSON();
                         const payload = {
                             endpoint: subData.endpoint,
@@ -393,50 +460,29 @@ toggle.addEventListener('change', async function() {
                         console.log('Save response status:', saveResponse.status);
                         if (saveResponse.status === 201) {
                             console.log('Subscription saved successfully');
+                            showStatus('Notifications enabled successfully! Reloading...', 'success');
+                            setTimeout(() => location.reload(), 1500);
+                            return;
                         } else {
                             const errorText = await saveResponse.text();
                             console.error('Save failed:', saveResponse.status);
                             console.error('Error details:', errorText);
+                            showStatus('Failed to save subscription: ' + errorText, 'danger');
+                            toggle.checked = false;
+                            return;
                         }
+                    } catch (subscribeError) {
+                        console.error('Error during subscription:', subscribeError);
+                        showStatus('Error subscribing: ' + subscribeError.message, 'danger');
+                        toggle.checked = false;
+                        return;
                     }
                 }
-            } else if (Notification.permission === 'granted') {
-                console.log('Permission already granted, subscribing...');
-                if ('serviceWorker' in navigator && 'PushManager' in window) {
-                    const registration = await navigator.serviceWorker.ready;
-                    const subscription = await registration.pushManager.subscribe({
-                        userVisibleOnly: true,
-                        applicationServerKey: applicationServerKey
-                    });
-                    console.log('Subscription created:', subscription);
-
-                    const subData = subscription.toJSON();
-                    const payload = {
-                        endpoint: subData.endpoint,
-                        keys: {
-                            p256dh: subData.keys.p256dh,
-                            auth: subData.keys.auth
-                        },
-                        device_name: getDeviceName()
-                    };
-                    console.log('Payload:', payload);
-                    const saveResponse = await fetch('/notifications/subscribe/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-                    console.log('Save response status:', saveResponse.status);
-                    if (saveResponse.status === 201) {
-                        console.log('Subscription saved successfully');
-                    } else {
-                        const errorText = await saveResponse.text();
-                        console.error('Save failed:', saveResponse.status);
-                        console.error('Error details:', errorText);
-                    }
-                }
+            } else if (Notification.permission === 'denied') {
+                console.log('Permission denied by user');
+                showStatus('Notifications are blocked. Please enable them in your browser settings.', 'warning');
+                toggle.checked = false;
+                return;
             }
             showStatus('Notifications enabled', 'success');
         } else {
