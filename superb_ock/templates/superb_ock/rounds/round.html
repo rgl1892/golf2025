@@ -317,6 +317,9 @@
                             {% if round_info.course_rating and round_info.slope_rating %}
                                 • Rating {{ round_info.course_rating }} / Slope {{ round_info.slope_rating }}
                             {% endif %}
+                            {% if round_info.round.use_playing_handicap %}
+                                <br><span class="badge bg-info text-dark">Playing Handicap (95%)</span>
+                            {% endif %}
                         </div>
                         {% endif %}
                     </div>

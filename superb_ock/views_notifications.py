@@ -136,35 +136,23 @@ def save_subscription(request):
         elif 'Safari' in user_agent:
             browser = 'Safari'
 
-        # Check if a device already exists for this user+subscription
-        # This ensures the same subscription doesn't create multiple devices
-        device = PushDevice.objects.filter(
-            user=request.user,
-            subscription_info=sub_info
-        ).first()
+        # Use update_or_create to handle the OneToOneField constraint
+        # The subscription_info is unique, so we can use it as the lookup
+        device, device_created = PushDevice.objects.update_or_create(
+            subscription_info=sub_info,
+            defaults={
+                'user': request.user,
+                'device_name': device_name,
+                'browser': browser,
+                'user_agent': user_agent,
+                'is_active': True,
+            }
+        )
 
-        if device:
-            # Update existing device
-            device.device_name = device_name
-            device.browser = browser
-            device.user_agent = user_agent
-            device.is_active = True
-            device.save()
-            device_created = False
-            logger.info(f"[SUBSCRIPTION] Updated existing device '{device.device_name}' for user {request.user.username}")
-        else:
-            # Create new device
-            logger.info(f"[SUBSCRIPTION] Creating new PushDevice for user {request.user.username}")
-            device = PushDevice.objects.create(
-                user=request.user,
-                subscription_info=sub_info,
-                device_name=device_name,
-                browser=browser,
-                user_agent=user_agent,
-                is_active=True
-            )
-            device_created = True
+        if device_created:
             logger.info(f"[SUBSCRIPTION] Created new device '{device.device_name}' for user {request.user.username}")
+        else:
+            logger.info(f"[SUBSCRIPTION] Updated existing device '{device.device_name}' for user {request.user.username}")
 
         return JsonResponse({'status': 'success', 'device_id': device.id}, status=201)
 

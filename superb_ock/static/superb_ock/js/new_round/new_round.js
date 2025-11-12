@@ -89,8 +89,19 @@ document.addEventListener("DOMContentLoaded", () => {
         return null;
     };
 
-    const getHandicap = (index, courseInfo) => 
-        ((parseFloat(courseInfo.slope_rating) / 113) * index + parseFloat(courseInfo.course_rating) - parseFloat(courseInfo.par)).toFixed(0);
+    const getHandicap = (index, courseInfo, usePlayingHandicap = false) => {
+        // Calculate course handicap
+        const courseHandicap = (parseFloat(courseInfo.slope_rating) / 113) * index +
+                               parseFloat(courseInfo.course_rating) -
+                               parseFloat(courseInfo.par);
+
+        // Apply 95% if playing handicap is enabled
+        if (usePlayingHandicap) {
+            return Math.round(courseHandicap * 0.95);
+        }
+
+        return Math.round(courseHandicap);
+    };
 
     const populatePlayerSelects = () => {
         const selectedPlayers = new Set([...playerSelects].map(select => select.value).filter(Boolean));
@@ -119,19 +130,22 @@ document.addEventListener("DOMContentLoaded", () => {
         const indexInput = document.getElementById(`player_${playerIndex}_index`);
         const label = document.getElementById(`label_player_${playerIndex}`);
         const indexValue =  parseFloat(indexInput.value);
+        const playingHandicapToggle = document.getElementById('usePlayingHandicap');
+        const usePlayingHandicap = playingHandicapToggle ? playingHandicapToggle.checked : false;
 
         const selectedCountry = countrySelect.value;
         const selectedCourse = courseSelect.value;
         const selectedTee = teeSelect.value;
-        const chosenCourse = courseData.find(course => 
-            course.country === selectedCountry && 
-            course.name === selectedCourse && 
+        const chosenCourse = courseData.find(course =>
+            course.country === selectedCountry &&
+            course.name === selectedCourse &&
             course.tees === selectedTee
         );
-        const handicap = getHandicap(indexValue,chosenCourse) 
+        const handicap = getHandicap(indexValue, chosenCourse, usePlayingHandicap);
 
-        if (indexValue) {
-            label.textContent = `Player ${playerIndex}: (Handicap: ${handicap})`;
+        if (indexValue && chosenCourse) {
+            const handicapType = usePlayingHandicap ? '95%' : '100%';
+            label.textContent = `Player ${playerIndex}: (Handicap: ${handicap} ${handicapType})`;
         } else {
             label.textContent = `Player ${playerIndex}:`;
         }
@@ -141,6 +155,17 @@ document.addEventListener("DOMContentLoaded", () => {
     for (let i = 1; i <= 4; i++) {
         const indexInput = document.getElementById(`player_${i}_index`);
         indexInput.addEventListener("input", () => updatePlayerIndexLabel(i));
+    }
+
+    // Event listener for playing handicap toggle
+    const playingHandicapToggle = document.getElementById('usePlayingHandicap');
+    if (playingHandicapToggle) {
+        playingHandicapToggle.addEventListener("change", () => {
+            // Update all player labels when toggle changes
+            for (let i = 1; i <= 4; i++) {
+                updatePlayerIndexLabel(i);
+            }
+        });
     }
 
     // Event listeners

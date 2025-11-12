@@ -15,6 +15,7 @@ from django.db.models import Sum, Count, Q
 
 from ..models import GolfCourse, GolfEvent, GolfRound, Hole, Player, Score
 from .utils import jsonify
+from ..utils.handicap import calculate_playing_handicap
 
 
 class NewRound(View):
@@ -66,10 +67,14 @@ class NewRound(View):
             if request.POST.get(f"player_{x+1}")
         ]
 
+        # Check if playing handicap (95%) should be used
+        use_playing_handicap = request.POST.get("usePlayingHandicap") == "on"
+
         # Create the golf round
         golf_round = GolfRound.objects.create(
             event_id=request.POST.get("eventId"),
-            date_started=timezone.now().date()
+            date_started=timezone.now().date(),
+            use_playing_handicap=use_playing_handicap
         )
 
         # Send notification to subscribed users
@@ -116,10 +121,12 @@ class NewRound(View):
             player_id = int(player["id"])
             if player_id in player_index_lookup:
                 player["index"] = player_index_lookup[player_id]
-                player["handicap"] = round(
-                    player["index"] * (float(course.slope_rating) / 113)
-                    + float(course.course_rating)
-                    - float(course.par)
+                player["handicap"] = calculate_playing_handicap(
+                    handicap_index=player["index"],
+                    slope_rating=float(course.slope_rating),
+                    course_rating=float(course.course_rating),
+                    par=float(course.par),
+                    use_playing_handicap=use_playing_handicap
                 )
 
         context = {"course": course, "players": player_objects}
@@ -322,7 +329,13 @@ class GolfRoundView(View):
             slope_rating = first_score.get('hole__golf_course__slope_rating', 113)
             course_rating = first_score.get('hole__golf_course__course_rating', 72)
             course_par = first_score.get('hole__golf_course__par', 72)
-            course_handicap = round(handicap_index * (slope_rating / 113) + course_rating - course_par)
+            course_handicap = calculate_playing_handicap(
+                handicap_index=handicap_index,
+                slope_rating=slope_rating,
+                course_rating=course_rating,
+                par=course_par,
+                use_playing_handicap=current_round.use_playing_handicap
+            )
 
             summary_data[player] = {
                 'front_nine': 0,

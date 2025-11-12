@@ -79,6 +79,10 @@ class GolfRound(models.Model):
 
     event = models.ForeignKey(GolfEvent,on_delete=models.CASCADE,default=1)
     date_started = models.DateField(blank=True,null=True)
+    use_playing_handicap = models.BooleanField(
+        default=False,
+        help_text="Use 95% playing handicap (England Golf standard) instead of course handicap"
+    )
 
     # Custom manager for optimized queries
     objects = GolfRoundManager()

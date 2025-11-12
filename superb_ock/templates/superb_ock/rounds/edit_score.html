@@ -308,6 +308,10 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Playing handicap setting from the round
+    const usePlayingHandicap = {{ use_playing_handicap|yesno:"true,false" }};
+    console.log('Using playing handicap (95%):', usePlayingHandicap);
+
     // Calculate and display playing handicaps
     // Auto-scroll to bottom on mobile for easier button access
     if (window.innerWidth <= 768) {
@@ -426,7 +430,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
             console.log('Player:', playerId, 'HCP Index:', handicapIndex, 'SI:', strokeIndex, 'Slope:', slopeRating);
 
-            const courseHandicap = Math.round(handicapIndex * (slopeRating / 113) + (courseRating - coursePar));
+            // Calculate course handicap
+            let courseHandicap = Math.round(handicapIndex * (slopeRating / 113) + (courseRating - coursePar));
+
+            // Apply 95% if playing handicap is enabled
+            if (usePlayingHandicap) {
+                courseHandicap = Math.round(courseHandicap * 0.95);
+            }
+
             span.textContent = courseHandicap;
 
             // Calculate hole-specific shots
@@ -481,8 +492,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const slopeRating = parseFloat(btn.dataset.slope) || 113;
         const courseRating = parseFloat(btn.dataset.courseRating) || 72;
         const coursePar = parseFloat(btn.dataset.coursePar) || 72;
-        
-        const courseHandicap = Math.round(handicapIndex * (slopeRating / 113) + courseRating - coursePar);
+
+        // Calculate course handicap
+        let courseHandicap = Math.round(handicapIndex * (slopeRating / 113) + courseRating - coursePar);
+
+        // Apply 95% if playing handicap is enabled
+        if (usePlayingHandicap) {
+            courseHandicap = Math.round(courseHandicap * 0.95);
+        }
+
         const extraShots = Math.floor(courseHandicap / 18);
         const remainingHandicap = Math.abs((courseHandicap + 18) % 18);
         const strokeIndexShots = strokeIndex <= remainingHandicap ? 1 : 0;

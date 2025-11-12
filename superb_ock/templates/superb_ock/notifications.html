@@ -125,12 +125,19 @@
                 <div class="card-body">
                     <div id="notification-status" class="alert" style="display: none;"></div>
 
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" id="notificationToggle" {% if notifications_enabled %}checked{% endif %}>
-                        <label class="form-check-label" for="notificationToggle">
-                            <strong>Enable notifications</strong>
-                        </label>
-                    </div>
+                    {% if devices %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> You have {{ devices|length }} device(s) registered for notifications.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Click the button below to enable notifications on this device.
+                        </div>
+                    {% endif %}
+
+                    <button id="enableNotifications" class="btn btn-primary btn-lg w-100 mb-3">
+                        <i class="fas fa-bell"></i> Enable Notifications on This Device
+                    </button>
 
                     <hr>
 
@@ -225,7 +232,7 @@
 </div>
 
 <script>
-const toggle = document.getElementById('notificationToggle');
+const enableBtn = document.getElementById('enableNotifications');
 const status = document.getElementById('notification-status');
 const deviceStatus = document.getElementById('device-status');
 
@@ -233,9 +240,6 @@ function showStatus(message, type) {
     status.className = `alert alert-${type}`;
     status.textContent = message;
     status.style.display = 'block';
-    setTimeout(() => {
-        status.style.display = 'none';
-    }, 3000);
 }
 
 function showDeviceStatus(message, type) {
@@ -303,6 +307,94 @@ function urlBase64ToUint8Array(base64String) {
 
 const applicationServerKey = urlBase64ToUint8Array('{{ webpush_settings.VAPID_PUBLIC_KEY }}');
 
+// Enable notifications button
+enableBtn.addEventListener('click', async function() {
+    enableBtn.disabled = true;
+    showStatus('Setting up notifications...', 'info');
+
+    try {
+        // Step 1: Check browser support
+        if (!('Notification' in window)) {
+            showStatus('Your browser does not support notifications', 'danger');
+            enableBtn.disabled = false;
+            return;
+        }
+
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            showStatus('Your browser does not support push notifications', 'danger');
+            enableBtn.disabled = false;
+            return;
+        }
+
+        // Step 2: Check current permission
+        if (Notification.permission === 'denied') {
+            showStatus('Notifications are blocked. Please enable them in your browser settings and reload the page.', 'warning');
+            enableBtn.disabled = false;
+            return;
+        }
+
+        // Step 3: Request permission if needed
+        if (Notification.permission === 'default') {
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                showStatus('Permission denied. Please allow notifications and try again.', 'warning');
+                enableBtn.disabled = false;
+                return;
+            }
+        }
+
+        // Step 4: Get service worker registration
+        showStatus('Waiting for service worker...', 'info');
+        const registration = await navigator.serviceWorker.ready;
+
+        // Step 5: Get or create subscription
+        showStatus('Creating subscription...', 'info');
+        let subscription = await registration.pushManager.getSubscription();
+
+        if (!subscription) {
+            subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: applicationServerKey
+            });
+        }
+
+        // Step 6: Save to server
+        showStatus('Saving subscription...', 'info');
+        const subData = subscription.toJSON();
+        const payload = {
+            endpoint: subData.endpoint,
+            keys: {
+                p256dh: subData.keys.p256dh,
+                auth: subData.keys.auth
+            },
+            device_name: getDeviceName()
+        };
+
+        const saveResponse = await fetch('/notifications/subscribe/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (saveResponse.status === 201) {
+            showStatus('✓ Success! Reloading page...', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            const error = await saveResponse.json();
+            showStatus('Failed to save: ' + (error.error || 'Unknown error'), 'danger');
+            enableBtn.disabled = false;
+        }
+
+    } catch (error) {
+        console.error('Error enabling notifications:', error);
+        showStatus('Error: ' + error.message, 'danger');
+        enableBtn.disabled = false;
+    }
+});
+
 // Test notification button
 document.getElementById('testNotification').addEventListener('click', async function() {
     try {
@@ -330,169 +422,6 @@ document.getElementById('testNotification').addEventListener('click', async func
     } catch (error) {
         console.error('Test error:', error);
         showStatus('Error sending test notification', 'danger');
-    }
-});
-
-toggle.addEventListener('change', async function() {
-    console.log('Toggle clicked, new state:', toggle.checked);
-    try {
-        // Toggle preference on server
-        console.log('Sending toggle request...');
-        const response = await fetch('/notifications/toggle/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}'
-            }
-        });
-
-        const result = await response.json();
-        console.log('Toggle result:', result);
-
-        if (result.enabled) {
-            console.log('Notifications enabled, checking permission...');
-            console.log('Current permission:', Notification.permission);
-
-            // Request browser permission if enabling
-            if ('Notification' in window && Notification.permission === 'default') {
-                console.log('Requesting permission...');
-                const permission = await Notification.requestPermission();
-                console.log('Permission result:', permission);
-
-                if (permission === 'granted') {
-                    // Subscribe to push notifications
-                    if ('serviceWorker' in navigator && 'PushManager' in window) {
-                        try {
-                            console.log('Getting SW registration...');
-                            const registration = await navigator.serviceWorker.ready;
-                            console.log('Got registration, subscribing...');
-
-                            const subscription = await registration.pushManager.subscribe({
-                                userVisibleOnly: true,
-                                applicationServerKey: applicationServerKey
-                            });
-                            console.log('Subscription created:', subscription);
-
-                            console.log('Saving subscription...');
-                            const subData = subscription.toJSON();
-                            const payload = {
-                                endpoint: subData.endpoint,
-                                keys: {
-                                    p256dh: subData.keys.p256dh,
-                                    auth: subData.keys.auth
-                                },
-                                device_name: getDeviceName()
-                            };
-                            console.log('Payload:', payload);
-                            const saveResponse = await fetch('/notifications/subscribe/', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRFToken': '{{ csrf_token }}'
-                                },
-                                body: JSON.stringify(payload)
-                            });
-                            console.log('Save response status:', saveResponse.status);
-                            if (saveResponse.status === 201) {
-                                console.log('Subscription saved successfully');
-                                showStatus('Notifications enabled successfully! Reloading...', 'success');
-                                setTimeout(() => location.reload(), 1500);
-                                return;
-                            } else {
-                                const errorText = await saveResponse.text();
-                                console.error('Save failed:', saveResponse.status);
-                                console.error('Error details:', errorText);
-                                showStatus('Failed to save subscription: ' + errorText, 'danger');
-                                toggle.checked = false;
-                                return;
-                            }
-                        } catch (subscribeError) {
-                            console.error('Error during subscription:', subscribeError);
-                            showStatus('Error subscribing: ' + subscribeError.message, 'danger');
-                            toggle.checked = false;
-                            return;
-                        }
-                    }
-                } else {
-                    console.log('Permission denied or dismissed');
-                    showStatus('Notifications permission denied', 'warning');
-                    toggle.checked = false;
-                    return;
-                }
-            } else if (Notification.permission === 'granted') {
-                console.log('Permission already granted, subscribing...');
-                if ('serviceWorker' in navigator && 'PushManager' in window) {
-                    try {
-                        const registration = await navigator.serviceWorker.ready;
-                        console.log('SW ready, getting existing subscription...');
-
-                        // Check if subscription already exists
-                        let subscription = await registration.pushManager.getSubscription();
-
-                        if (!subscription) {
-                            console.log('No existing subscription, creating new one...');
-                            subscription = await registration.pushManager.subscribe({
-                                userVisibleOnly: true,
-                                applicationServerKey: applicationServerKey
-                            });
-                            console.log('Subscription created:', subscription);
-                        } else {
-                            console.log('Using existing subscription:', subscription);
-                        }
-
-                        const subData = subscription.toJSON();
-                        const payload = {
-                            endpoint: subData.endpoint,
-                            keys: {
-                                p256dh: subData.keys.p256dh,
-                                auth: subData.keys.auth
-                            },
-                            device_name: getDeviceName()
-                        };
-                        console.log('Payload:', payload);
-                        const saveResponse = await fetch('/notifications/subscribe/', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': '{{ csrf_token }}'
-                            },
-                            body: JSON.stringify(payload)
-                        });
-                        console.log('Save response status:', saveResponse.status);
-                        if (saveResponse.status === 201) {
-                            console.log('Subscription saved successfully');
-                            showStatus('Notifications enabled successfully! Reloading...', 'success');
-                            setTimeout(() => location.reload(), 1500);
-                            return;
-                        } else {
-                            const errorText = await saveResponse.text();
-                            console.error('Save failed:', saveResponse.status);
-                            console.error('Error details:', errorText);
-                            showStatus('Failed to save subscription: ' + errorText, 'danger');
-                            toggle.checked = false;
-                            return;
-                        }
-                    } catch (subscribeError) {
-                        console.error('Error during subscription:', subscribeError);
-                        showStatus('Error subscribing: ' + subscribeError.message, 'danger');
-                        toggle.checked = false;
-                        return;
-                    }
-                }
-            } else if (Notification.permission === 'denied') {
-                console.log('Permission denied by user');
-                showStatus('Notifications are blocked. Please enable them in your browser settings.', 'warning');
-                toggle.checked = false;
-                return;
-            }
-            showStatus('Notifications enabled', 'success');
-        } else {
-            showStatus('Notifications disabled', 'info');
-        }
-    } catch (error) {
-        console.error('Error toggling notifications:', error);
-        showStatus('Error updating preferences', 'danger');
-        // Revert toggle on error
-        toggle.checked = !toggle.checked;
     }
 });
 

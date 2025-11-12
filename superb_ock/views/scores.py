@@ -7,7 +7,7 @@ from django.shortcuts import render, redirect
 from django.views import View
 from django.db import models
 
-from ..models import Score
+from ..models import Score, GolfRound
 
 
 class EditScore(View):
@@ -77,11 +77,15 @@ class EditScore(View):
                 player_totals[player_name]["played_holes_par"] += score["hole__par"] or 0
                 player_totals[player_name]["holes_played"] += 1
 
+        # Get the round's playing handicap setting
+        golf_round = GolfRound.objects.get(id=round_id)
+
         context = {
             "scores_per_hole": scores_per_hole,
             "round_id": round_id,
             "hole_number": hole_number,
             "player_totals": player_totals,
+            "use_playing_handicap": golf_round.use_playing_handicap,
         }
         return context
 
