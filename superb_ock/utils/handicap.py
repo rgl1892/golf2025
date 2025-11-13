@@ -30,7 +30,7 @@ def calculate_playing_handicap(handicap_index, slope_rating, course_rating, par,
     """
     Calculate handicap for play.
 
-    If use_playing_handicap is True, applies 95% allowance (England Golf standard).
+    If use_playing_handicap is True, applies 95% allowance.
     Otherwise returns full course handicap.
 
     Args:

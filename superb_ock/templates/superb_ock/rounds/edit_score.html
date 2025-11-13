@@ -310,7 +310,11 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Playing handicap setting from the round
     const usePlayingHandicap = {{ use_playing_handicap|yesno:"true,false" }};
-    console.log('Using playing handicap (95%):', usePlayingHandicap);
+    console.log('=== HANDICAP DEBUG ===');
+    console.log('Round use_playing_handicap:', '{{ use_playing_handicap }}');
+    console.log('JavaScript usePlayingHandicap:', usePlayingHandicap);
+    console.log('Type:', typeof usePlayingHandicap);
+    console.log('======================');
 
     // Calculate and display playing handicaps
     // Auto-scroll to bottom on mobile for easier button access
@@ -433,9 +437,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // Calculate course handicap
             let courseHandicap = Math.round(handicapIndex * (slopeRating / 113) + (courseRating - coursePar));
 
+            console.log(`Player ${playerId}: HCP Index=${handicapIndex}, Course HCP (100%)=${courseHandicap}, usePlayingHandicap=${usePlayingHandicap}`);
+
             // Apply 95% if playing handicap is enabled
             if (usePlayingHandicap) {
+                const before = courseHandicap;
                 courseHandicap = Math.round(courseHandicap * 0.95);
+                console.log(`  -> Applied 95%: ${before} * 0.95 = ${courseHandicap}`);
             }
 
             span.textContent = courseHandicap;
@@ -496,9 +504,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Calculate course handicap
         let courseHandicap = Math.round(handicapIndex * (slopeRating / 113) + courseRating - coursePar);
 
+        console.log(`[STABLEFORD] Player ${playerId}: HCP Index=${handicapIndex}, Course HCP (100%)=${courseHandicap}, usePlayingHandicap=${usePlayingHandicap}`);
+
         // Apply 95% if playing handicap is enabled
         if (usePlayingHandicap) {
+            const before = courseHandicap;
             courseHandicap = Math.round(courseHandicap * 0.95);
+            console.log(`[STABLEFORD]   -> Applied 95%: ${before} * 0.95 = ${courseHandicap}`);
         }
 
         const extraShots = Math.floor(courseHandicap / 18);

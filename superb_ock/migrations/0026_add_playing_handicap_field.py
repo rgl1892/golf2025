@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='golfround',
             name='use_playing_handicap',
-            field=models.BooleanField(default=False, help_text='Use 95% playing handicap (England Golf standard) instead of course handicap'),
+            field=models.BooleanField(default=False, help_text='Use 95% playing handicap instead of course handicap'),
         ),
     ]

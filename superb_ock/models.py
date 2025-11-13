@@ -81,7 +81,7 @@ class GolfRound(models.Model):
     date_started = models.DateField(blank=True,null=True)
     use_playing_handicap = models.BooleanField(
         default=False,
-        help_text="Use 95% playing handicap (England Golf standard) instead of course handicap"
+        help_text="Use 95% playing handicap instead of course handicap"
     )
 
     # Custom manager for optimized queries
