@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <select id="player_${i}" class="form-select form-select-player mb-2 mb-sm-0 me-sm-2 w-100 w-sm-auto" name="player_${i}">
                         <option value="">--Select a Player--</option>
                     </select>
-                    <input type="number" id="player_${i}_index" class="form-control w-100 w-sm-auto" step="0.1" placeholder="Index" name="player_${i}_index">
+                    <input type="number" id="player_${i}_index" class="form-control w-100 w-sm-auto" step="0.1" min="0" placeholder="Index" name="player_${i}_index">
                 </div>
             </div>
         `;
