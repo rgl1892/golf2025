@@ -1,7 +1,7 @@
 {% extends "superb_ock/base.html" %} {% block content %} {% load static %}
 <div style="display: none" id="courseJsonData" data-json="{{ courses }}"></div>
 <div style="display: none" id="playerJsonData" data-json="{{ players }}"></div>
-<script src="{% static 'superb_ock/js/new_round/new_round.js' %}"></script>
+<script src="{% static 'superb_ock/js/new_round/new_round.js' %}?v={{ STATIC_VERSION|default:'1' }}"></script>
 
 <h1 class="mt-4 mb-4">Golf Course Selector</h1>
 <form id="courseSelectorForm" method="post" action="{% url 'new_round'%}">
