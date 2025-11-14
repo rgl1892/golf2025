@@ -439,16 +439,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
             console.log('Player:', playerId, 'HCP Index:', handicapIndex, 'SI:', strokeIndex, 'Slope:', slopeRating);
 
-            // Calculate course handicap
-            let courseHandicap = Math.round(handicapIndex * (slopeRating / 113) + (courseRating - coursePar));
+            // Calculate raw course handicap (unrounded)
+            const rawCourseHandicap = handicapIndex * (slopeRating / 113) + (courseRating - coursePar);
 
-            console.log(`Player ${playerId}: HCP Index=${handicapIndex}, Course HCP (100%)=${courseHandicap}, usePlayingHandicap=${usePlayingHandicap}`);
-
-            // Apply 95% if playing handicap is enabled
+            let courseHandicap;
             if (usePlayingHandicap) {
-                const before = courseHandicap;
-                courseHandicap = Math.round(courseHandicap * 0.95);
-                console.log(`  -> Applied 95%: ${before} * 0.95 = ${courseHandicap}`);
+                // Apply 95% BEFORE rounding
+                courseHandicap = Math.round(rawCourseHandicap * 0.95);
+                console.log(`Player ${playerId}: HCP Index=${handicapIndex}, Raw=${rawCourseHandicap.toFixed(2)}, 95%=${(rawCourseHandicap * 0.95).toFixed(2)}, Rounded=${courseHandicap}`);
+            } else {
+                // Round the full course handicap
+                courseHandicap = Math.round(rawCourseHandicap);
+                console.log(`Player ${playerId}: HCP Index=${handicapIndex}, Raw=${rawCourseHandicap.toFixed(2)}, 100% Rounded=${courseHandicap}`);
             }
 
             span.textContent = courseHandicap;
@@ -506,16 +508,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const courseRating = parseFloat(btn.dataset.courseRating) || 72;
         const coursePar = parseFloat(btn.dataset.coursePar) || 72;
 
-        // Calculate course handicap
-        let courseHandicap = Math.round(handicapIndex * (slopeRating / 113) + courseRating - coursePar);
+        // Calculate raw course handicap (unrounded)
+        const rawCourseHandicap = handicapIndex * (slopeRating / 113) + courseRating - coursePar;
 
-        console.log(`[STABLEFORD] Player ${playerId}: HCP Index=${handicapIndex}, Course HCP (100%)=${courseHandicap}, usePlayingHandicap=${usePlayingHandicap}`);
-
-        // Apply 95% if playing handicap is enabled
+        let courseHandicap;
         if (usePlayingHandicap) {
-            const before = courseHandicap;
-            courseHandicap = Math.round(courseHandicap * 0.95);
-            console.log(`[STABLEFORD]   -> Applied 95%: ${before} * 0.95 = ${courseHandicap}`);
+            // Apply 95% BEFORE rounding
+            courseHandicap = Math.round(rawCourseHandicap * 0.95);
+            console.log(`[STABLEFORD] Player ${playerId}: HCP Index=${handicapIndex}, Raw=${rawCourseHandicap.toFixed(2)}, 95%=${(rawCourseHandicap * 0.95).toFixed(2)}, Rounded=${courseHandicap}`);
+        } else {
+            // Round the full course handicap
+            courseHandicap = Math.round(rawCourseHandicap);
+            console.log(`[STABLEFORD] Player ${playerId}: HCP Index=${handicapIndex}, Raw=${rawCourseHandicap.toFixed(2)}, 100% Rounded=${courseHandicap}`);
         }
 
         const extraShots = Math.floor(courseHandicap / 18);

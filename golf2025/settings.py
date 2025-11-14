@@ -182,7 +182,7 @@ MEDIA_ROOT = BASE_DIR / 'media/'
 
 # Static file versioning for cache busting on mobile browsers
 # Increment this when you make changes to JS/CSS files
-STATIC_VERSION = '20251114b'
+STATIC_VERSION = '20251114c'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
