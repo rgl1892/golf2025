@@ -309,7 +309,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Playing handicap setting from the round
-    const usePlayingHandicap = {{ use_playing_handicap|yesno:"true,false" }};
+    const usePlayingHandicap = {% if use_playing_handicap %}true{% else %}false{% endif %};
     console.log('=== HANDICAP DEBUG ===');
     console.log('Round use_playing_handicap:', '{{ use_playing_handicap }}');
     console.log('JavaScript usePlayingHandicap:', usePlayingHandicap);

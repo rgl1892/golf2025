@@ -172,16 +172,20 @@ class GolfEventAdmin(admin.ModelAdmin):
 
 @admin.register(GolfRound)
 class GolfRoundAdmin(admin.ModelAdmin):
-    list_display = ['round_id', 'event_name', 'date_display', 'players_count', 'scores_count']
-    list_filter = ['event', 'date_started']
+    list_display = ['round_id', 'event_name', 'date_display', 'handicap_mode', 'players_count', 'scores_count']
+    list_filter = ['event', 'date_started', 'use_playing_handicap']
     search_fields = ['event__name']
     ordering = ['-date_started', '-id']
     # Removed date_hierarchy to avoid None date issues
-    
+
     fieldsets = (
         ('Round Information', {
             'fields': ('event', 'date_started'),
             'description': 'When and where this round was played'
+        }),
+        ('Handicap Settings', {
+            'fields': ('use_playing_handicap',),
+            'description': 'Use 95% playing handicap instead of 100% course handicap'
         }),
     )
     
@@ -198,11 +202,17 @@ class GolfRoundAdmin(admin.ModelAdmin):
             return obj.date_started.strftime("%Y-%m-%d")
         return "No date set"
     date_display.short_description = "Date"
-    
+
+    def handicap_mode(self, obj):
+        if obj.use_playing_handicap:
+            return "95%"
+        return "100%"
+    handicap_mode.short_description = "HCP Mode"
+
     def players_count(self, obj):
         return Score.objects.filter(golf_round=obj).values('player').distinct().count()
     players_count.short_description = "Players"
-    
+
     def scores_count(self, obj):
         return Score.objects.filter(golf_round=obj).count()
     scores_count.short_description = "Scores"
