@@ -30,7 +30,7 @@ def calculate_playing_handicap(handicap_index, slope_rating, course_rating, par,
     """
     Calculate handicap for play.
 
-    If use_playing_handicap is True, applies 95% allowance.
+    If use_playing_handicap is True, applies 95% allowance before rounding.
     Otherwise returns full course handicap.
 
     Args:
@@ -43,11 +43,12 @@ def calculate_playing_handicap(handicap_index, slope_rating, course_rating, par,
     Returns:
         Rounded playing handicap
     """
-    course_handicap = calculate_course_handicap(
-        handicap_index, slope_rating, course_rating, par
-    )
+    # Calculate raw course handicap (unrounded)
+    raw_course_handicap = handicap_index * (slope_rating / 113) + course_rating - par
 
     if use_playing_handicap:
-        return round(course_handicap * 0.95)
+        # Apply 95% BEFORE rounding
+        return round(raw_course_handicap * 0.95)
 
-    return course_handicap
+    # Round the full course handicap
+    return round(raw_course_handicap)
