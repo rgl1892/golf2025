@@ -359,11 +359,25 @@ class DateCourseLeaderboardBuilder(LeaderboardBuilder):
         """
         entries = []
 
-        # Get all (date, course) keys, sorted by date then course
+        # Get all (date, course) keys
         all_date_course_keys = set()
         for rounds_dict in player_rounds.values():
             all_date_course_keys.update(rounds_dict.keys())
-        sorted_keys = sorted(all_date_course_keys, key=lambda x: (x[0], x[1]))
+
+        # Sort by date then by minimum round ID (chronological order)
+        # Need to get the min round_id for each (date, course) key
+        key_to_min_round_id = {}
+        for rounds_dict in player_rounds.values():
+            for key, data in rounds_dict.items():
+                if key not in key_to_min_round_id:
+                    key_to_min_round_id[key] = min(data['round_ids']) if data['round_ids'] else float('inf')
+                else:
+                    # Update if we find a lower round ID
+                    current_min = min(data['round_ids']) if data['round_ids'] else float('inf')
+                    key_to_min_round_id[key] = min(key_to_min_round_id[key], current_min)
+
+        # Sort by (date, min_round_id) for chronological order
+        sorted_keys = sorted(all_date_course_keys, key=lambda x: (x[0], key_to_min_round_id.get(x, float('inf'))))
 
         for player_name, rounds_dict in player_rounds.items():
             # Extract (date, course) -> total mapping
